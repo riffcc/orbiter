@@ -1,8 +1,8 @@
 <template>
   <v-container class="fill-height">
     <v-responsive class="d-flex align-center text-center fill-height">
-      <main-page v-if="account" />
-      <init-screen v-else />
+      <main-page v-if="account || enterAnonymously" />
+      <init-screen v-else @enter="enterAnonymously = true; emit('enter')"/>
     </v-responsive>
   </v-container>
 </template>
@@ -16,6 +16,7 @@
   const riff = inject('riff')
 
   const account = ref(undefined);
+  const enterAnonymously = ref(false);
 
   let forgetAccount = undefined
   onMounted(async () => {
@@ -25,4 +26,8 @@
   onUnmounted(async () => {
     if (forgetAccount) await forgetAccount()
   })
+
+  const emit = defineEmits<{
+    (e: 'enter'): void
+  }>()
 </script>

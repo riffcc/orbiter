@@ -1,8 +1,8 @@
 <template>
   <v-app>
-    <app-bar v-show="account"/>
+    <app-bar v-show="account || enterAnonymously"/>
     <v-main>
-      <Home />
+      <Home @enter="enterAnonymously = true"/>
     </v-main>
   </v-app>
 </template>
@@ -14,6 +14,7 @@
   const riff = inject('riff')
 
   const account = ref(undefined);
+  const enterAnonymously = ref(false);
 
   let forgetAccount = undefined
   onMounted(async () => {

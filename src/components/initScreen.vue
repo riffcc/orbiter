@@ -14,11 +14,11 @@
     <v-row class="d-flex align-center justify-center">
         <v-col cols="auto">
         <v-btn
-            href="https://next.vuetifyjs.com/components/all/"
             min-width="164"
             rel="noopener noreferrer"
             target="_blank"
             variant="text"
+            v-on:click="emit('enter')"
         >
             <v-icon
             icon="mdi-view-dashboard"
@@ -36,7 +36,6 @@
             min-width="228"
             rel="noopener noreferrer"
             size="x-large"
-            target="_blank"
             variant="flat"
             @click="setupAccount"
         >
@@ -70,8 +69,9 @@
     </v-row>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, inject, onMounted, onUnmounted } from 'vue'
+
 const riff = inject('riff')
 
 const account = ref(undefined);
@@ -88,5 +88,9 @@ onMounted(async () => {
 onUnmounted(() => {
   if (forgetAccount) forgetAccount()
 })
+
+const emit = defineEmits<{
+  (e: 'enter'): void
+}>()
 
 </script>
