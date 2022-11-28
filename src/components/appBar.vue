@@ -4,7 +4,7 @@
             <v-app-bar-nav-icon v-show="false"></v-app-bar-nav-icon>
         </template>
 
-        <v-app-bar-title>Riff.cc</v-app-bar-title>
+        <v-app-bar-title>Riff.CC</v-app-bar-title>
 
         <template v-slot:append>
             <v-dialog v-model="settings" max-width=600>
