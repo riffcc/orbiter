@@ -2,10 +2,11 @@ import { EventEmitter } from "events";
 import { v4 as uuidv4 } from "uuid";
 
 type offFunction = () => Promise<void>
-interface Release {
+export interface Release {
     CID: string;
     thumbnail: string;
     metadata: string;
+    author: string;
 }
 
 export default class Riff {
@@ -59,15 +60,53 @@ export default class Riff {
         }
     }
 
+    async onBlockedReleasesChange(f: (releases?: string[]) => void): Promise<offFunction> {
+        this.events.on("blockedReleasesChanged", f)
+        f(this.state.blockedCIDs)
+
+        return async () => {
+            this.events.off("blockedReleasesChanged", f)
+        }
+    }
+
+    async onTrustedSitesChange(f: (releases?: string[]) => void): Promise<offFunction> {
+        this.events.on("trustedSitesChanged", f)
+        f(this.state.trustedSites)
+
+        return async () => {
+            this.events.off("trustedSitesChanged", f)
+        }
+    }
+
     async addRelease(r: Release) {
-        this.state.releases.push(r)
-        console.log(this.state.releases)
+        this.state.releases = [...this.state.releases, r]
         this.events.emit("releasesChanged", this.state.releases);
     }
 
     async removeRelease(cid: string) {
         this.state.releases = this.state.releases.filter(r=>r.CID !== cid)
         this.events.emit("releasesChanged", this.state.releases);
+    }
+
+    async blockRelease(cid: string) {
+        this.state.blockedCIDs = [...new Set([...this.state.blockedCIDs, cid])]
+        this.events.emit("blockedReleasesChanged", this.state.blockedCIDs);
+    }
+
+    async unblockRelease(cid: string) {
+        this.state.blockedCIDs = this.state.blockedCIDs.filter(x=>x!==cid)
+        this.events.emit("blockedReleasesChanged", this.state.blockedCIDs);
+    }
+
+    
+    async trustSite(siteId: string) {
+        this.state.trustedSites = [...new Set([...this.state.trustedSites, siteId])]
+        this.events.emit("trustedSitesChanged", this.state.trustedSites);
+    }
+
+    async untrustSite(site: string) {
+        this.state.trustedSites = this.state.trustedSites.filter(x=>x!==site)
+        this.events.emit("trustedSitesChanged", this.state.trustedSites);
     }
 
     async changeName(name?: string): Promise<void> {
