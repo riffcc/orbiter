@@ -10,7 +10,7 @@
 <script setup lang="ts">
   import MainPage from '@/components/MainPage.vue'
   import InitScreen from '@/components/InitScreen.vue'
-  import setupRiff from '@/plugins/riff.ts'
+  import setupRiff from '@/plugins/riff/riff.ts'
 
   import { ref, inject, onMounted, onUnmounted } from 'vue'
   const riff = inject('riff')

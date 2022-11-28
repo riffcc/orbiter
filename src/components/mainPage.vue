@@ -21,7 +21,7 @@
  import { v4 as uuidv4 } from "uuid";
 
  import Release from "@/components/release.vue"
- import setupRiff from '@/plugins/riff.ts'
+ import setupRiff from '@/plugins/riff/riff.ts'
 
 
   import { ref, reactive, inject, onMounted, onUnmounted, computed } from 'vue'
