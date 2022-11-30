@@ -37,9 +37,6 @@ interface Props {
 }
 const props = defineProps<Props>()
 
- import setupRiff from '@/plugins/riff/riff.ts'
-
-
 import { ref, reactive, inject, onMounted, onUnmounted } from 'vue'
 const riff = inject('riff')
 
