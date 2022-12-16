@@ -1,8 +1,8 @@
-import { EventEmitter } from "events";
-import { v4 as uuidv4 } from "uuid";
+import { EventEmitter, once } from "events";
+import ClientConstellation from "@constl/ipa/dist/client";
 
 type offFunction = () => Promise<void>
-export interface Release {
+export type Release = {
     CID: string;
     thumbnail: string;
     metadata: string;
@@ -10,54 +10,54 @@ export interface Release {
 }
 
 export default class Riff {
-    state: {
-        account?: string;
-        name?: string;
-        releases: Release[];
-        trustedSites: string[];
-        blockedCIDs: string[];
-        blockedUsers: [];
-    };
+    constellation?: ClientConstellation
     events: EventEmitter
 
     constructor () {
         this.events = new EventEmitter();
-        this.state = {
-            releases: [],
-            trustedSites: [],
-            blockedCIDs: [],
-            blockedUsers: []
-        }
+        
+        // Constellation is a big module to load, so load it asynchronously to ensure fast page load
+        const ConstellationModule = import("@constl/ipa")
+        ConstellationModule.then(API => {
+            this.constellation = API.proxy.ipa.générerProxyProc();
+            this.events.emit("ready")
+        })
 
-        this.state.account = localStorage.getItem("accountID") || undefined
-        this.events.emit("accountChanged", this.state.account)
+    }
+
+    async ready() {
+        if (!this.constellation) {
+            await once(this.events, "ready")
+        }
+    }
+
+    async onAccountExists(f: (exists: boolean) => void): Promise<offFunction> {
+        // We'll consider that an account "exists" if there is a human-readable name associated with it.
+        return await this.onNameChange(
+            (names) => f(Object.keys(names).length > 0)
+        )
     }
 
     async onAccountChange (f: (account?: string) => void): Promise<offFunction> {
-        this.events.on("accountChanged", f)
-        f(this.state.account)
-
-        return async () => {
-            this.events.off("accountChanged", f)
-        }
+        await this.ready()
+        return await this.constellation!.suivreIdBdCompte({ f })
     }
 
-    async onNameChange (f: (name?: string) => void): Promise<offFunction> {
-        this.events.on("nameChanged", f)
-        f(this.state.name)
-
-        return async () => {
-            this.events.off("nameChanged", f)
-        }
+    async onNameChange (f: (name: { [language: string]: string }) => void): Promise<offFunction> {
+        await this.ready()
+        return await this.constellation!.profil!.suivreNoms({ f })
     }
 
     async onReleasesChange(f: (releases?: Release[]) => void): Promise<offFunction> {
-        this.events.on("releasesChanged", f)
-        f(this.state.releases)
-
-        return async () => {
-            this.events.off("releasesChanged", f)
-        }
+        await this.ready()
+        const { fOublier } = await this.constellation!.réseau!.suivreÉlémentsDeTableauxUniques({
+            motClefUnique,
+            clef,
+            f,
+            nBds: 100
+        })
+        
+        return fOublier;
     }
 
     async onBlockedReleasesChange(f: (releases?: string[]) => void): Promise<offFunction> {
@@ -79,8 +79,12 @@ export default class Riff {
     }
 
     async addRelease(r: Release) {
-        this.state.releases = [...this.state.releases, r]
-        this.events.emit("releasesChanged", this.state.releases);
+        await this.constellation.bds!.ajouterÉlémentÀTableauUnique({
+            schémaBd,
+            clefTableau,
+            motClefUnique,
+            vals: r
+        });
     }
 
     async removeRelease(cid: string) {
@@ -109,21 +113,15 @@ export default class Riff {
         this.events.emit("trustedSitesChanged", this.state.trustedSites);
     }
 
-    async changeName(name?: string): Promise<void> {
-        this.state.name = name
-        this.events.emit("nameChanged", this.state.name)
-    }
-
-    async setupAccount(): Promise<void> {
-        const account = uuidv4()
-        this.state.account = account
-        localStorage.setItem("accountID", account)
-        this.events.emit("accountChanged", this.state.account)
+    async changeName({ name, language }: {name?: string, language: string}): Promise<void> {
+        if (name)
+            await this.constellation.profil!.sauvegarderNom({ langue: language, nom: name})
+        else
+            await this.constellation.profil!.effacerNom({ langue: language })
     }
 
     async deleteAccount(): Promise<void> {
-        this.state.account = undefined
-        localStorage.removeItem("accountID")
-        this.events.emit("accountChanged", this.state.account)
+        console.error("Not implemented")
+        // await this.constellation.effacerCompte()
     }
 }

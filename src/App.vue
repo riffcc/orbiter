@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <app-bar v-show="account || enterAnonymously"/>
+    <app-bar v-show="accountExists || enterAnonymously"/>
     <v-main>
       <Home @enter="enterAnonymously = true"/>
     </v-main>
@@ -11,17 +11,19 @@
   import Home from '@/views/Home.vue'
   import appBar from '@/components/appBar.vue'
   import { ref, inject, onMounted, onUnmounted } from 'vue'
-  const riff = inject('riff')
+import Riff from './plugins/riff/riff';
 
-  const account = ref(undefined);
+  const riff: Riff = inject('riff')!
+
+  const accountExists = ref<boolean>();
   const enterAnonymously = ref(false);
 
-  let forgetAccount = undefined
+  let forgetAccountExists: (() => void) | undefined = undefined
   onMounted(async () => {
-    forgetAccount = await riff.onAccountChange(a=>account.value = a)
+    forgetAccountExists = await riff.onAccountExists(a=>accountExists.value = a)
   })
 
   onUnmounted(async () => {
-    if (forgetAccount) await forgetAccount()
+    if (forgetAccountExists) await forgetAccountExists()
   })
 </script>

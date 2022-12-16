@@ -114,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, inject, onMounted, onUnmounted, computed } from 'vue'
+import { ref, inject, onMounted, onUnmounted } from 'vue'
 
 const riff = inject('riff')
 

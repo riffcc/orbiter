@@ -72,23 +72,24 @@
 </template>
 
 <script setup lang="ts">
+import Riff from '@/plugins/riff/riff';
 import { ref, inject, onMounted, onUnmounted } from 'vue'
 
-const riff = inject('riff')
+const riff: Riff = inject('riff')!
 
-const account = ref(undefined);
+const accountExists = ref<boolean>();
 
 async function setupAccount() {
-    await riff.setupAccount()
+    await riff.ready()
 }
 
-let forgetAccount = undefined
+let forgetAccountExists: (()=>void)|undefined = undefined
 onMounted(async () => {
-  forgetAccount = await riff.onAccountChange(a=>account.value = a)
+  forgetAccountExists = await riff.onAccountExists(a=>accountExists.value = a)
 })
 
-onUnmounted(() => {
-  if (forgetAccount) forgetAccount()
+onUnmounted(async () => {
+  if (forgetAccountExists) await forgetAccountExists()
 })
 
 const emit = defineEmits<{
