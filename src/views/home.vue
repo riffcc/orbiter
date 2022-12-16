@@ -1,7 +1,7 @@
 <template>
   <v-container class="fill-height">
     <v-responsive class="d-flex align-center text-center fill-height">
-      <main-page v-if="account || enterAnonymously" />
+      <main-page v-if="riffReady && (accountExists || enterAnonymously)" />
       <init-screen v-else @enter="enterAnonymously = true; emit('enter')"/>
     </v-responsive>
   </v-container>
@@ -16,10 +16,14 @@
   
   const riff: Riff = inject('riff')!
 
+  const riffReady = ref<boolean>(false);
   const accountExists = ref<boolean>();
   const enterAnonymously = ref(false);
 
-  let forgetAccountExists: (()=>void) | undefined = undefined
+  riff.ready().then(()=>riffReady.value = true)
+
+  let forgetAccountExists: (()=>void) | undefined = undefined;
+
   onMounted(async () => {
     forgetAccountExists = await riff.onAccountExists(a=>accountExists.value = a)
   })

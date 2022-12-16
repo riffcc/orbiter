@@ -13,69 +13,85 @@
 
     <div class="py-14" />
 
-    <v-row class="d-flex align-center justify-center">
-        <v-col cols="auto">
-        <v-btn
-            min-width="164"
-            rel="noopener noreferrer"
-            target="_blank"
-            variant="text"
-            v-on:click="emit('enter')"
-        >
-            <v-icon
-            icon="mdi-view-dashboard"
-            size="large"
-            start
-            />
+    <initiateModDBs/>
 
-            Just browse
-        </v-btn>
+    <v-row v-if="riffReady" class="d-flex align-center justify-center">
+        <v-col cols="auto">
+            <v-btn
+                min-width="164"
+                rel="noopener noreferrer"
+                target="_blank"
+                variant="text"
+                v-on:click="emit('enter')"
+            >
+                <v-icon
+                icon="mdi-view-dashboard"
+                size="large"
+                start
+                />
+
+                Just browse
+            </v-btn>
         </v-col>
 
         <v-col cols="auto">
-        <v-btn
-            color="primary"
-            min-width="228"
-            rel="noopener noreferrer"
-            size="x-large"
-            variant="flat"
-            @click="setupAccount"
-        >
-            <v-icon
-            icon="mdi-speedometer"
-            size="large"
-            start
-            />
+            <v-btn
+                color="primary"
+                min-width="228"
+                rel="noopener noreferrer"
+                size="x-large"
+                variant="flat"
+                @click="setupAccount"
+            >
+                <v-icon
+                icon="mdi-speedometer"
+                size="large"
+                start
+                />
 
-            Create account
-        </v-btn>
+                Create account
+            </v-btn>
         </v-col>
 
         <v-col cols="auto">
-        <v-btn
-            href="https://community.vuetifyjs.com/"
-            min-width="164"
-            rel="noopener noreferrer"
-            target="_blank"
-            variant="text"
-        >
-            <v-icon
-            icon="mdi-account-group"
-            size="large"
-            start
-            />
+            <v-btn
+                href="https://community.vuetifyjs.com/"
+                min-width="164"
+                rel="noopener noreferrer"
+                target="_blank"
+                variant="text"
+            >
+                <v-icon
+                icon="mdi-account-group"
+                size="large"
+                start
+                />
 
-            View docs
-        </v-btn>
+                View docs
+            </v-btn>
+        </v-col>
+    </v-row>
+    <v-row v-else class="d-flex align-center justify-center">
+        <v-col cols="auto">
+            <v-progress-circular 
+            indeterminate
+            :size="100"
+            :width="15"
+            />
         </v-col>
     </v-row>
 </template>
 
 <script setup lang="ts">
 import Riff from '@/plugins/riff/riff';
-import { ref, inject, onMounted, onUnmounted } from 'vue'
+import { ref, inject, onMounted, onUnmounted } from 'vue';
+
+import initiateModDBs from "@/components/initiateModDBs.vue"
 
 const riff: Riff = inject('riff')!
+
+const riffReady = ref<boolean>(false);
+riff.ready().then(()=>riffReady.value = true)
 
 const accountExists = ref<boolean>();
 

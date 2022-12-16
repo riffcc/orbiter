@@ -1,5 +1,6 @@
 import { EventEmitter, once } from "events";
 import ClientConstellation from "@constl/ipa/dist/client";
+import { tableaux } from "@constl/ipa";
 
 type offFunction = () => Promise<void>
 export type Release = {
@@ -10,11 +11,19 @@ export type Release = {
 }
 
 export default class Riff {
+    modDbAddress?: string
+
     constellation?: ClientConstellation
     events: EventEmitter
 
-    constructor () {
+    constructor ({
+        modDbAddress,
+    }: {
+        modDbAddress?: string;
+    }) {
         this.events = new EventEmitter();
+        
+        this.modDbAddress = modDbAddress;
         
         // Constellation is a big module to load, so load it asynchronously to ensure fast page load
         const ConstellationModule = import("@constl/ipa")
@@ -22,13 +31,75 @@ export default class Riff {
             this.constellation = API.proxy.ipa.générerProxyProc();
             this.events.emit("ready")
         })
-
     }
 
     async ready() {
+        // Fake longer load for dev for now, as is likely in production
+        const host = window?.location?.host
+        if (host && host.startsWith("127.0.0.1")) {
+            await new Promise(resolve => setTimeout(resolve, 3000))
+        }
+
         if (!this.constellation) {
             await once(this.events, "ready")
         }
+    }
+
+    async generateModDb(): Promise<string> {
+        await this.ready();
+
+        return await this.constellation!.bds!.créerBdDeSchéma({
+            schéma: {
+                licence: "ODbl-1_0",
+                tableaux: [
+                    {
+                        cols: [
+                            {
+                                idVariable: "",
+                                idColonne: "site mod db address"
+                            }
+                        ],
+                        clef: "trusted sites"
+                    },
+                    {
+                        cols: [
+                            {
+                                idVariable: "",
+                                idColonne: "cid"
+                            }
+                        ],
+                        clef: "blocked cids"
+                    },
+                    {
+                        cols: [
+                            {
+                                idVariable: "",
+                                idColonne: "member account id"
+                            },
+                            {
+                                idVariable: "",
+                                idColonne: "status"
+                            }
+                        ],
+                        clef: "member moderation"
+                    }
+                ]
+            }
+        });
+    }
+
+    setModDb(id: string) {
+        this.modDbAddress = id;
+        this.events.emit("mod db changed")
+    }
+
+    async onModDbChange(f: (id?: string) => void): Promise<offFunction> {
+        const fFollow = () => f(this.modDbAddress);
+
+        this.events.on("mod db changed", fFollow);
+        return async () => {
+            this.events.off("mod db changed", fFollow)
+        };
     }
 
     async onAccountExists(f: (exists: boolean) => void): Promise<offFunction> {
