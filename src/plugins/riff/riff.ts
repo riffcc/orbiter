@@ -89,6 +89,10 @@ export default class Riff {
     }
 
     setModDb(id: string) {
+        if (this.modDbAddress) throw new Error(
+            "Cannot change moderation DB address after Riff initialisation. Sorry."
+            );
+
         this.modDbAddress = id;
         this.events.emit("mod db changed")
     }
