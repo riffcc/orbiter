@@ -11,9 +11,12 @@
             <v-card-text v-else>
                 Moderation DB generated! Be sure to copy the code below into a .env file and place
                 it at the root of your Riff.CC project.
-                <v-textarea>
-                    VITE_MOD_BD_ADDRESS={{ modDbAddress }}
-                </v-textarea>
+                <v-textarea 
+                class="mt-4"
+                :value="'VITE_MOD_BD_ADDRESS='+generatedModDbAddress" 
+                readonly
+                variant="outlined"
+                />
             </v-card-text>
             <v-card-actions v-if="!generatedModDbAddress">
                 <v-btn
