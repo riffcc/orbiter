@@ -34,14 +34,14 @@ export default class Riff {
     }
 
     async ready() {
-        // Fake longer load for dev for now, as is likely in production
-        const host = window?.location?.host
-        if (host && host.startsWith("127.0.0.1")) {
-            await new Promise(resolve => setTimeout(resolve, 3000))
-        }
-
         if (!this.constellation) {
             await once(this.events, "ready")
+
+            // Fake longer load for dev for now, as is likely in production
+            const host = window?.location?.host
+            if (host && host.startsWith("127.0.0.1")) {
+                await new Promise(resolve => setTimeout(resolve, 3000))
+            }
         }
     }
 
@@ -136,7 +136,8 @@ export default class Riff {
     }
 
     async onReleasesChange(f: (releases?: Release[]) => void): Promise<offFunction> {
-        await this.ready()
+        await this.ready();
+
         const { fOublier } = await this.constellation!.réseau!.suivreÉlémentsDeTableauxUniques({
             motClefUnique,
             clef,
@@ -148,25 +149,25 @@ export default class Riff {
     }
 
     async onBlockedReleasesChange(f: (releases?: string[]) => void): Promise<offFunction> {
-        return await this.constellation!.bds!.suivre({
+        await this.ready();
+        if (!this.modDbAddress) throw new Error("Moderation DB not initialised.");
+
+        return await this.constellation!.bds!.suivreDonnéesDeTableauDeClef({
+            idBd: this.modDbAddress,
+            clefTableau: BLOCKED_RELEASES_TABLE_KEY,
             f
         });
-
-        this.events.on("blockedReleasesChanged", f)
-        f(this.state.blockedCIDs)
-
-        return async () => {
-            this.events.off("blockedReleasesChanged", f)
-        }
     }
 
-    async onTrustedSitesChange(f: (releases?: string[]) => void): Promise<offFunction> {
-        this.events.on("trustedSitesChanged", f)
-        f(this.state.trustedSites)
-
-        return async () => {
-            this.events.off("trustedSitesChanged", f)
-        }
+    async onTrustedSitesChange(f: (sites?: string[]) => void): Promise<offFunction> {
+        await this.ready();
+        if (!this.modDbAddress) throw new Error("Moderation DB not initialised.");
+        
+        return await this.constellation!.bds!.suivreDonnéesDeTableauDeClef({
+            idBd: this.modDbAddress,
+            clefTableau: TRUSTED_SITES_TABLE_KEY,
+            f: (data)=>f(data.map(d=>d.données[TRUSTED_SITE_MOD_DB_COL]))
+        })
     }
 
     async addRelease(r: Release) {
@@ -192,6 +193,8 @@ export default class Riff {
 
     async blockRelease(cid: string) {
         await this.ready();
+        if (!this.modDbAddress) throw new Error("Moderation DB not initialised.");
+
         await this.constellation!.bds!.ajouterÉlémentÀTableauParClef({
             idBd: this.modDbAddress,
             clefTableau: BLOCKED_RELEASES_TABLE_KEY,
@@ -201,13 +204,14 @@ export default class Riff {
 
     async unblockRelease(releaseHash: string) {
         await this.ready();
+        if (!this.modDbAddress) throw new Error("Moderation DB not initialised.");
+
         await this.constellation!.bds!.effacerÉlémentDeTableauParClef({
             idBd: this.modDbAddress,
             clefTableau: BLOCKED_RELEASES_TABLE_KEY,
             empreinte: releaseHash
         });
     }
-
     
     async trustSite(siteModDb: string) {
         await this.ready();
