@@ -18,13 +18,13 @@ export default defineConfig({
       plugins: [
         rollupNodePolyFill()
       ]
-    }
+    },
   },
   optimizeDeps: {
     esbuildOptions: {
       target: 'es2020'
     },
-    exclude: ["fsevents"],
+    exclude: ["chokidar"],
   },
   plugins: [
     vue(),
@@ -36,10 +36,10 @@ export default defineConfig({
       buffer: true,
       process: true
     }),
-    
   ],
   define: { 
     global: "globalThis",
+
   },
   resolve: {
     alias: {

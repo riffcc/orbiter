@@ -123,6 +123,18 @@ export default class Riff {
         return await this.constellation!.profil!.suivreNoms({ f })
     }
 
+    async onIsModChange(f: (isMod: boolean) => void): Promise<offFunction> {
+        await this.ready();
+        
+        if (!this.modDbAddress) {
+            await once(this.events, "mod db changed")
+        }
+        return await this.constellation!.suivrePermissionÉcrire({
+            id: this.modDbAddress!,
+            f
+        })
+    }
+
     async onReleasesChange(f: (releases?: Release[]) => void): Promise<offFunction> {
         await this.ready()
         const { fOublier } = await this.constellation!.réseau!.suivreÉlémentsDeTableauxUniques({
@@ -136,6 +148,10 @@ export default class Riff {
     }
 
     async onBlockedReleasesChange(f: (releases?: string[]) => void): Promise<offFunction> {
+        return await this.constellation!.bds!.suivre({
+            f
+        });
+
         this.events.on("blockedReleasesChanged", f)
         f(this.state.blockedCIDs)
 
@@ -154,45 +170,70 @@ export default class Riff {
     }
 
     async addRelease(r: Release) {
-        await this.constellation.bds!.ajouterÉlémentÀTableauUnique({
-            schémaBd,
-            clefTableau,
-            motClefUnique,
-            vals: r
+        await this.constellation!.bds!.ajouterÉlémentÀTableauUnique({
+            schémaBd: RELEASES_DB_FORMAT,
+            motClefUnique: RELEASES_DB_UNIQUE_KEY,
+            clefTableau: RELEASES_DB_TABLE_KEY,
+            vals: {
+                [RELEASES_CID_COLUMN]: r.CID,
+                [RELEASES_AUTHOR_COLUMN]: r.author,
+            }
         });
     }
 
-    async removeRelease(cid: string) {
-        this.state.releases = this.state.releases.filter(r=>r.CID !== cid)
-        this.events.emit("releasesChanged", this.state.releases);
+    async removeRelease(releaseHash: string) {
+        await this.constellation!.bds!.effacerÉlémentDeTableauParClef({
+            schémaBd: RELEASES_DB_FORMAT,
+            motClefUnique: RELEASES_DB_UNIQUE_KEY,
+            clefTableau: RELEASES_DB_TABLE_KEY,
+            empreinte: releaseHash
+        });
     }
 
     async blockRelease(cid: string) {
-        this.state.blockedCIDs = [...new Set([...this.state.blockedCIDs, cid])]
-        this.events.emit("blockedReleasesChanged", this.state.blockedCIDs);
+        await this.ready();
+        await this.constellation!.bds!.ajouterÉlémentÀTableauParClef({
+            idBd: this.modDbAddress,
+            clefTableau: BLOCKED_RELEASES_TABLE_KEY,
+            vals: {[BLOCKED_RELEASE_CID_COL]: cid}
+        });
     }
 
-    async unblockRelease(cid: string) {
-        this.state.blockedCIDs = this.state.blockedCIDs.filter(x=>x!==cid)
-        this.events.emit("blockedReleasesChanged", this.state.blockedCIDs);
+    async unblockRelease(releaseHash: string) {
+        await this.ready();
+        await this.constellation!.bds!.effacerÉlémentDeTableauParClef({
+            idBd: this.modDbAddress,
+            clefTableau: BLOCKED_RELEASES_TABLE_KEY,
+            empreinte: releaseHash
+        });
     }
 
     
-    async trustSite(siteId: string) {
-        this.state.trustedSites = [...new Set([...this.state.trustedSites, siteId])]
-        this.events.emit("trustedSitesChanged", this.state.trustedSites);
+    async trustSite(siteModDb: string) {
+        await this.ready();
+        if (!this.modDbAddress) throw new Error("Moderation DB not initialised.");
+
+        await this.constellation!.bds!.ajouterÉlémentÀTableauParClef({
+            idBd: this.modDbAddress,
+            clefTableau: TRUSTED_SITES_TABLE_KEY,
+            vals: {[TRUSTED_SITE_MOD_DB_COL]: siteModDb}
+        })
     }
 
-    async untrustSite(site: string) {
-        this.state.trustedSites = this.state.trustedSites.filter(x=>x!==site)
-        this.events.emit("trustedSitesChanged", this.state.trustedSites);
+    async untrustSite(siteHash: string) {
+        await this.ready();
+        await this.constellation!.bds!.effacerÉlémentDeTableauParClef({
+            idBd: this.modDbAddress,
+            clefTableau: TRUSTED_SITES_TABLE_KEY,
+            empreinte: siteHash
+        });
     }
 
     async changeName({ name, language }: {name?: string, language: string}): Promise<void> {
         if (name)
-            await this.constellation.profil!.sauvegarderNom({ langue: language, nom: name})
+            await this.constellation!.profil!.sauvegarderNom({ langue: language, nom: name})
         else
-            await this.constellation.profil!.effacerNom({ langue: language })
+            await this.constellation!.profil!.effacerNom({ langue: language })
     }
 
     async deleteAccount(): Promise<void> {
