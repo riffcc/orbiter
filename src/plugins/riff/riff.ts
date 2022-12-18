@@ -1,6 +1,18 @@
 import { EventEmitter, once } from "events";
-import ClientConstellation from "@constl/ipa/dist/client";
-import { tableaux } from "@constl/ipa";
+import ClientConstellation, { réseau, tableaux, valid } from "@constl/ipa";
+import { 
+    BLOCKED_RELEASES_TABLE_KEY, 
+    BLOCKED_RELEASE_CID_COL, 
+    RELEASES_AUTHOR_COLUMN, 
+    RELEASES_CID_COLUMN, 
+    RELEASES_DB_FORMAT, 
+    RELEASES_DB_TABLE_KEY, 
+    TRUSTED_SITES_TABLE_KEY, 
+    TRUSTED_SITES_MOD_DB_COL, 
+    MEMBER_ID_COL,
+    MEMBER_STATUS_COL
+} from "./consts";
+import { VariableIds } from "./types";
 
 type offFunction = () => Promise<void>
 export type Release = {
@@ -11,19 +23,23 @@ export type Release = {
 }
 
 export default class Riff {
-    modDbAddress?: string
+    modDbAddress?: string;
+    variableIds?: VariableIds;
 
-    constellation?: ClientConstellation
-    events: EventEmitter
+    constellation?: ClientConstellation;
+    events: EventEmitter;
 
     constructor ({
         modDbAddress,
+        variableIds,
     }: {
         modDbAddress?: string;
+        variableIds?: VariableIds
     }) {
         this.events = new EventEmitter();
         
         this.modDbAddress = modDbAddress;
+        this.variableIds = variableIds;
         
         // Constellation is a big module to load, so load it asynchronously to ensure fast page load
         const ConstellationModule = import("@constl/ipa")
@@ -45,18 +61,53 @@ export default class Riff {
         }
     }
 
-    async generateModDb(): Promise<string> {
+    async generateModDb(): Promise<{ modDbId: string, variableIds: VariableIds}> {
         await this.ready();
 
-        return await this.constellation!.bds!.créerBdDeSchéma({
+        const trustedSitesVariableId = this.variableIds?.trustedSitesVariableId || await this.constellation!.variables!.créerVariable(
+            { catégorie: "chaîne"}
+        )
+
+        const blockedCidsVariableId = this.variableIds?.blockedCidsVariableId || await this.constellation!.variables!.créerVariable({
+            catégorie: "chaîne"
+        })
+        
+        const memberIdVariableId = this.variableIds?.memberIdVariableId || await this.constellation!.variables!.créerVariable({
+            catégorie: "chaîne"
+        })
+        
+        const generateMemberStatusVar = async (): Promise<string> => {
+            const varId = await this.constellation!.variables!.créerVariable(
+                { catégorie: "catégorique"}
+            )
+            const règle: valid.règleValeurCatégorique = {
+                typeRègle: "valeurCatégorique",
+                détails: {
+                    type: "fixe",
+                    options: ["authorised", "blocked"]
+                }
+            }; 
+            await this.constellation!.variables!.ajouterRègleVariable({
+                idVariable: varId,
+                règle
+            })
+            
+            return varId
+        }
+
+        const memberStatusVariableId = this.variableIds?.memberStatusVariableId || await generateMemberStatusVar();
+
+        const riffSwarmId = this.variableIds?.riffSwarmId || await this.constellation!.nuées!.créerNuée({});
+
+        const modDbId = await this.constellation!.bds!.créerBdDeSchéma({
             schéma: {
                 licence: "ODbl-1_0",
                 tableaux: [
                     {
                         cols: [
                             {
-                                idVariable: "",
-                                idColonne: "site mod db address"
+                                idVariable: trustedSitesVariableId,
+                                idColonne: TRUSTED_SITES_MOD_DB_COL
                             }
                         ],
                         clef: "trusted sites"
@@ -64,21 +115,21 @@ export default class Riff {
                     {
                         cols: [
                             {
-                                idVariable: "",
-                                idColonne: "cid"
+                                idVariable: blockedCidsVariableId,
+                                idColonne: BLOCKED_RELEASE_CID_COL
                             }
                         ],
-                        clef: "blocked cids"
+                        clef: BLOCKED_RELEASES_TABLE_KEY
                     },
                     {
                         cols: [
                             {
-                                idVariable: "",
-                                idColonne: "member account id"
+                                idVariable: memberIdVariableId,
+                                idColonne: MEMBER_ID_COL
                             },
                             {
-                                idVariable: "",
-                                idColonne: "status"
+                                idVariable: memberStatusVariableId,
+                                idColonne: MEMBER_STATUS_COL
                             }
                         ],
                         clef: "member moderation"
@@ -86,24 +137,42 @@ export default class Riff {
                 ]
             }
         });
+
+        return {
+            modDbId,
+            variableIds: {
+                trustedSitesVariableId,
+                blockedCidsVariableId,
+                memberIdVariableId,
+                memberStatusVariableId,
+                riffSwarmId
+            }
+        }
     }
 
-    setModDb(id: string) {
+    setModDb({ id, variableIds }: {id: string, variableIds: VariableIds}) {
         if (this.modDbAddress) throw new Error(
             "Cannot change moderation DB address after Riff initialisation. Sorry."
             );
 
         this.modDbAddress = id;
+        this.variableIds = variableIds;
         this.events.emit("mod db changed")
     }
 
-    async onModDbChange(f: (id?: string) => void): Promise<offFunction> {
+    async onModDbSet(f: (id?: string) => void): Promise<offFunction> {
         const fFollow = () => f(this.modDbAddress);
+        if (this.modDbAddress) fFollow();
 
         this.events.on("mod db changed", fFollow);
         return async () => {
             this.events.off("mod db changed", fFollow)
-        };
+        };        
+    }
+
+    async modDbReady(): Promise<void> {
+        if (this.modDbAddress) return;
+        await once(this.events, "mod db changed");
     }
 
     async onAccountExists(f: (exists: boolean) => void): Promise<offFunction> {
@@ -135,12 +204,13 @@ export default class Riff {
         })
     }
 
-    async onReleasesChange(f: (releases?: Release[]) => void): Promise<offFunction> {
+    async onReleasesChange(f: (releases?: réseau.élémentDeMembre<Release>[]) => void): Promise<offFunction> {
         await this.ready();
+        await this.modDbReady();
 
         const { fOublier } = await this.constellation!.réseau!.suivreÉlémentsDeTableauxUniques({
-            motClefUnique,
-            clef,
+            idNuéeUnique: this.variableIds!.riffSwarmId,
+            clef: RELEASES_DB_TABLE_KEY,
             f,
             nBds: 100
         })
@@ -150,7 +220,7 @@ export default class Riff {
 
     async onBlockedReleasesChange(f: (releases?: string[]) => void): Promise<offFunction> {
         await this.ready();
-        if (!this.modDbAddress) throw new Error("Moderation DB not initialised.");
+        await this.modDbReady();
 
         return await this.constellation!.bds!.suivreDonnéesDeTableauDeClef({
             idBd: this.modDbAddress,
@@ -161,12 +231,12 @@ export default class Riff {
 
     async onTrustedSitesChange(f: (sites?: string[]) => void): Promise<offFunction> {
         await this.ready();
-        if (!this.modDbAddress) throw new Error("Moderation DB not initialised.");
+        await this.modDbReady();
         
-        return await this.constellation!.bds!.suivreDonnéesDeTableauDeClef({
+        return await this.constellation!.bds!.suivreDonnéesDeTableauParClef<Release>({
             idBd: this.modDbAddress,
             clefTableau: TRUSTED_SITES_TABLE_KEY,
-            f: (data)=>f(data.map(d=>d.données[TRUSTED_SITE_MOD_DB_COL]))
+            f: (data)=>f(data.map(d=>d.données[TRUSTED_SITES_MOD_DB_COL]))
         })
     }
 
@@ -193,7 +263,7 @@ export default class Riff {
 
     async blockRelease(cid: string) {
         await this.ready();
-        if (!this.modDbAddress) throw new Error("Moderation DB not initialised.");
+        await this.modDbReady();
 
         await this.constellation!.bds!.ajouterÉlémentÀTableauParClef({
             idBd: this.modDbAddress,
@@ -204,7 +274,7 @@ export default class Riff {
 
     async unblockRelease(releaseHash: string) {
         await this.ready();
-        if (!this.modDbAddress) throw new Error("Moderation DB not initialised.");
+        await this.modDbReady();
 
         await this.constellation!.bds!.effacerÉlémentDeTableauParClef({
             idBd: this.modDbAddress,
@@ -215,12 +285,12 @@ export default class Riff {
     
     async trustSite(siteModDb: string) {
         await this.ready();
-        if (!this.modDbAddress) throw new Error("Moderation DB not initialised.");
+        await this.modDbReady();
 
         await this.constellation!.bds!.ajouterÉlémentÀTableauParClef({
             idBd: this.modDbAddress,
             clefTableau: TRUSTED_SITES_TABLE_KEY,
-            vals: {[TRUSTED_SITE_MOD_DB_COL]: siteModDb}
+            vals: {[TRUSTED_SITES_MOD_DB_COL]: siteModDb}
         })
     }
 
@@ -241,7 +311,7 @@ export default class Riff {
     }
 
     async deleteAccount(): Promise<void> {
-        console.error("Not implemented")
+        throw new Error("Not implemented");
         // await this.constellation.effacerCompte()
     }
 }

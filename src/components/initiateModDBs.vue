@@ -13,7 +13,7 @@
                 it at the root of your Riff.CC project.
                 <v-textarea 
                 class="mt-4"
-                :value="'VITE_MOD_BD_ADDRESS='+generatedModDbAddress" 
+                :value="envFileText" 
                 readonly
                 variant="outlined"
                 />
@@ -50,6 +50,7 @@
 <script setup lang="ts">
 import { ref, inject, onMounted, onUnmounted, computed } from "vue"
 import Riff from '@/plugins/riff/riff';
+import { VariableIds } from "@/plugins/riff/types";
 
 const riff: Riff = inject('riff')!
 
@@ -58,13 +59,17 @@ const modDbMissing = computed(() => !modDbAddress.value)
 
 const generatingDb = ref<boolean>(false);
 const generatedModDbAddress = ref<string>();
+const generatedVariableIds = ref<VariableIds>();
 
 const generatingEnvFile = ref<boolean>(false);
 
 const generateDb = async () => {
     generatingDb.value = true;
 
-    generatedModDbAddress.value = await riff.generateModDb();
+    const { modDbId, variableIds } = await riff.generateModDb();
+
+    generatedModDbAddress.value = modDbId;
+    generatedVariableIds.value = variableIds;
 
     generatingDb.value = false;
 }
@@ -82,29 +87,51 @@ function download(filename: string, text: string) {
   document.body.removeChild(element);
 }
 
+const envFileText = computed(() => {
+    const trustedSitesVar = "VITE_TRUSTED_SITES_VAR_ID=" + generatedVariableIds.value?.trustedSitesVariableId;
+    const blockedCidsVar = "VITE_BLOCKED_CIDS_VAR_ID=" + generatedVariableIds.value?.blockedCidsVariableId;
+    const memberIdVar = "VITE_MEMBER_ID_VAR_ID=" + generatedVariableIds.value?.memberIdVariableId;
+    const memberStatusVar = "VITE_MEMBER_STATUS_VAR_ID=" + generatedVariableIds.value?.memberStatusVariableId;
+
+    const riffSwarmId = "VITE_RIFF_SWARM_ID=" + generatedVariableIds.value?.riffSwarmId;
+
+    const modDBAddress = "VITE_MOD_BD_ADDRESS=" + generatedModDbAddress.value;
+
+    return  "# The address below should be regenerated for each Riff.CC site. If you are setting up an independent site, erase the value below and run the site in development mode (`pnpm dev`) to automatically regenerate. \n" +
+        modDBAddress + "\n" + "\n" +
+        "# These should ideally stay the same for all Riff.CC sites for optimal performance. Only change if you know what you are doing.\n" +
+        trustedSitesVar + "\n" +
+        blockedCidsVar + "\n" +
+        memberIdVar + "\n" +
+        memberStatusVar + "\n" +
+        riffSwarmId + "\n"
+})
+
 const downloadEnvFile = async () => {
     if (!generatedModDbAddress.value) return;
     generatingEnvFile.value = true;
     
-    const contents = "VITE_MOD_BD_ADDRESS=" + generatedModDbAddress.value;
+    const contents = await envFileText.value;
     download(".env", contents);
 
     generatingEnvFile.value = false;
 }
 
-const acceptNewModDb = async (id: string) => {
-    riff.setModDb(id);
+const acceptNewModDb = async () => {
+    if (!generatedModDbAddress.value || !generatedVariableIds.value) {
+        throw new Error("Mod DB and variables not generated.")
+    }
+    riff.setModDb({ id: generatedModDbAddress.value, variableIds: generatedVariableIds.value });
 }
 
 let forgetModDbAddress: (()=>void) | undefined = undefined
 
 onMounted(async () => {
-    forgetModDbAddress = await riff.onModDbChange(id => {modDbAddress.value = id});
+    forgetModDbAddress = await riff.onModDbSet(id => {modDbAddress.value = id});
 })
 
 onUnmounted(async () => {
     if (forgetModDbAddress) await forgetModDbAddress();
 })
 
-const dialog = ref<boolean>(true);
 </script>
