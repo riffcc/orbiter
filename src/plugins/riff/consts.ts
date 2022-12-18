@@ -14,19 +14,3 @@ export const MEMBER_STATUS_COL="status";
 
 
 export const RELEASES_DB_TABLE_KEY="releases";
-
-export const RELEASES_DB_FORMAT: bds.schémaSpécificationBd = {
-    licence: "ODbl-1_0",
-    tableaux: [
-        {
-            cols: [
-                {
-                    idVariable: "",
-                    idColonne: RELEASES_CID_COLUMN
-                },
-                
-            ],
-            clef: RELEASES_DB_TABLE_KEY
-        }
-    ]
-};

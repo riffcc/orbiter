@@ -94,6 +94,7 @@ const envFileText = computed(() => {
     const memberStatusVar = "VITE_MEMBER_STATUS_VAR_ID=" + generatedVariableIds.value?.memberStatusVariableId;
 
     const riffSwarmId = "VITE_RIFF_SWARM_ID=" + generatedVariableIds.value?.riffSwarmId;
+    const releasesCidVar = "VITE_RELEASES_CID_VAR_ID=" + generatedVariableIds.value?.releasesCidVar;
 
     const modDBAddress = "VITE_MOD_BD_ADDRESS=" + generatedModDbAddress.value;
 
@@ -104,7 +105,8 @@ const envFileText = computed(() => {
         blockedCidsVar + "\n" +
         memberIdVar + "\n" +
         memberStatusVar + "\n" +
-        riffSwarmId + "\n"
+        riffSwarmId + "\n" +
+        releasesCidVar + "\n"
 })
 
 const downloadEnvFile = async () => {
@@ -121,7 +123,7 @@ const acceptNewModDb = async () => {
     if (!generatedModDbAddress.value || !generatedVariableIds.value) {
         throw new Error("Mod DB and variables not generated.")
     }
-    riff.setModDb({ id: generatedModDbAddress.value, variableIds: generatedVariableIds.value });
+    riff.setModDb({ modDbId: generatedModDbAddress.value, variableIds: generatedVariableIds.value });
 }
 
 let forgetModDbAddress: (()=>void) | undefined = undefined

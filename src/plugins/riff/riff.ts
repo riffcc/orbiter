@@ -1,11 +1,10 @@
 import { EventEmitter, once } from "events";
-import ClientConstellation, { réseau, tableaux, valid } from "@constl/ipa";
+import ClientConstellation, { bds, réseau, tableaux, valid } from "@constl/ipa";
 import { 
     BLOCKED_RELEASES_TABLE_KEY, 
     BLOCKED_RELEASE_CID_COL, 
     RELEASES_AUTHOR_COLUMN, 
     RELEASES_CID_COLUMN, 
-    RELEASES_DB_FORMAT, 
     RELEASES_DB_TABLE_KEY, 
     TRUSTED_SITES_TABLE_KEY, 
     TRUSTED_SITES_MOD_DB_COL, 
@@ -99,6 +98,10 @@ export default class Riff {
 
         const riffSwarmId = this.variableIds?.riffSwarmId || await this.constellation!.nuées!.créerNuée({});
 
+        const releasesCidVar = this.variableIds?.releasesCidVar || await this.constellation!.variables!.créerVariable({
+            catégorie: "chaîne"
+        })
+
         const modDbId = await this.constellation!.bds!.créerBdDeSchéma({
             schéma: {
                 licence: "ODbl-1_0",
@@ -137,25 +140,28 @@ export default class Riff {
                 ]
             }
         });
+        
+        const variableIds: VariableIds = {
+            trustedSitesVariableId,
+            blockedCidsVariableId,
+            memberIdVariableId,
+            memberStatusVariableId,
+            riffSwarmId,
+            releasesCidVar,
+        }
 
         return {
             modDbId,
-            variableIds: {
-                trustedSitesVariableId,
-                blockedCidsVariableId,
-                memberIdVariableId,
-                memberStatusVariableId,
-                riffSwarmId
-            }
+            variableIds
         }
     }
 
-    setModDb({ id, variableIds }: {id: string, variableIds: VariableIds}) {
+    setModDb({ modDbId, variableIds }: {modDbId: string, variableIds: VariableIds}) {
         if (this.modDbAddress) throw new Error(
             "Cannot change moderation DB address after Riff initialisation. Sorry."
             );
 
-        this.modDbAddress = id;
+        this.modDbAddress = modDbId;
         this.variableIds = variableIds;
         this.events.emit("mod db changed")
     }
@@ -171,6 +177,7 @@ export default class Riff {
     }
 
     async modDbReady(): Promise<void> {
+        await this.ready();
         if (this.modDbAddress) return;
         await once(this.events, "mod db changed");
     }
@@ -193,11 +200,8 @@ export default class Riff {
     }
 
     async onIsModChange(f: (isMod: boolean) => void): Promise<offFunction> {
-        await this.ready();
-        
-        if (!this.modDbAddress) {
-            await once(this.events, "mod db changed")
-        }
+        await this.modDbReady();
+
         return await this.constellation!.suivrePermissionÉcrire({
             id: this.modDbAddress!,
             f
@@ -219,7 +223,6 @@ export default class Riff {
     }
 
     async onBlockedReleasesChange(f: (releases?: string[]) => void): Promise<offFunction> {
-        await this.ready();
         await this.modDbReady();
 
         return await this.constellation!.bds!.suivreDonnéesDeTableauDeClef({
@@ -230,7 +233,6 @@ export default class Riff {
     }
 
     async onTrustedSitesChange(f: (sites?: string[]) => void): Promise<offFunction> {
-        await this.ready();
         await this.modDbReady();
         
         return await this.constellation!.bds!.suivreDonnéesDeTableauParClef<Release>({
@@ -240,10 +242,34 @@ export default class Riff {
         })
     }
 
+    async getReleasesDBFormat(): Promise<bds.schémaSpécificationBd> {
+        await this.modDbReady();
+
+        const releasesDbFormat: bds.schémaSpécificationBd = {
+            licence: "ODbl-1_0",
+            tableaux: [
+                {
+                    cols: [
+                        {
+                            idVariable: this.variableIds!.releasesCidVar,
+                            idColonne: RELEASES_CID_COLUMN
+                        },
+                        
+                    ],
+                    clef: RELEASES_DB_TABLE_KEY
+                }
+            ]
+        };
+
+        return releasesDbFormat
+    }
+
     async addRelease(r: Release) {
+        await this.modDbReady();
+
         await this.constellation!.bds!.ajouterÉlémentÀTableauUnique({
-            schémaBd: RELEASES_DB_FORMAT,
-            motClefUnique: RELEASES_DB_UNIQUE_KEY,
+            schémaBd: await this.getReleasesDBFormat(),
+            idNuéeUnique: this.variableIds!.riffSwarmId,
             clefTableau: RELEASES_DB_TABLE_KEY,
             vals: {
                 [RELEASES_CID_COLUMN]: r.CID,
@@ -253,16 +279,17 @@ export default class Riff {
     }
 
     async removeRelease(releaseHash: string) {
+        await this.modDbReady();
+
         await this.constellation!.bds!.effacerÉlémentDeTableauParClef({
-            schémaBd: RELEASES_DB_FORMAT,
-            motClefUnique: RELEASES_DB_UNIQUE_KEY,
+            schémaBd: await this.getReleasesDBFormat(),
+            idNuéeUnique: this.variableIds!.riffSwarmId,
             clefTableau: RELEASES_DB_TABLE_KEY,
             empreinte: releaseHash
         });
     }
 
     async blockRelease(cid: string) {
-        await this.ready();
         await this.modDbReady();
 
         await this.constellation!.bds!.ajouterÉlémentÀTableauParClef({
@@ -273,7 +300,6 @@ export default class Riff {
     }
 
     async unblockRelease(releaseHash: string) {
-        await this.ready();
         await this.modDbReady();
 
         await this.constellation!.bds!.effacerÉlémentDeTableauParClef({
@@ -284,7 +310,6 @@ export default class Riff {
     }
     
     async trustSite(siteModDb: string) {
-        await this.ready();
         await this.modDbReady();
 
         await this.constellation!.bds!.ajouterÉlémentÀTableauParClef({
@@ -295,7 +320,7 @@ export default class Riff {
     }
 
     async untrustSite(siteHash: string) {
-        await this.ready();
+        await this.modDbReady();
         await this.constellation!.bds!.effacerÉlémentDeTableauParClef({
             idBd: this.modDbAddress,
             clefTableau: TRUSTED_SITES_TABLE_KEY,
