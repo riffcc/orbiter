@@ -8,31 +8,31 @@
 </template>
 
 <script setup lang="ts">
-  import mainPage from '@/components/MainPage.vue'
-  import initScreen from '@/components/InitScreen.vue'
+import mainPage from '@/components/mainPage.vue'
+import initScreen from '@/components/initScreen.vue'
 
-  import { ref, inject, onMounted, onUnmounted } from 'vue'
-  import Riff from '@/plugins/riff/riff';
-  
-  const riff: Riff = inject('riff')!
+import { ref, inject, onMounted, onUnmounted } from 'vue'
+import Riff from '@/plugins/riff/riff';
 
-  const riffReady = ref<boolean>(false);
-  const accountExists = ref<boolean>();
-  const enterAnonymously = ref(false);
+const riff: Riff = inject('riff')!
 
-  riff.ready().then(()=>riffReady.value = true)
+const riffReady = ref<boolean>(false);
+const accountExists = ref<boolean>();
+const enterAnonymously = ref(false);
 
-  let forgetAccountExists: (()=>void) | undefined = undefined;
+riff.ready().then(()=>riffReady.value = true)
 
-  onMounted(async () => {
-    forgetAccountExists = await riff.onAccountExists(a=>accountExists.value = a)
-  })
+let forgetAccountExists: (()=>void) | undefined = undefined;
 
-  onUnmounted(async () => {
-    if (forgetAccountExists) await forgetAccountExists()
-  })
+onMounted(async () => {
+  forgetAccountExists = await riff.onAccountExists(a=>accountExists.value = a)
+})
 
-  const emit = defineEmits<{
-    (e: 'enter'): void
-  }>()
+onUnmounted(async () => {
+  if (forgetAccountExists) await forgetAccountExists()
+})
+
+const emit = defineEmits<{
+  (e: 'enter'): void
+}>()
 </script>
