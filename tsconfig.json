@@ -14,7 +14,7 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "lib": ["esnext", "dom"],
-    "types": ["vuetify"],
+    "types": ["vuetify", "vite/client"],
     "paths": {
       "@/*": ["src/*"]
     },

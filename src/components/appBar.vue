@@ -34,7 +34,6 @@
                                             My account ID: {{ account }}
                                             <v-icon small @click="copyId">{{ idCopied ? 'mdi-check' : 'mdi-content-copy'}}</v-icon>
                                         </p>
-                                        Profile name: <v-text-field v-model="newName" @keyup.enter="()=>changeName(newName)" variant="outlined"></v-text-field>
 
                                         <v-btn color="error" class="my-6" text outlined @click=deleteAccount>
                                             Delete my account
@@ -50,7 +49,7 @@
                                                       v-model="newSite"
                                                       class="mt-2" label="Trust site" variant="outlined"
                                                       append-icon="mdi-check"
-                                                      @click:append="()=>trustSite(newSite)" @keyup.enter="()=>trustSite(newSite)"
+                                                      @click:append="()=>newSite && trustSite(newSite)" @keyup.enter="()=>newSite && trustSite(newSite)"
                                                     />
                                                 </v-list-item-title>
                                             </v-list-item>
@@ -70,7 +69,7 @@
                                                       v-model="toBlock"
                                                       class="mt-2" label="Block CID" variant="outlined"
                                                       append-icon="mdi-check"
-                                                      @click:append="()=>blockRelease(toBlock)" @keyup.enter="()=>blockRelease(toBlock)"
+                                                      @click:append="()=>toBlock && blockRelease(toBlock)" @keyup.enter="()=>toBlock && blockRelease(toBlock)"
                                                     />
                                                 </v-list-item-title>
                                             </v-list-item>
@@ -94,7 +93,6 @@
                                 size="x-large"
                                 target="_blank"
                                 variant="flat"
-                                @click="setupAccount"
                             >
                                 <v-icon
                                 icon="mdi-speedometer"
@@ -114,22 +112,22 @@
 </template>
 
 <script setup lang="ts">
+import Riff from '@/plugins/riff/riff';
 import { ref, inject, onMounted, onUnmounted } from 'vue'
 
-const riff = inject('riff')
+const riff: Riff = inject('riff')!;
 
 const settings = ref(false);
-const account = ref(undefined);
+const account = ref<string>();
 const idCopied = ref(false);
-const name = ref(undefined);
+const names = ref<{ [language: string]: string; }>();
 const tab = ref("account");
 
-const newSite = ref(null);
-const toBlock = ref(null);
-const newName = ref(undefined);
+const newSite = ref<string|null>(null);
+const toBlock = ref<string|null>(null);
 
-const trustedSites = ref(undefined);
-const blockedCIDs = ref(undefined);
+const trustedSites = ref<string[]>();
+const blockedCIDs = ref<string[]>();
 
 async function deleteAccount() {
     await riff.deleteAccount();
@@ -137,22 +135,15 @@ async function deleteAccount() {
 }
 
 async function copyId() {
+    if (!account.value) return
     await navigator.clipboard.writeText(account.value);
     idCopied.value = true;
-}
-
-async function setupAccount() {
-    await riff.setupAccount()
 }
 
 async function blockRelease(cid: string) {
     if (!cid) return
     toBlock.value = null
     await riff.blockRelease(cid)
-}
-
-async function changeName(name?: string) {
-    await riff.changeName(name || undefined)
 }
 
 async function unblockRelease(cid: string) {
@@ -169,21 +160,21 @@ async function untrustSite(site: string) {
     await riff.untrustSite(site)
 }
 
-let forgetAccount = undefined
-let forgetName = undefined
-let forgetBlockedCIDs = undefined
-let forgetTrustedSites = undefined
+let forgetAccount: (()=>void) | undefined = undefined
+let forgetNames: (()=>void) | undefined = undefined
+let forgetBlockedCIDs: (()=>void) | undefined = undefined
+let forgetTrustedSites: (()=>void) | undefined = undefined
 
 onMounted(async () => {
     forgetAccount = await riff.onAccountChange(a=>account.value = a)
-    forgetName = await riff.onNameChange(a=>name.value = a)
+    forgetNames = await riff.onNameChange(a=>names.value = a)
     forgetBlockedCIDs = await riff.onBlockedReleasesChange(x=>blockedCIDs.value = x)
     forgetTrustedSites = await riff.onTrustedSitesChange(x=>trustedSites.value = x)
 })
 
 onUnmounted(async () => {
     if (forgetAccount) await forgetAccount()
-    if (forgetName) await forgetName()
+    if (forgetNames) await forgetNames()
     if (forgetBlockedCIDs) await forgetBlockedCIDs()
     if (forgetTrustedSites) await forgetTrustedSites()
 })

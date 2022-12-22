@@ -7,7 +7,7 @@
             Uploaded by: {{ info.idBdCompte }}
         </template>
         <template v-slot:title>
-            CID: {{info.élémen.données.CID}}
+            CID: {{info.élément.données.CID}}
         </template>
         <template v-slot:append>
           <v-btn
