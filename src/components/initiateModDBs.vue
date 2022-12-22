@@ -90,6 +90,7 @@ function download(filename: string, text: string) {
 
 const envFileText = computed(() => {
     const trustedSitesVar = "VITE_TRUSTED_SITES_VAR_ID=" + generatedVariableIds.value?.trustedSitesVariableId;
+    const trustedSitesNameVar = "VITE_TRUSTED_SITES_NAME_VAR_ID=" + generatedVariableIds.value?.trustedSitesNameVariableId;
     const blockedCidsVar = "VITE_BLOCKED_CIDS_VAR_ID=" + generatedVariableIds.value?.blockedCidsVariableId;
     const memberIdVar = "VITE_MEMBER_ID_VAR_ID=" + generatedVariableIds.value?.memberIdVariableId;
     const memberStatusVar = "VITE_MEMBER_STATUS_VAR_ID=" + generatedVariableIds.value?.memberStatusVariableId;
@@ -103,6 +104,7 @@ const envFileText = computed(() => {
         modDBAddress + "\n" + "\n" +
         "# These should ideally stay the same for all Riff.CC sites for optimal performance. Only change if you know what you are doing.\n" +
         trustedSitesVar + "\n" +
+        trustedSitesNameVar + "\n" +
         blockedCidsVar + "\n" +
         memberIdVar + "\n" +
         memberStatusVar + "\n" +

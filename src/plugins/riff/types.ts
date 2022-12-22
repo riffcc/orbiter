@@ -1,5 +1,6 @@
 export interface VariableIds {
     trustedSitesVariableId: string;
+    trustedSitesNameVariableId: string;
     blockedCidsVariableId: string;
     memberIdVariableId: string;
     memberStatusVariableId: string;

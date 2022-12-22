@@ -9,7 +9,8 @@ import {
     TRUSTED_SITES_TABLE_KEY, 
     TRUSTED_SITES_MOD_DB_COL, 
     MEMBER_ID_COL,
-    MEMBER_STATUS_COL
+    MEMBER_STATUS_COL,
+    TRUSTED_SITES_NAME_COL
 } from "./consts";
 import { VariableIds } from "./types";
 
@@ -66,6 +67,9 @@ export default class Riff {
         const trustedSitesVariableId = this.variableIds?.trustedSitesVariableId || await this.constellation!.variables!.créerVariable(
             { catégorie: "chaîne"}
         )
+        const trustedSitesNameVariableId = this.variableIds?.trustedSitesNameVariableId || await this.constellation!.variables!.créerVariable(
+            { catégorie : "chaîne" }
+        )
 
         const blockedCidsVariableId = this.variableIds?.blockedCidsVariableId || await this.constellation!.variables!.créerVariable({
             catégorie: "chaîne"
@@ -111,6 +115,10 @@ export default class Riff {
                             {
                                 idVariable: trustedSitesVariableId,
                                 idColonne: TRUSTED_SITES_MOD_DB_COL
+                            },
+                            {
+                                idVariable: trustedSitesNameVariableId,
+                                idColonne: TRUSTED_SITES_NAME_COL
                             }
                         ],
                         clef: "trusted sites"
@@ -143,6 +151,7 @@ export default class Riff {
         
         const variableIds: VariableIds = {
             trustedSitesVariableId,
+            trustedSitesNameVariableId,
             blockedCidsVariableId,
             memberIdVariableId,
             memberStatusVariableId,
