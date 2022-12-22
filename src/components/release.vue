@@ -4,10 +4,10 @@
             <v-icon>mdi-file</v-icon>
         </template>
         <template v-slot:subtitle>
-            Uploaded by: {{ info.author }}
+            Uploaded by: {{ info.idBdCompte }}
         </template>
         <template v-slot:title>
-            CID: {{info.CID}}
+            CID: {{info.élémen.données.CID}}
         </template>
         <template v-slot:append>
           <v-btn
@@ -30,21 +30,22 @@
 </template>
 
 <script setup lang="ts">
-import { Release } from "@/plugins/riff/riff";
+import { inject } from 'vue'
+import Riff, { Release } from "@/plugins/riff/riff";
+import { élémentDeMembre } from '@constl/ipa/dist/reseau';
 
 interface Props {
-  info: Release
+  info: élémentDeMembre<Release>
 }
 const props = defineProps<Props>()
 
-import { ref, reactive, inject, onMounted, onUnmounted } from 'vue'
-const riff = inject('riff')
+const riff: Riff = inject('riff')!
 
   async function removeRelease() {
-    riff.removeRelease(props.info.CID)
+    riff.removeRelease(props.info.élément.empreinte)
   }
 
   async function blockRelease() {
-    riff.blockRelease(props.info.CID)
+    riff.blockRelease(props.info.élément.données.CID)
   }
 </script>

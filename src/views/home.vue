@@ -8,8 +8,8 @@
 </template>
 
 <script setup lang="ts">
-  import MainPage from '@/components/MainPage.vue'
-  import InitScreen from '@/components/InitScreen.vue'
+  import mainPage from '@/components/MainPage.vue'
+  import initScreen from '@/components/InitScreen.vue'
 
   import { ref, inject, onMounted, onUnmounted } from 'vue'
   import Riff from '@/plugins/riff/riff';
