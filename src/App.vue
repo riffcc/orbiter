@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-  import Home from '@/views/Home.vue'
+  import Home from '@/views/home.vue'
   import appBar from '@/components/appBar.vue'
   import { ref, inject, onMounted, onUnmounted } from 'vue'
 import Riff from './plugins/riff/riff';
