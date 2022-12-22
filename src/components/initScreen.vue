@@ -35,22 +35,26 @@
         </v-col>
 
         <v-col cols="auto">
-            <v-btn
-                color="primary"
-                min-width="228"
-                rel="noopener noreferrer"
-                size="x-large"
-                variant="flat"
-                @click="setupAccount"
-            >
-                <v-icon
-                icon="mdi-speedometer"
-                size="large"
-                start
-                />
-
-                Create account
-            </v-btn>
+            <initiate-account>
+                <template v-slot:activator="{ props }">
+                  <v-list-item v-bind="props">
+                    <v-btn
+                        color="primary"
+                        min-width="228"
+                        rel="noopener noreferrer"
+                        size="x-large"
+                        variant="flat"
+                    >
+                        <v-icon
+                            icon="mdi-speedometer"
+                            size="large"
+                            start
+                        />
+                        Create account
+                    </v-btn>
+                  </v-list-item>
+                </template>
+            </initiate-account>
         </v-col>
 
         <v-col cols="auto">
@@ -87,6 +91,7 @@ import Riff from '@/plugins/riff/riff';
 import { ref, inject, onMounted, onUnmounted } from 'vue';
 
 import initiateModDBs from "@/components/initiateModDBs.vue"
+import initiateAccount from '@/components/initiateAccount.vue';
 
 const riff: Riff = inject('riff')!
 
@@ -94,10 +99,6 @@ const riffReady = ref<boolean>(false);
 riff.ready().then(()=>riffReady.value = true)
 
 const accountExists = ref<boolean>();
-
-async function setupAccount() {
-    await riff.ready()
-}
 
 let forgetAccountExists: (()=>void)|undefined = undefined
 onMounted(async () => {

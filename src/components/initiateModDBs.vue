@@ -1,6 +1,7 @@
 <template>
     <v-dialog
         v-model="modDbMissing" persistent
+         max-width="800"
     >
         <v-card>
             <v-card-title>Missing moderation database addresses</v-card-title>
