@@ -1,5 +1,5 @@
 import { EventEmitter, once } from "events";
-import ClientConstellation, { bds, réseau, tableaux, valid } from "@constl/ipa";
+import ClientConstellation, { bds, réseau, valid } from "@constl/ipa";
 import { 
     BLOCKED_RELEASES_TABLE_KEY, 
     BLOCKED_RELEASE_CID_COL, 
@@ -44,7 +44,7 @@ export default class Riff {
         // Constellation is a big module to load, so load it asynchronously to ensure fast page load
         const ConstellationModule = import("@constl/ipa")
         ConstellationModule.then(API => {
-            this.constellation = API.proxy.ipa.générerProxyProc();
+            this.constellation = API.mandataire.ipa.générerMandataireProc();
             this.events.emit("ready")
         })
     }
@@ -234,8 +234,8 @@ export default class Riff {
     async onBlockedReleasesChange(f: (releases?: string[]) => void): Promise<offFunction> {
         await this.modDbReady();
 
-        return await this.constellation!.bds!.suivreDonnéesDeTableauDeClef({
-            idBd: this.modDbAddress,
+        return await this.constellation!.bds!.suivreDonnéesDeTableauParClef({
+            idBd: this.modDbAddress!,
             clefTableau: BLOCKED_RELEASES_TABLE_KEY,
             f
         });
@@ -245,7 +245,7 @@ export default class Riff {
         await this.modDbReady();
         
         return await this.constellation!.bds!.suivreDonnéesDeTableauParClef<Release>({
-            idBd: this.modDbAddress,
+            idBd: this.modDbAddress!,
             clefTableau: TRUSTED_SITES_TABLE_KEY,
             f: (data)=>f(data.map(d=>d.données[TRUSTED_SITES_MOD_DB_COL]))
         })
@@ -291,10 +291,9 @@ export default class Riff {
         await this.modDbReady();
 
         await this.constellation!.bds!.effacerÉlémentDeTableauParClef({
-            schémaBd: await this.getReleasesDBFormat(),
-            idNuéeUnique: this.variableIds!.riffSwarmId,
+            idBd: this.modDbAddress!,
             clefTableau: RELEASES_DB_TABLE_KEY,
-            empreinte: releaseHash
+            empreinteÉlément: releaseHash
         });
     }
 
@@ -302,7 +301,7 @@ export default class Riff {
         await this.modDbReady();
 
         await this.constellation!.bds!.ajouterÉlémentÀTableauParClef({
-            idBd: this.modDbAddress,
+            idBd: this.modDbAddress!,
             clefTableau: BLOCKED_RELEASES_TABLE_KEY,
             vals: {[BLOCKED_RELEASE_CID_COL]: cid}
         });
@@ -312,9 +311,9 @@ export default class Riff {
         await this.modDbReady();
 
         await this.constellation!.bds!.effacerÉlémentDeTableauParClef({
-            idBd: this.modDbAddress,
+            idBd: this.modDbAddress!,
             clefTableau: BLOCKED_RELEASES_TABLE_KEY,
-            empreinte: releaseHash
+            empreinteÉlément: releaseHash
         });
     }
     
@@ -322,7 +321,7 @@ export default class Riff {
         await this.modDbReady();
 
         await this.constellation!.bds!.ajouterÉlémentÀTableauParClef({
-            idBd: this.modDbAddress,
+            idBd: this.modDbAddress!,
             clefTableau: TRUSTED_SITES_TABLE_KEY,
             vals: {[TRUSTED_SITES_MOD_DB_COL]: siteModDb}
         })
@@ -331,9 +330,9 @@ export default class Riff {
     async untrustSite(siteHash: string) {
         await this.modDbReady();
         await this.constellation!.bds!.effacerÉlémentDeTableauParClef({
-            idBd: this.modDbAddress,
+            idBd: this.modDbAddress!,
             clefTableau: TRUSTED_SITES_TABLE_KEY,
-            empreinte: siteHash
+            empreinteÉlément: siteHash
         });
     }
 
