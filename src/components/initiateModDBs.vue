@@ -10,7 +10,7 @@
                 Click below to generate the moderation DB.
             </v-card-text>
             <v-card-text v-else>
-                Moderation DB generated! Be sure to copy the code below into a .env file and place
+                Moderation DB generated! Be sure to copy the code below into a <code>.env</code> file and place
                 it at the root of your Riff.CC project.
                 <v-textarea 
                 class="mt-4"
