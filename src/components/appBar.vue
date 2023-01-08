@@ -7,18 +7,15 @@
         <v-app-bar-title>Riff.CC</v-app-bar-title>
 
         <template v-slot:append>
-            <account-info/>
+            <SettingsDialog/>
         </template>
     </v-app-bar>
 </template>
 
 <script setup lang="ts">
 
-import { ref, onMounted, onUnmounted } from 'vue'
-import AccountInfo from '@/components/accountInfo.vue'
-
-
-
+import { ref } from 'vue'
+import SettingsDialog from '@/components/settings/settingsDialog.vue';
 
 
 

@@ -25,7 +25,7 @@ riff.ready().then(()=>riffReady.value = true)
 let forgetAccountExists: (()=>void) | undefined = undefined;
 
 onMounted(async () => {
-  forgetAccountExists = await riff.onAccountExists(a=>accountExists.value = a)
+  forgetAccountExists = await riff.onAccountExists({f: a=>accountExists.value = a})
 })
 
 onUnmounted(async () => {

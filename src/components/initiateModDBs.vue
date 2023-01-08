@@ -132,7 +132,7 @@ const acceptNewModDb = async () => {
 let forgetModDbAddress: (()=>void) | undefined = undefined
 
 onMounted(async () => {
-    forgetModDbAddress = await riff.onModDbSet(id => {modDbAddress.value = id});
+    forgetModDbAddress = await riff.onModDbSet({f: id => {modDbAddress.value = id}});
 })
 
 onUnmounted(async () => {

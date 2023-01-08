@@ -50,10 +50,10 @@ let forgetReleases: (() => void) | undefined = undefined
 let forgetBlockedCIDs: (() => void) | undefined = undefined
 
 onMounted(async () => {
-  forgetAccountExists = await riff.onAccountExists(a=>accountInitialised.value = a)
-  forgetAccount = await riff.onAccountChange(a=>account.value = a)
-  forgetReleases = await riff.onReleasesChange(rs=>allReleases.value = rs)
-  forgetBlockedCIDs = await riff.onBlockedReleasesChange(x=>blockedCIDs.value = x)
+  forgetAccountExists = await riff.onAccountExists({f: a=>accountInitialised.value = a})
+  forgetAccount = await riff.onAccountChange({f: a=>account.value = a})
+  forgetReleases = await riff.onReleasesChange({f: rs=>allReleases.value = rs})
+  forgetBlockedCIDs = await riff.onBlockedReleasesChange({f: x=>blockedCIDs.value = x})
 })
 
 onUnmounted(async () => {

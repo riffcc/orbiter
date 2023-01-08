@@ -20,7 +20,7 @@ import Riff from './plugins/riff/riff';
 
   let forgetAccountExists: (() => void) | undefined = undefined
   onMounted(async () => {
-    forgetAccountExists = await riff.onAccountExists(a=>accountExists.value = a)
+    forgetAccountExists = await riff.onAccountExists({f: a=>accountExists.value = a})
   })
 
   onUnmounted(async () => {

@@ -4,7 +4,7 @@
             <v-icon>mdi-file</v-icon>
         </template>
         <template v-slot:subtitle>
-            Uploaded by: {{ info.idBdCompte }}
+            Uploaded by: <UserChip :accountId="info.idBdCompte" />
         </template>
         <template v-slot:title>
             CID: {{info.élément.données.CID}}
@@ -33,6 +33,7 @@
 import { inject } from 'vue'
 import Riff, { Release } from "@/plugins/riff/riff";
 import { élémentDeMembre } from '@constl/ipa/dist/reseau';
+import UserChip from '@/components/userChip.vue';
 
 interface Props {
   info: élémentDeMembre<Release>

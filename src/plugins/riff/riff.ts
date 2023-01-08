@@ -175,7 +175,7 @@ export default class Riff {
         this.events.emit("mod db changed")
     }
 
-    async onModDbSet(f: (id?: string) => void): Promise<offFunction> {
+    async onModDbSet({ f }: {f: (id?: string) => void}): Promise<offFunction> {
         const fFollow = () => f(this.modDbAddress);
         if (this.modDbAddress) fFollow();
 
@@ -191,24 +191,41 @@ export default class Riff {
         await once(this.events, "mod db changed");
     }
 
-    async onAccountExists(f: (exists: boolean) => void): Promise<offFunction> {
+    async onAccountExists({
+        f,
+        accountId
+    }: {
+        f: (exists: boolean) => void;
+        accountId?: string;
+    }): Promise<offFunction> {
         // We'll consider that an account "exists" if there is a human-readable name associated with it.
-        return await this.onNameChange(
-            (names) => f(Object.keys(names).length > 0)
-        )
+        return await this.onNameChange({
+            f: (names) => f(Object.keys(names).length > 0),
+            accountId
+        })
     }
 
-    async onAccountChange (f: (account?: string) => void): Promise<offFunction> {
+    async onAccountChange ({ f }: {f: (account?: string) => void}): Promise<offFunction> {
         await this.ready()
         return await this.constellation!.suivreIdBdCompte({ f })
     }
 
-    async onNameChange (f: (name: { [language: string]: string }) => void): Promise<offFunction> {
-        await this.ready()
-        return await this.constellation!.profil!.suivreNoms({ f })
+    async onNameChange ({
+        f,
+        accountId,
+    }: {
+        f: (name: { [language: string]: string }) => void;
+        accountId?: string
+    }): Promise<offFunction> {
+        await this.ready();
+        if (accountId) {
+            return await this.constellation!.réseau!.suivreNomsMembre({ f, idCompte: accountId });
+        } else {
+            return await this.constellation!.profil!.suivreNoms({ f });
+        }
     }
 
-    async onIsModChange(f: (isMod: boolean) => void): Promise<offFunction> {
+    async onIsModChange({ f }: {f: (isMod: boolean) => void}): Promise<offFunction> {
         await this.modDbReady();
 
         return await this.constellation!.suivrePermissionÉcrire({
@@ -217,7 +234,7 @@ export default class Riff {
         })
     }
 
-    async onReleasesChange(f: (releases?: réseau.élémentDeMembre<Release>[]) => void): Promise<offFunction> {
+    async onReleasesChange({ f }: {f: (releases?: réseau.élémentDeMembre<Release>[]) => void}): Promise<offFunction> {
         await this.ready();
         await this.modDbReady();
 
@@ -231,7 +248,7 @@ export default class Riff {
         return fOublier;
     }
 
-    async onBlockedReleasesChange(f: (releases?: string[]) => void): Promise<offFunction> {
+    async onBlockedReleasesChange({ f }: {f: (releases?: string[]) => void}): Promise<offFunction> {
         await this.modDbReady();
 
         return await this.constellation!.bds!.suivreDonnéesDeTableauParClef({
@@ -241,7 +258,7 @@ export default class Riff {
         });
     }
 
-    async onTrustedSitesChange(f: (sites?: string[]) => void): Promise<offFunction> {
+    async onTrustedSitesChange({ f }: {f: (sites?: string[]) => void}): Promise<offFunction> {
         await this.modDbReady();
         
         return await this.constellation!.bds!.suivreDonnéesDeTableauParClef<Release>({
