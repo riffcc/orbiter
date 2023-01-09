@@ -8,4 +8,8 @@ export interface VariableIds {
     riffSwarmId: string;  // Not *technically* a variable, but will do here for now.
 
     releasesCidVar: string;
+    releasesThumbnailVar: string;
+    releasesAuthorVar: string;
+    releasesContentNameVar: string;
+    releasesMetadataVar: string;
 }

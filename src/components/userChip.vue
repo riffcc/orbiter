@@ -1,6 +1,6 @@
 <template>
-    <v-chip label>
-        {{ displayName }}
+    <v-chip class="mx-2" label>
+        Uploaded by: {{ displayName }}
     </v-chip>
 </template>
 

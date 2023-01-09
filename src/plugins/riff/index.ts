@@ -24,7 +24,11 @@ const getVariableIds = (): VariableIds | undefined  => {
     VITE_MEMBER_ID_VAR_ID,
     VITE_MEMBER_STATUS_VAR_ID,
     VITE_RIFF_SWARM_ID,
-    VITE_RELEASES_CID_VAR_ID
+    VITE_RELEASES_CID_VAR_ID,
+    VITE_RELEASES_AUTHOR_VAR_ID,
+    VITE_RELEASES_CONTENT_NAME_VAR_ID,
+    VITE_RELEASES_METADATA_VAR_ID,
+    VITE_RELEASES_THUMBNAIL_VAR_ID,
   } = import.meta.env;
   
   if (
@@ -34,7 +38,11 @@ const getVariableIds = (): VariableIds | undefined  => {
     VITE_MEMBER_ID_VAR_ID &&
     VITE_MEMBER_STATUS_VAR_ID && 
     VITE_RIFF_SWARM_ID &&
-    VITE_RELEASES_CID_VAR_ID
+    VITE_RELEASES_CID_VAR_ID &&
+    VITE_RELEASES_AUTHOR_VAR_ID &&
+    VITE_RELEASES_CONTENT_NAME_VAR_ID &&
+    VITE_RELEASES_METADATA_VAR_ID &&
+    VITE_RELEASES_THUMBNAIL_VAR_ID
   ) {
     const variableIds: VariableIds = {
       trustedSitesVariableId: VITE_TRUSTED_SITES_VAR_ID,
@@ -45,7 +53,11 @@ const getVariableIds = (): VariableIds | undefined  => {
       
       riffSwarmId: VITE_RIFF_SWARM_ID,
 
-      releasesCidVar: VITE_RELEASES_CID_VAR_ID
+      releasesCidVar: VITE_RELEASES_CID_VAR_ID,
+      releasesAuthorVar: VITE_RELEASES_AUTHOR_VAR_ID,
+      releasesContentNameVar: VITE_RELEASES_CONTENT_NAME_VAR_ID,
+      releasesMetadataVar: VITE_RELEASES_METADATA_VAR_ID,
+      releasesThumbnailVar: VITE_RELEASES_THUMBNAIL_VAR_ID,
     }
     return variableIds
   }

@@ -10,16 +10,21 @@ import {
     TRUSTED_SITES_MOD_DB_COL, 
     MEMBER_ID_COL,
     MEMBER_STATUS_COL,
-    TRUSTED_SITES_NAME_COL
+    TRUSTED_SITES_NAME_COL,
+    RELEASES_NAME_COLUMN,
+    RELEASES_METADATA_COLUMN,
+    RELEASES_THUMBNAIL_COLUMN
 } from "./consts";
 import { VariableIds } from "./types";
+import { élémentsBd } from "@constl/ipa/dist/utils";
 
 type offFunction = () => Promise<void>
 export type Release = {
-    CID: string;
-    thumbnail: string;
-    metadata: string;
+    name: string;
+    cid: string;
     author: string;
+    thumbnail?: string;
+    metadata?: string;
 }
 
 export default class Riff {
@@ -105,6 +110,18 @@ export default class Riff {
         const releasesCidVar = this.variableIds?.releasesCidVar || await this.constellation!.variables!.créerVariable({
             catégorie: "chaîne"
         })
+        const releasesThumbnailVar = this.variableIds?.releasesThumbnailVar || await this.constellation!.variables!.créerVariable({
+            catégorie: "chaîne"
+        })
+        const releasesAuthorVar = this.variableIds?.releasesAuthorVar || await this.constellation!.variables!.créerVariable({
+            catégorie: "chaîne"
+        })
+        const releasesMetadataVar = this.variableIds?.releasesMetadataVar || await this.constellation!.variables!.créerVariable({
+            catégorie: "chaîne"
+        })
+        const releasesContentNameVar = this.variableIds?.releasesContentNameVar || await this.constellation!.variables!.créerVariable({
+            catégorie: "chaîne"
+        })
 
         const modDbId = await this.constellation!.bds!.créerBdDeSchéma({
             schéma: {
@@ -157,6 +174,10 @@ export default class Riff {
             memberStatusVariableId,
             riffSwarmId,
             releasesCidVar,
+            releasesAuthorVar,
+            releasesContentNameVar,
+            releasesThumbnailVar,
+            releasesMetadataVar
         }
 
         return {
@@ -278,8 +299,24 @@ export default class Riff {
                     cols: [
                         {
                             idVariable: this.variableIds!.releasesCidVar,
-                            idColonne: RELEASES_CID_COLUMN
+                            idColonne: RELEASES_CID_COLUMN,
                         },
+                        {
+                            idVariable: this.variableIds!.releasesThumbnailVar,
+                            idColonne: RELEASES_THUMBNAIL_COLUMN,
+                        },
+                        {
+                            idVariable: this.variableIds!.releasesAuthorVar,
+                            idColonne: RELEASES_AUTHOR_COLUMN,
+                        },
+                        {
+                            idVariable: this.variableIds!.releasesContentNameVar,
+                            idColonne: RELEASES_NAME_COLUMN,
+                        },
+                        {
+                            idVariable: this.variableIds!.releasesMetadataVar,
+                            idColonne: RELEASES_METADATA_COLUMN
+                        }
                         
                     ],
                     clef: RELEASES_DB_TABLE_KEY
@@ -293,24 +330,34 @@ export default class Riff {
     async addRelease(r: Release) {
         await this.modDbReady();
 
+        const vals: {[key: string]: élémentsBd} = {
+            [RELEASES_CID_COLUMN]: r.cid,
+            [RELEASES_AUTHOR_COLUMN]: r.author,
+            [RELEASES_NAME_COLUMN]: r.name,
+        }
+        if (r.metadata) {
+            vals[RELEASES_METADATA_COLUMN] = r.metadata
+        }
+        if (r.thumbnail) {
+            vals[RELEASES_THUMBNAIL_COLUMN] = r.thumbnail
+        }
+
         await this.constellation!.bds!.ajouterÉlémentÀTableauUnique({
             schémaBd: await this.getReleasesDBFormat(),
             idNuéeUnique: this.variableIds!.riffSwarmId,
             clefTableau: RELEASES_DB_TABLE_KEY,
-            vals: {
-                [RELEASES_CID_COLUMN]: r.CID,
-                [RELEASES_AUTHOR_COLUMN]: r.author,
-            }
+            vals
         });
     }
 
     async removeRelease(releaseHash: string) {
-        await this.modDbReady();
+        await this.ready();
 
-        await this.constellation!.bds!.effacerÉlémentDeTableauParClef({
-            idBd: this.modDbAddress!,
+        await this.constellation!.bds!.effacerÉlémentDeTableauUnique({
+            schémaBd: await this.getReleasesDBFormat(),
+            idNuéeUnique: this.variableIds!.riffSwarmId,
             clefTableau: RELEASES_DB_TABLE_KEY,
-            empreinteÉlément: releaseHash
+            empreinte: releaseHash
         });
     }
 

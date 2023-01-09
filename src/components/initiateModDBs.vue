@@ -97,6 +97,10 @@ const envFileText = computed(() => {
 
     const riffSwarmId = "VITE_RIFF_SWARM_ID=" + generatedVariableIds.value?.riffSwarmId;
     const releasesCidVar = "VITE_RELEASES_CID_VAR_ID=" + generatedVariableIds.value?.releasesCidVar;
+    const releasesAuthorVar = "VITE_RELEASES_AUTHOR_VAR_ID=" + generatedVariableIds.value?.releasesAuthorVar;
+    const releasesContentNameVar = "VITE_RELEASES_CONTENT_NAME_VAR_ID=" + generatedVariableIds.value?.releasesContentNameVar;
+    const releasesMetadataVar = "VITE_RELEASES_METADATA_VAR_ID=" + generatedVariableIds.value?.releasesMetadataVar;
+    const releasesThumbnailVar = "VITE_RELEASES_THUMBNAIL_VAR_ID=" + generatedVariableIds.value?.releasesThumbnailVar;
 
     const modDBAddress = "VITE_MOD_BD_ADDRESS=" + generatedModDbAddress.value;
 
@@ -109,7 +113,11 @@ const envFileText = computed(() => {
         memberIdVar + "\n" +
         memberStatusVar + "\n" +
         riffSwarmId + "\n" +
-        releasesCidVar + "\n"
+        releasesCidVar + "\n" +
+        releasesAuthorVar + "\n" +
+        releasesContentNameVar + "\n" +
+        releasesMetadataVar + "\n" +
+        releasesThumbnailVar + "\n"
 })
 
 const downloadEnvFile = async () => {
