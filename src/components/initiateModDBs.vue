@@ -1,7 +1,7 @@
 <template>
     <v-dialog
         v-model="modDbMissing" persistent
-         max-width="800"
+        max-width="800"
     >
         <v-card>
             <v-card-title>Missing moderation database addresses</v-card-title>
@@ -31,15 +31,15 @@
             </v-card-actions>
             <v-card-actions v-else>
                 <v-btn
-                color="primary" 
-                :loading="generatingEnvFile"
-                @click="downloadEnvFile"
+                    color="primary"
+                    :loading="generatingEnvFile"
+                    @click="downloadEnvFile"
                 >
                     Download .env file
                 </v-btn>
                 <v-btn
-                color="primary" 
-                @click="acceptNewModDb"
+                    color="primary" 
+                    @click="acceptNewModDb"
                 >
                     Close and enter site
                 </v-btn>
