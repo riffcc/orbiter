@@ -105,14 +105,14 @@ const envFileText = computed(() => {
     const modDBAddress = "VITE_MOD_BD_ADDRESS=" + generatedModDbAddress.value;
 
     return  "# The address below should be regenerated for each Riff.CC site. If you are setting up an independent site, erase the value below and run the site in development mode (`pnpm dev`) to automatically regenerate. \n" +
-        modDBAddress + "\n" + "\n" +
+        modDBAddress + "\n" + 
+        riffSwarmId + "\n" + "\n" +
         "# These should ideally stay the same for all Riff.CC sites for optimal performance. Only change if you know what you are doing.\n" +
         trustedSitesVar + "\n" +
         trustedSitesNameVar + "\n" +
         blockedCidsVar + "\n" +
         memberIdVar + "\n" +
         memberStatusVar + "\n" +
-        riffSwarmId + "\n" +
         releasesCidVar + "\n" +
         releasesAuthorVar + "\n" +
         releasesContentNameVar + "\n" +

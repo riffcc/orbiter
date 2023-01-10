@@ -1,13 +1,15 @@
+import { importateur } from "@constl/ipa";
 import { App } from "vue"
 import RiffApp from "./riff"
 import { VariableIds } from "./types";
 
 export default {
   install: (app: App) => {
-    const variableIds = getVariableIds()
+    const variableIds = getVariableIds();
 
     const riffApp = new RiffApp({
       modDbAddress: variableIds ? import.meta.env.VITE_MOD_BD_ADDRESS : undefined,
+      riffSwarmId: variableIds ? import.meta.env.VITE_RIFF_SWARM_ID : undefined,
       variableIds,
     });
     app.config.globalProperties.$riff = riffApp;

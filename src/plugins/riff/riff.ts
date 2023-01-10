@@ -22,6 +22,7 @@ type offFunction = () => Promise<void>
 
 export default class Riff {
     modDbAddress?: string;
+    riffSwarmId?: string;
     variableIds?: VariableIds;
 
     constellation?: ClientConstellation;
@@ -29,14 +30,17 @@ export default class Riff {
 
     constructor ({
         modDbAddress,
+        riffSwarmId,
         variableIds,
     }: {
         modDbAddress?: string;
+        riffSwarmId?: string;
         variableIds?: VariableIds
     }) {
         this.events = new EventEmitter();
         
         this.modDbAddress = modDbAddress;
+        this.riffSwarmId = riffSwarmId;
         this.variableIds = variableIds;
         
         // Constellation is a big module to load, so load it asynchronously to ensure fast page load
@@ -59,7 +63,7 @@ export default class Riff {
         }
     }
 
-    async generateModDb(): Promise<{ modDbId: string, variableIds: VariableIds}> {
+    async generateModDb(): Promise<{ modDbId: string, riffSwarmId: string, variableIds: VariableIds}> {
         await this.ready();
 
         const trustedSitesVariableId = this.variableIds?.trustedSitesVariableId || await this.constellation!.variables!.créerVariable(
@@ -73,7 +77,7 @@ export default class Riff {
             catégorie: "chaîne"
         })
 
-        const riffSwarmId = this.variableIds?.riffSwarmId || await this.constellation!.nuées!.créerNuée({});
+        const riffSwarmId = this.riffSwarmId || await this.constellation!.nuées!.créerNuée({});
 
         const releasesCidVar = this.variableIds?.releasesCidVar || await this.constellation!.variables!.créerVariable({
             catégorie: "chaîne"
@@ -125,7 +129,6 @@ export default class Riff {
             trustedSitesVariableId,
             trustedSitesNameVariableId,
             blockedCidsVariableId,
-            riffSwarmId,
             releasesCidVar,
             releasesAuthorVar,
             releasesContentNameVar,
@@ -135,6 +138,7 @@ export default class Riff {
 
         return {
             modDbId,
+            riffSwarmId,
             variableIds
         }
     }
@@ -239,7 +243,7 @@ export default class Riff {
         const { 
             fOublier:  fForgetEntries 
         } = await this.constellation!.réseau!.suivreÉlémentsDeTableauxUniques<Release>({
-            idNuéeUnique: this.variableIds!.riffSwarmId,
+            idNuéeUnique: this.riffSwarmId!,
             clef: RELEASES_DB_TABLE_KEY,
             f: async (entries) => {
                 info.entries = entries;
@@ -331,7 +335,7 @@ export default class Riff {
 
         await this.constellation!.bds!.ajouterÉlémentÀTableauUnique({
             schémaBd: await this.getReleasesDBFormat(),
-            idNuéeUnique: this.variableIds!.riffSwarmId,
+            idNuéeUnique: this.riffSwarmId!,
             clefTableau: RELEASES_DB_TABLE_KEY,
             vals
         });
@@ -342,7 +346,7 @@ export default class Riff {
 
         await this.constellation!.bds!.effacerÉlémentDeTableauUnique({
             schémaBd: await this.getReleasesDBFormat(),
-            idNuéeUnique: this.variableIds!.riffSwarmId,
+            idNuéeUnique: this.riffSwarmId!,
             clefTableau: RELEASES_DB_TABLE_KEY,
             empreinte: releaseHash
         });
@@ -354,7 +358,7 @@ export default class Riff {
         return await this.constellation!.bds!.modifierÉlémentDeTableauUnique({
             vals: release,
             schémaBd: await this.getReleasesDBFormat(),
-            idNuéeUnique: this.variableIds!.riffSwarmId,
+            idNuéeUnique: this.riffSwarmId!,
             clefTableau: RELEASES_DB_TABLE_KEY,
             empreintePrécédente: releaseHash,
         })
