@@ -22,14 +22,16 @@
 </template>
 
 <script setup lang="ts">
-import { v4 as uuidv4 } from "uuid";
-import Riff, { Release as ReleaseInfo } from "@/plugins/riff/riff"
+import Riff from "@/plugins/riff/riff"
+import { Release as ReleaseInfo } from "@/plugins/riff/types"
 
-import Release from "@/components/release.vue"
+import Release from "@/components/release.vue";
+import ReleaseDialog from "@/components/releaseDialog.vue";
 
 import { ref, inject, onMounted, onUnmounted, computed } from 'vue'
 import { élémentDeMembre } from "@constl/ipa/dist/reseau";
-import ReleaseDialog from "./releaseDialog.vue";
+
+
 const riff = inject('riff') as Riff;
 
 const accountInitialised = ref<boolean|undefined>(undefined);

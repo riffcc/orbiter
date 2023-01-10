@@ -27,21 +27,30 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref } from 'vue';
+import { computed, inject, PropType, ref, watchEffect } from 'vue';
 
 import { élémentDeMembre } from '@constl/ipa/dist/reseau';
 
-import Riff, { Release } from '@/plugins/riff/riff';
+import Riff from '@/plugins/riff/riff';
+import { Release } from "@/plugins/riff/types"
 
 const riff = inject<Riff>("riff")!;
 
-const props = defineProps<{releaseHash?: élémentDeMembre<Release>, active: boolean}>()
+const props = defineProps({
+    release: {
+        type: Object as PropType<élémentDeMembre<Release>>,
+    },
+    active: {
+        type: Boolean,
+        default: true
+    }
+})
 
 // Allow same component to be used for both creating and editing releases
-const newRelease = computed(()=>!props.releaseHash);
+const newRelease = computed(()=>!props.release);
 
 const readyToSave = computed(()=>{
-    return !!(file.value && author.value && releaseName.value)
+    return !!((file.value || existingFileCid.value) && author.value && releaseName.value)
 })
 
 const dialog = ref(false);
@@ -58,23 +67,35 @@ const save = async () => {
 
     saving.value = true;
 
-    const cid = await riff.constellation!.ajouterÀSFIP({
+    const cid: string = file.value ? await riff.constellation!.ajouterÀSFIP({
         fichier: file.value![0]
-    });
+    }) : existingFileCid.value as string;  // We know it exists if readyToSave was true
 
+    // If not specified, use existing CID if available (only relevant on editing existing release).
     const thumbnailCID = thumbnail.value?.length ? await riff.constellation!.ajouterÀSFIP({
         fichier: thumbnail.value[0]
-    }) : undefined
+    }) : existingThumbnailCid.value
 
     if (newRelease.value) {
         await riff.addRelease({
             cid,
             thumbnail: thumbnailCID,
-            name: releaseName.value!,
+            contentName: releaseName.value!,
             metadata: metadata?.value,
             author: author.value!
         });
-    };
+    } else {
+        await riff.editRelease({
+            releaseHash: props.release!.élément.empreinte, 
+            release: {
+                cid,
+                thumbnail: thumbnailCID,
+                contentName: releaseName.value!,
+                metadata: metadata?.value,
+                author: author.value!
+            }
+        })
+    }
     
     saving.value = false;
     clearDialog();
@@ -83,5 +104,14 @@ const save = async () => {
 const clearDialog = () => {
     dialog.value = false;
 }
+
+const existingThumbnailCid = ref<string>();
+const existingFileCid = ref<string>();
+
+watchEffect(()=>author.value = props.release?.élément.données.author);
+watchEffect(()=>metadata.value = props.release?.élément.données.metadata);
+watchEffect(()=>releaseName.value = props.release?.élément.données.contentName);
+watchEffect(()=>existingFileCid.value = props.release?.élément.données.cid);
+watchEffect(()=>existingThumbnailCid.value = props.release?.élément.données.thumbnail);
 
 </script>

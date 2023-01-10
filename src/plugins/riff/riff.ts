@@ -1,5 +1,7 @@
 import { EventEmitter, once } from "events";
 import ClientConstellation, { bds, réseau, valid } from "@constl/ipa";
+import type { élémentsBd } from "@constl/ipa/dist/utils";
+
 import { 
     BLOCKED_RELEASES_TABLE_KEY, 
     BLOCKED_RELEASE_CID_COL, 
@@ -15,17 +17,9 @@ import {
     RELEASES_METADATA_COLUMN,
     RELEASES_THUMBNAIL_COLUMN
 } from "./consts";
-import { VariableIds } from "./types";
-import { élémentsBd } from "@constl/ipa/dist/utils";
+import { Release, VariableIds } from "./types";
 
 type offFunction = () => Promise<void>
-export type Release = {
-    name: string;
-    cid: string;
-    author: string;
-    thumbnail?: string;
-    metadata?: string;
-}
 
 export default class Riff {
     modDbAddress?: string;
@@ -333,7 +327,7 @@ export default class Riff {
         const vals: {[key: string]: élémentsBd} = {
             [RELEASES_CID_COLUMN]: r.cid,
             [RELEASES_AUTHOR_COLUMN]: r.author,
-            [RELEASES_NAME_COLUMN]: r.name,
+            [RELEASES_NAME_COLUMN]: r.contentName,
         }
         if (r.metadata) {
             vals[RELEASES_METADATA_COLUMN] = r.metadata
@@ -359,6 +353,18 @@ export default class Riff {
             clefTableau: RELEASES_DB_TABLE_KEY,
             empreinte: releaseHash
         });
+    }
+
+    async editRelease({ release, releaseHash }: { release: Release; releaseHash: string }): Promise<string> {
+        await this.ready();
+
+        return await this.constellation!.bds!.modifierÉlémentDeTableauUnique({
+            vals: release,
+            schémaBd: await this.getReleasesDBFormat(),
+            idNuéeUnique: this.variableIds!.riffSwarmId,
+            clefTableau: RELEASES_DB_TABLE_KEY,
+            empreintePrécédente: releaseHash,
+        })
     }
 
     async blockRelease(cid: string) {

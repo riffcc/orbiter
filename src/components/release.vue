@@ -1,5 +1,5 @@
 <template>
-    <ReleaseDialog :releaseHash="info" :active="myRelease">
+    <ReleaseDialog :release="info" :active="myRelease">
         <template v-slot:activator="{ props }">
           <v-list-item v-bind="props">
             <template v-slot:prepend>
@@ -50,7 +50,9 @@
 
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, ref } from 'vue'
-import Riff, { Release } from "@/plugins/riff/riff";
+import Riff from "@/plugins/riff/riff";
+import { Release } from "@/plugins/riff/types"
+
 import { élémentDeMembre } from '@constl/ipa/dist/reseau';
 import UserChip from '@/components/userChip.vue';
 import ReleaseDialog from '@/components/releaseDialog.vue';
