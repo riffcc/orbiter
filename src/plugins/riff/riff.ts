@@ -11,8 +11,6 @@ import {
     RELEASES_DB_TABLE_KEY, 
     TRUSTED_SITES_TABLE_KEY, 
     TRUSTED_SITES_MOD_DB_COL, 
-    MEMBER_ID_COL,
-    MEMBER_STATUS_COL,
     TRUSTED_SITES_NAME_COL,
     RELEASES_NAME_COLUMN,
     RELEASES_METADATA_COLUMN,
@@ -74,31 +72,6 @@ export default class Riff {
         const blockedCidsVariableId = this.variableIds?.blockedCidsVariableId || await this.constellation!.variables!.créerVariable({
             catégorie: "chaîne"
         })
-        
-        const memberIdVariableId = this.variableIds?.memberIdVariableId || await this.constellation!.variables!.créerVariable({
-            catégorie: "chaîne"
-        })
-        
-        const generateMemberStatusVar = async (): Promise<string> => {
-            const varId = await this.constellation!.variables!.créerVariable(
-                { catégorie: "catégorique"}
-            )
-            const règle: valid.règleValeurCatégorique = {
-                typeRègle: "valeurCatégorique",
-                détails: {
-                    type: "fixe",
-                    options: ["authorised", "blocked"]
-                }
-            }; 
-            await this.constellation!.variables!.ajouterRègleVariable({
-                idVariable: varId,
-                règle
-            })
-            
-            return varId
-        }
-
-        const memberStatusVariableId = this.variableIds?.memberStatusVariableId || await generateMemberStatusVar();
 
         const riffSwarmId = this.variableIds?.riffSwarmId || await this.constellation!.nuées!.créerNuée({});
 
@@ -143,19 +116,6 @@ export default class Riff {
                             }
                         ],
                         clef: BLOCKED_RELEASES_TABLE_KEY
-                    },
-                    {
-                        cols: [
-                            {
-                                idVariable: memberIdVariableId,
-                                idColonne: MEMBER_ID_COL
-                            },
-                            {
-                                idVariable: memberStatusVariableId,
-                                idColonne: MEMBER_STATUS_COL
-                            }
-                        ],
-                        clef: "member moderation"
                     }
                 ]
             }
@@ -165,8 +125,6 @@ export default class Riff {
             trustedSitesVariableId,
             trustedSitesNameVariableId,
             blockedCidsVariableId,
-            memberIdVariableId,
-            memberStatusVariableId,
             riffSwarmId,
             releasesCidVar,
             releasesAuthorVar,
