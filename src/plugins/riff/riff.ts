@@ -1,6 +1,7 @@
 import { EventEmitter, once } from "events";
 import ClientConstellation, { bds, réseau, valid } from "@constl/ipa";
 import type { élémentsBd } from "@constl/ipa/dist/utils";
+import { élémentDeMembre } from "@constl/ipa/dist/reseau";
 
 import { 
     BLOCKED_RELEASES_TABLE_KEY, 
@@ -255,17 +256,46 @@ export default class Riff {
     }
 
     async onReleasesChange({ f }: {f: (releases?: réseau.élémentDeMembre<Release>[]) => void}): Promise<offFunction> {
-        await this.ready();
         await this.modDbReady();
 
-        const { fOublier } = await this.constellation!.réseau!.suivreÉlémentsDeTableauxUniques({
+        const info: {
+            blockedCids?: string[];
+            entries?: élémentDeMembre<Release>[]
+        } = {};
+
+        const fFinal = async () => {
+            if (info.blockedCids && info.entries) {
+                // Filter out blocked cids
+                const finalEntries = info.entries.filter(e=>!info.blockedCids!.includes(e.élément.données.cid));
+                await f(finalEntries);
+            }
+        }
+
+        const forgetBlockedCids = await this.onBlockedReleasesChange({
+            f: async blockedCids => {
+                info.blockedCids = blockedCids;
+                await fFinal();
+            }
+        });
+
+        const { 
+            fOublier:  fForgetEntries 
+        } = await this.constellation!.réseau!.suivreÉlémentsDeTableauxUniques<Release>({
             idNuéeUnique: this.variableIds!.riffSwarmId,
             clef: RELEASES_DB_TABLE_KEY,
-            f,
+            f: async (entries) => {
+                info.entries = entries;
+                await fFinal();
+            },
             nBds: 100
-        })
+        });
         
-        return fOublier;
+        const fForget = async () => {
+            await fForgetEntries();
+            await forgetBlockedCids();
+        };
+
+        return fForget;
     }
 
     async onBlockedReleasesChange({ f }: {f: (releases?: string[]) => void}): Promise<offFunction> {
