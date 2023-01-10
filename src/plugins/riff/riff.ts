@@ -225,6 +225,11 @@ export default class Riff {
         return await this.constellation!.suivreIdBdCompte({ f })
     }
 
+    async getAccountId(): Promise<string> {
+        await this.ready();
+        return await this.constellation!.obtIdCompte();
+    }
+
     async onNameChange ({
         f,
         accountId,
@@ -233,11 +238,11 @@ export default class Riff {
         accountId?: string
     }): Promise<offFunction> {
         await this.ready();
-        if (accountId) {
-            return await this.constellation!.réseau!.suivreNomsMembre({ f, idCompte: accountId });
-        } else {
-            return await this.constellation!.profil!.suivreNoms({ f });
-        }
+
+        return await this.constellation!.réseau!.suivreNomsMembre({ 
+            f, 
+            idCompte: accountId || await this.getAccountId()
+        });
     }
 
     async onIsModChange({ f }: {f: (isMod: boolean) => void}): Promise<offFunction> {
