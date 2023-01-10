@@ -3,7 +3,8 @@
         <template v-slot:activator="{ props }">
           <v-list-item v-bind="props">
             <template v-slot:prepend>
-                <v-icon>mdi-file</v-icon>
+                <img v-if="thumbnailURL" :src="thumbnailURL" width="30"/>
+                <v-icon v-else>mdi-file</v-icon>
             </template>
             <v-list-item-title>
               {{ info.élément.données.contentName }}
@@ -49,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onMounted, onUnmounted, ref } from 'vue'
+import { computed, inject, onMounted, onUnmounted, ref, watchEffect } from 'vue'
 import Riff from "@/plugins/riff/riff";
 import { Release } from "@/plugins/riff/types"
 
@@ -68,8 +69,27 @@ const myAccountId = ref<string>();
 
 const myRelease = computed(()=>{
   return props.info.idBdCompte === myAccountId.value
-})
+});
 
+const thumbnailURL = ref<string>();
+watchEffect(async () => {
+  const { thumbnail } = props.info.élément.données
+  if (thumbnail) {
+    const image = await riff.constellation!.obtFichierSFIP({
+      id: thumbnail,
+      max: 1500 * 1000 // 1.5 MB,
+    });
+    if (image) {
+      thumbnailURL.value = URL.createObjectURL(
+        new Blob([image.buffer], { type: "image/png" })
+      );
+    } else {
+      thumbnailURL.value = undefined;
+    };
+  } else {
+      thumbnailURL.value = undefined;
+  };
+})
 
 async function removeRelease() {
   riff.removeRelease(props.info.élément.empreinte)

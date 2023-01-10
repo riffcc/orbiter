@@ -77,7 +77,6 @@ const tab = ref("account");
 
 
 const account = ref<string>();
-const names = ref<{ [language: string]: string; }>();
 const accountExists = ref<boolean>();
 const moderator = ref<boolean>();
 
@@ -85,27 +84,17 @@ const moderator = ref<boolean>();
 let forgetAccount: (()=>void) | undefined = undefined
 let forgetAccountExists: (()=>void) | undefined = undefined
 let forgetModerator: (()=>void) | undefined = undefined
-let forgetNames: (()=>void) | undefined = undefined
-let forgetBlockedCIDs: (()=>void) | undefined = undefined
-let forgetTrustedSites: (()=>void) | undefined = undefined
 
 onMounted(async () => {
     forgetAccount = await riff.onAccountChange({ f: a=>account.value = a })
     forgetAccountExists = await riff.onAccountExists({f: a => accountExists.value = a});
     forgetModerator = await riff.onIsModChange({f: isMod => moderator.value = isMod});
-
-    forgetNames = await riff.onNameChange({f: a=>names.value = a})
-    forgetBlockedCIDs = await riff.onBlockedReleasesChange({f: x=>blockedCIDs.value = x})
-    forgetTrustedSites = await riff.onTrustedSitesChange({f: x=>trustedSites.value = x})
 })
 
 onUnmounted(async () => {
     if (forgetAccount) await forgetAccount()
     if (forgetAccountExists) await forgetAccountExists()
     if (forgetModerator) await forgetModerator()
-    if (forgetNames) await forgetNames()
-    if (forgetBlockedCIDs) await forgetBlockedCIDs()
-    if (forgetTrustedSites) await forgetTrustedSites()
 })
 
 </script>

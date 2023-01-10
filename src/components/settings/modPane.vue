@@ -43,5 +43,25 @@
 </template>
 
 <script setup lang="ts">
+import { inject, ref, onMounted, onUnmounted } from 'vue'
 
+import Riff from '@/plugins/riff/riff';
+
+const riff: Riff = inject('riff')!;
+
+const blockedCIDs = ref<string[]>();
+const trustedSites = ref<string[]>();
+
+let forgetBlockedCIDs: (()=>void) | undefined = undefined
+let forgetTrustedSites: (()=>void) | undefined = undefined
+
+onMounted(async () => {
+    forgetBlockedCIDs = await riff.onBlockedReleasesChange({f: x=>blockedCIDs.value = x})
+    forgetTrustedSites = await riff.onTrustedSitesChange({f: x=>trustedSites.value = x})
+})
+
+onUnmounted(async () => {
+    if (forgetBlockedCIDs) await forgetBlockedCIDs()
+    if (forgetTrustedSites) await forgetTrustedSites()
+})
 </script>
