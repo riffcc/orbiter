@@ -67,7 +67,7 @@ const save = async () => {
 
     saving.value = true;
 
-    const cid: string = file.value ? await riff.constellation!.ajouterÀSFIP({
+    const cid: string = file.value?.length ? await riff.constellation!.ajouterÀSFIP({
         fichier: file.value![0]
     }) : existingFileCid.value as string;  // We know it exists if readyToSave was true
 
