@@ -37,9 +37,6 @@ const getVariableIds = (): VariableIds | undefined  => {
     VITE_TRUSTED_SITES_VAR_ID &&
     VITE_TRUSTED_SITES_NAME_VAR_ID &&
     VITE_BLOCKED_CIDS_VAR_ID &&
-    VITE_MEMBER_ID_VAR_ID &&
-    VITE_MEMBER_STATUS_VAR_ID && 
-    VITE_RIFF_SWARM_ID &&
     VITE_RELEASES_CID_VAR_ID &&
     VITE_RELEASES_AUTHOR_VAR_ID &&
     VITE_RELEASES_CONTENT_NAME_VAR_ID &&
@@ -50,10 +47,7 @@ const getVariableIds = (): VariableIds | undefined  => {
       trustedSitesVariableId: VITE_TRUSTED_SITES_VAR_ID,
       trustedSitesNameVariableId: VITE_TRUSTED_SITES_NAME_VAR_ID,
       blockedCidsVariableId: VITE_BLOCKED_CIDS_VAR_ID,
-      memberIdVariableId: VITE_MEMBER_ID_VAR_ID,
-      memberStatusVariableId: VITE_MEMBER_STATUS_VAR_ID,
       
-      riffSwarmId: VITE_RIFF_SWARM_ID,
 
       releasesCidVar: VITE_RELEASES_CID_VAR_ID,
       releasesAuthorVar: VITE_RELEASES_AUTHOR_VAR_ID,
