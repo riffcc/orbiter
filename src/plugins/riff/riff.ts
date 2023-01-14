@@ -19,6 +19,7 @@ RELEASES_TYPE_COLUMN,
 TRUSTED_SITES_SWARM_COL
 } from "./consts";
 import { BlockedCid, possiblyIncompleteVariableIds, Release, TrustedSite, variableIdKeys, VariableIds } from "./types";
+import { élémentDonnées } from "@constl/ipa/dist/valid";
 
 type offFunction = () => Promise<void>
 
@@ -395,13 +396,13 @@ export default class Riff {
         });
     }
 
-    async onTrustedSitesChange({ f }: {f: (sites?: TrustedSite[]) => void}): Promise<offFunction> {
+    async onTrustedSitesChange({ f }: {f: (sites?: élémentDonnées<TrustedSite>[]) => void}): Promise<offFunction> {
         await this.riffReady();
         
         return await this.constellation!.bds!.suivreDonnéesDeTableauParClef<TrustedSite>({
             idBd: this.modDbAddress!,
             clefTableau: TRUSTED_SITES_TABLE_KEY,
-            f: (data)=>f(data.map(d=>d.données))
+            f: (data)=>f(data)
         })
     }
 
@@ -471,17 +472,30 @@ export default class Riff {
         });
     }
     
-    async trustSite({ siteModDb, siteSwarm, siteName }: {siteModDb: string, siteSwarm: string, siteName: string}) {
+    async trustSite(site: TrustedSite) {
         await this.riffReady();
 
         await this.constellation!.bds!.ajouterÉlémentÀTableauParClef<TrustedSite>({
             idBd: this.modDbAddress!,
             clefTableau: TRUSTED_SITES_TABLE_KEY,
-            vals: {
-                [TRUSTED_SITES_MOD_DB_COL]: siteModDb,
-                [TRUSTED_SITES_SWARM_COL]: siteSwarm,
-                [TRUSTED_SITES_NAME_COL]: siteName,
-            }
+            vals: site
+        })
+    };
+
+    async editTrustedSite({
+        siteHash,
+        site
+    }: {
+        siteHash: string,
+        site: TrustedSite
+    }) {
+        await this.riffReady();
+
+        await this.constellation!.bds!.modifierÉlémentDeTableauParClef({
+            idBd: this.modDbAddress!,
+            clefTableau: TRUSTED_SITES_TABLE_KEY,
+            empreinteÉlément: siteHash,
+            vals: site,
         })
     }
 
