@@ -25,6 +25,7 @@
                 icon="mdi-download"
                 class="mx-2"
                 @click.stop
+                @click="downloadRelease"
               ></v-btn>
               <v-btn
                 v-if="myRelease"
@@ -57,8 +58,9 @@ import { Release } from "@/plugins/riff/types"
 import { élémentDeMembre } from '@constl/ipa/dist/reseau';
 import UserChip from '@/components/userChip.vue';
 import ReleaseDialog from '@/components/releaseDialog.vue';
+import { downloadFile } from '@/utils';
 
-const riff: Riff = inject('riff')!
+const riff: Riff = inject('riff')!;
 
 interface Props {
   info: élémentDeMembre<Release>
@@ -73,15 +75,16 @@ const myRelease = computed(()=>{
 
 const thumbnailURL = ref<string>();
 watchEffect(async () => {
-  const { thumbnail } = props.info.élément.données
+  const { thumbnail } = props.info.élément.données;
+
   if (thumbnail) {
     const image = await riff.constellation!.obtFichierSFIP({
-      id: thumbnail,
+      id: thumbnail.cid,
       max: 1500 * 1000 // 1.5 MB,
     });
     if (image) {
       thumbnailURL.value = URL.createObjectURL(
-        new Blob([image.buffer], { type: "image/png" })
+        new Blob([image.buffer], { type: `image/${thumbnail.ext}` })
       );
     } else {
       thumbnailURL.value = undefined;
@@ -92,11 +95,24 @@ watchEffect(async () => {
 })
 
 async function removeRelease() {
-  riff.removeRelease(props.info.élément.empreinte)
+  await riff.removeRelease(props.info.élément.empreinte)
+}
+
+async function downloadRelease() {
+  const { file, contentName } = props.info.élément.données
+
+  const releaseFile = await riff.constellation!.obtFichierSFIP({
+    id: file.cid
+  });
+  const filename = `${contentName}.${file.ext}`
+
+  if (releaseFile) {
+    downloadFile(filename, releaseFile)
+  }
 }
 
 async function blockRelease() {
-  riff.blockRelease(props.info.élément.données.cid)
+  await riff.blockRelease(props.info.élément.données.file.cid)
 }
 
 let forgetAccountId: (()=>Promise<void>)|undefined = undefined;
