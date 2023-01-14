@@ -18,7 +18,7 @@ import {
 RELEASES_TYPE_COLUMN,
 TRUSTED_SITES_SWARM_COL
 } from "./consts";
-import { possiblyIncompleteVariableIds, Release, variableIdKeys, VariableIds } from "./types";
+import { BlockedCid, possiblyIncompleteVariableIds, Release, TrustedSite, variableIdKeys, VariableIds } from "./types";
 
 type offFunction = () => Promise<void>
 
@@ -378,25 +378,30 @@ export default class Riff {
         return fForget;
     }
 
-    async onBlockedReleasesChange({ f }: {f: (releases?: string[]) => void}): Promise<offFunction> {
+    async onBlockedReleasesChange({ f }: {f: (releases?: {cid: string, hash: string}[]) => void}): Promise<offFunction> {
         await this.riffReady();
 
-        return await this.constellation!.bds!.suivreDonnéesDeTableauParClef({
+        return await this.constellation!.bds!.suivreDonnéesDeTableauParClef<BlockedCid>({
             idBd: this.modDbAddress!,
             clefTableau: BLOCKED_RELEASES_TABLE_KEY,
             f: async (releases) => {
-                await f(releases.map(r=>r.données[BLOCKED_RELEASE_CID_COL] as string))
+                await f(releases.map(r=>{
+                    return {
+                        cid: r.données[BLOCKED_RELEASE_CID_COL],
+                        hash: r.empreinte
+                    }
+                }))
             }
         });
     }
 
-    async onTrustedSitesChange({ f }: {f: (sites?: string[]) => void}): Promise<offFunction> {
+    async onTrustedSitesChange({ f }: {f: (sites?: TrustedSite[]) => void}): Promise<offFunction> {
         await this.riffReady();
         
-        return await this.constellation!.bds!.suivreDonnéesDeTableauParClef({
+        return await this.constellation!.bds!.suivreDonnéesDeTableauParClef<TrustedSite>({
             idBd: this.modDbAddress!,
             clefTableau: TRUSTED_SITES_TABLE_KEY,
-            f: (data)=>f(data.map(d=>d.données[TRUSTED_SITES_MOD_DB_COL]))
+            f: (data)=>f(data.map(d=>d.données))
         })
     }
 
@@ -466,13 +471,17 @@ export default class Riff {
         });
     }
     
-    async trustSite(siteModDb: string) {
+    async trustSite({ siteModDb, siteSwarm, siteName }: {siteModDb: string, siteSwarm: string, siteName: string}) {
         await this.riffReady();
 
-        await this.constellation!.bds!.ajouterÉlémentÀTableauParClef({
+        await this.constellation!.bds!.ajouterÉlémentÀTableauParClef<TrustedSite>({
             idBd: this.modDbAddress!,
             clefTableau: TRUSTED_SITES_TABLE_KEY,
-            vals: {[TRUSTED_SITES_MOD_DB_COL]: siteModDb}
+            vals: {
+                [TRUSTED_SITES_MOD_DB_COL]: siteModDb,
+                [TRUSTED_SITES_SWARM_COL]: siteSwarm,
+                [TRUSTED_SITES_NAME_COL]: siteName,
+            }
         })
     }
 
