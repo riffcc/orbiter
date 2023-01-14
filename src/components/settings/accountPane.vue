@@ -1,10 +1,46 @@
 <template>
     <div>
+        <h2>Account info</h2>
         <p>
-            My account ID: {{ account }}
-            Username: {{ names }}
-            <v-icon small @click="copyId">{{ idCopied ? 'mdi-check' : 'mdi-content-copy'}}</v-icon>
+            <v-chip label class="my-2 me-2">Username: {{ displayName }}</v-chip>
+            <v-chip label class="my-2 me-2">
+                Account ID: {{ account ? account.slice(9, 25) + "..." : "" }}
+                <v-icon 
+                    small 
+                    @click="()=>copyAccountId(account, accountIdCopied)"
+                >
+                    {{ accountIdCopied ? 'mdi-check' : 'mdi-content-copy' }}
+                </v-icon>
+            </v-chip>
+            
         </p>
+        <v-divider class="my-4"/>
+        <h2>Advanced</h2>
+        <p>
+            You are on the site <code>{{ siteDomainName }}</code>.
+            If you are the moderator of another Riff.CC site and wish to
+            add this site to your list of trusted sites, copy the information below:
+            <v-text-field 
+                class="my-2"
+                variant="outlined" 
+                readonly
+                 :append-inner-icon="modDbAddressCopied ? 'mdi-check' : 'mdi-content-copy'"
+                @click:appendInner="()=>copyModDbAddress(modDbAddress)"
+            >
+                Moderation DB: {{ modDbAddress ? modDbAddress.slice(0, 35) + "..." : ""  }}
+            </v-text-field>
+            <v-text-field 
+                class="my-2"
+                variant="outlined" 
+                readonly
+                 :append-inner-icon="riffSwarmIdCopied ? 'mdi-check' : 'mdi-content-copy'"
+                @click:appendInner="()=>copySwarmId(riffSwarmId)"
+            >
+                Swarm ID: {{ riffSwarmId ? riffSwarmId.slice(0, 40) + "..." : "" }}
+            </v-text-field>
+        </p>
+
+        <v-divider/>
 
         <v-btn color="error" class="my-6" text outlined @click="deleteAccount">
             Delete my account
@@ -13,26 +49,47 @@
 </template>
 
 <script setup lang="ts">
-import { inject, onMounted, onUnmounted, ref } from 'vue';
+import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
 import Riff from '@/plugins/riff/riff';
+import { selectTranslation, copyText } from '@/utils';
 
 const riff: Riff = inject('riff')!;
 
-const account = ref<string>();
 const names = ref<{[language: string]: string}>();
 
-const idCopied = ref(false);
+const account = ref<string>();
+const accountIdCopied = ref(false);
+const copyAccountId = async () => {
+    await copyText(account.value);
+    accountIdCopied.value = true;
+}
+
+const displayName = computed(()=>{
+    return selectTranslation(names.value) || 'Anonymous'
+});
+
+const siteDomainName = computed(()=>{
+    return document.location.hostname
+});
+
+const modDbAddressCopied = ref(false);
+const modDbAddress = ref<string>();
+const copyModDbAddress = async () => {
+    await copyText(modDbAddress.value)
+    modDbAddressCopied.value = true;
+};
+
+const riffSwarmIdCopied = ref(false);
+const riffSwarmId = ref<string>();
+const copySwarmId = async () => {
+    await copyText(riffSwarmId.value)
+    riffSwarmIdCopied.value = true;
+}
 
 async function deleteAccount() {
     await riff.deleteAccount();
-}
-
-async function copyId() {
-    if (!account.value) return
-    await navigator.clipboard.writeText(account.value);
-    idCopied.value = true;
-}
+};
 
 let forgetAccount: (()=>void) | undefined = undefined;
 let forgetNames: (()=>void) | undefined = undefined;
@@ -40,6 +97,11 @@ let forgetNames: (()=>void) | undefined = undefined;
 onMounted(async () => {
     forgetAccount = await riff.onAccountChange({ f: a=>account.value = a })
     forgetNames = await riff.onNameChange({ f: n => names.value = n});
+    
+    // These don't need to be dynamically followed, just noted once ready
+    await riff.riffReady();
+    modDbAddress.value = riff.modDbAddress
+    riffSwarmId.value = riff.riffSwarmId
 });
 
 onUnmounted(async () => {
