@@ -1,24 +1,19 @@
 <template>
     <div>
         <h2>Trusted sites</h2>
-        <v-list>
-            <v-list-item>
-                <v-list-item-title>
-                    <v-text-field 
-                        v-model="newSite"
-                        class="mt-2" label="Trust site" variant="outlined"
-                        append-icon="mdi-check"
-                        @click:append="()=>newSite && trustSite(newSite)" @keyup.enter="()=>newSite && trustSite(newSite)"
-                    />
-                </v-list-item-title>
-            </v-list-item>
-            <v-list-item v-for="site in trustedSites">
-                <v-list-item-title>{{ site }}</v-list-item-title>
-                <template v-slot:append>
-                    <v-btn text @click="()=>untrustSite(site)">Untrust</v-btn>
+        <div class="my-2 text-center">
+            <TrustSiteDialog>
+                <template v-slot:activator="{ props }">
+                    <v-btn v-bind="props" color="primary">Add trusted site</v-btn>
                 </template>
-            </v-list-item>
+            </TrustSiteDialog>
+        </div>
+        
+        <v-list>
+            <TrustedSiteListItem v-for="site in trustedSites" :key="site.empreinte" :site="site.données" />
         </v-list>
+
+        <v-divider class="my-2"/>
 
         <h2>Blocked CIDs</h2>
         <v-list>
@@ -46,23 +41,27 @@
 import { inject, ref, onMounted, onUnmounted } from 'vue'
 
 import Riff from '@/plugins/riff/riff';
-import { TrustedSite } from '@/plugins/riff/types';
+import { BlockedCid, TrustedSite } from '@/plugins/riff/types';
+import { élémentDonnées } from '@constl/ipa/dist/valid';
+
+import TrustSiteDialog from './trustedSites/trustSiteDialog.vue';
+import TrustedSiteListItem from './trustedSites/trustedSite.vue';
 
 const riff: Riff = inject('riff')!;
 
-const blockedCIDs = ref<string[]>();
-const trustedSites = ref<TrustedSite[]>();
+const blockedCIDs = ref<BlockedCid[]>();
+const toBlock = ref<string>();
+
+const trustedSites = ref<élémentDonnées<TrustedSite>[]>();
 
 const blockRelease = async (cid: string) => {
     await riff.blockRelease(cid);
+    toBlock.value = undefined;
 };
 const unblockRelease = async (cid: string) => {
     await riff.unblockRelease(cid);
 }
 
-const trustSite = async ({ siteModDb, siteSwarm, siteName }: {siteModDb: string, siteSwarm: string, siteName: string}) => {
-    await riff.trustSite({ siteModDb, siteSwarm, siteName })
-}
 const untrustSite = async (siteHash: string) => {
     await riff.untrustSite(siteHash)
 }

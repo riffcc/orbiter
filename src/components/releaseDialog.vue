@@ -46,7 +46,7 @@ const props = defineProps({
         type: Boolean,
         default: true
     }
-})
+});
 
 // Allow same component to be used for both creating and editing releases
 const newRelease = computed(()=>!props.release);
@@ -110,7 +110,7 @@ const save = async () => {
     
     saving.value = false;
     clearDialog();
-}
+};
 
 const clearDialog = () => {
     dialog.value = false;
