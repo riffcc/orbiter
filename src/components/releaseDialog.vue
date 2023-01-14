@@ -67,19 +67,25 @@ const save = async () => {
 
     saving.value = true;
 
-    const cid: string = file.value?.length ? await riff.constellation!.ajouterÀSFIP({
-        fichier: file.value![0]
-    }) : existingFileCid.value as string;  // We know it exists if readyToSave was true
+    const fileEntry = file.value?.length ? {
+        cid: await riff.constellation!.ajouterÀSFIP({
+            fichier: file.value![0]
+        }),
+        ext: file.value![0].name.split(".").pop()!,
+    } : existingContentFile.value as { cid: string, ext: string };  // We know it exists if readyToSave was true
 
     // If not specified, use existing CID if available (only relevant on editing existing release).
-    const thumbnailCID = thumbnail.value?.length ? await riff.constellation!.ajouterÀSFIP({
-        fichier: thumbnail.value[0]
-    }) : existingThumbnailCid.value
+    const thumbnailEntry = thumbnail.value?.length ? { 
+        cid: await riff.constellation!.ajouterÀSFIP({
+            fichier: thumbnail.value[0]
+        }), 
+        ext: thumbnail.value[0].name.split(".").pop()!
+    } : existingThumbnailFile.value
 
     if (newRelease.value) {
         await riff.addRelease({
-            cid,
-            thumbnail: thumbnailCID,
+            file: fileEntry,
+            thumbnail: thumbnailEntry,
             contentName: releaseName.value!,
             metadata: metadata?.value,
             author: author.value!
@@ -88,8 +94,8 @@ const save = async () => {
         await riff.editRelease({
             releaseHash: props.release!.élément.empreinte, 
             release: {
-                cid,
-                thumbnail: thumbnailCID,
+                file: fileEntry,
+                thumbnail: thumbnailEntry,
                 contentName: releaseName.value!,
                 metadata: metadata?.value,
                 author: author.value!
@@ -105,13 +111,13 @@ const clearDialog = () => {
     dialog.value = false;
 }
 
-const existingThumbnailCid = ref<string>();
-const existingFileCid = ref<string>();
+const existingThumbnailFile = ref<{cid: string, ext: string}>();
+const existingContentFile = ref<{cid: string, ext: string}>();
 
 watchEffect(()=>author.value = props.release?.élément.données.author);
 watchEffect(()=>metadata.value = props.release?.élément.données.metadata);
 watchEffect(()=>releaseName.value = props.release?.élément.données.contentName);
-watchEffect(()=>existingFileCid.value = props.release?.élément.données.cid);
-watchEffect(()=>existingThumbnailCid.value = props.release?.élément.données.thumbnail);
+watchEffect(()=>existingContentFile.value = props.release?.élément.données.file);
+watchEffect(()=>existingThumbnailFile.value = props.release?.élément.données.thumbnail);
 
 </script>

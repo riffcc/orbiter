@@ -52,6 +52,7 @@
 import { ref, inject, onMounted, onUnmounted, computed } from "vue"
 import Riff from '@/plugins/riff/riff';
 import { VariableIds } from "@/plugins/riff/types";
+import { downloadFile } from "@/utils";
 
 const riff: Riff = inject('riff')!
 
@@ -60,6 +61,7 @@ const modDbMissing = computed(() => !modDbAddress.value)
 
 const generatingDb = ref<boolean>(false);
 const generatedModDbAddress = ref<string>();
+const generatedRiffSwarmId = ref<string>();
 const generatedVariableIds = ref<VariableIds>();
 
 const generatingEnvFile = ref<boolean>(false);
@@ -67,36 +69,23 @@ const generatingEnvFile = ref<boolean>(false);
 const generateDb = async () => {
     generatingDb.value = true;
 
-    const { modDbId, variableIds } = await riff.generateModDb();
+    const { modDbId, riffSwarmId, variableIds } = await riff.generateModDb();
 
     generatedModDbAddress.value = modDbId;
     generatedVariableIds.value = variableIds;
+    generatedRiffSwarmId.value = riffSwarmId;
 
     generatingDb.value = false;
 }
 
-function download(filename: string, text: string) {
-  var element = document.createElement('a');
-  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-  element.setAttribute('download', filename);
-
-  element.style.display = 'none';
-  document.body.appendChild(element);
-
-  element.click();
-
-  document.body.removeChild(element);
-}
-
 const envFileText = computed(() => {
-    const trustedSitesVar = "VITE_TRUSTED_SITES_VAR_ID=" + generatedVariableIds.value?.trustedSitesVariableId;
+    const trustedSitesModDbVar = "VITE_TRUSTED_SITES_MOD_DB_VAR_ID=" + generatedVariableIds.value?.trustedSitesModDbVariableId;
+    const trustedSitesSwarmVar = "VITE_TRUSTED_SITES_SWARM_VAR_ID=" + generatedVariableIds.value?.trustedSitesSwarmVariableId;
     const trustedSitesNameVar = "VITE_TRUSTED_SITES_NAME_VAR_ID=" + generatedVariableIds.value?.trustedSitesNameVariableId;
     const blockedCidsVar = "VITE_BLOCKED_CIDS_VAR_ID=" + generatedVariableIds.value?.blockedCidsVariableId;
-    const memberIdVar = "VITE_MEMBER_ID_VAR_ID=" + generatedVariableIds.value?.memberIdVariableId;
-    const memberStatusVar = "VITE_MEMBER_STATUS_VAR_ID=" + generatedVariableIds.value?.memberStatusVariableId;
 
-    const riffSwarmId = "VITE_RIFF_SWARM_ID=" + generatedVariableIds.value?.riffSwarmId;
-    const releasesCidVar = "VITE_RELEASES_CID_VAR_ID=" + generatedVariableIds.value?.releasesCidVar;
+    const riffSwarmId = "VITE_RIFF_SWARM_ID=" + generatedRiffSwarmId.value;
+    const releasesFileVar = "VITE_RELEASES_FILE_VAR_ID=" + generatedVariableIds.value?.releasesFileVar;
     const releasesAuthorVar = "VITE_RELEASES_AUTHOR_VAR_ID=" + generatedVariableIds.value?.releasesAuthorVar;
     const releasesContentNameVar = "VITE_RELEASES_CONTENT_NAME_VAR_ID=" + generatedVariableIds.value?.releasesContentNameVar;
     const releasesMetadataVar = "VITE_RELEASES_METADATA_VAR_ID=" + generatedVariableIds.value?.releasesMetadataVar;
@@ -107,13 +96,13 @@ const envFileText = computed(() => {
     return  "# The address below should be regenerated for each Riff.CC site. If you are setting up an independent site, erase the value below and run the site in development mode (`pnpm dev`) to automatically regenerate. \n" +
         modDBAddress + "\n" + 
         riffSwarmId + "\n" + "\n" +
+        
         "# These should ideally stay the same for all Riff.CC sites for optimal performance. Only change if you know what you are doing.\n" +
-        trustedSitesVar + "\n" +
+        trustedSitesModDbVar + "\n" +
+        trustedSitesSwarmVar + "\n" +
         trustedSitesNameVar + "\n" +
         blockedCidsVar + "\n" +
-        memberIdVar + "\n" +
-        memberStatusVar + "\n" +
-        releasesCidVar + "\n" +
+        releasesFileVar + "\n" +
         releasesAuthorVar + "\n" +
         releasesContentNameVar + "\n" +
         releasesMetadataVar + "\n" +
@@ -125,16 +114,20 @@ const downloadEnvFile = async () => {
     generatingEnvFile.value = true;
     
     const contents = await envFileText.value;
-    download(".env", contents);
+    downloadFile(".env", contents);
 
     generatingEnvFile.value = false;
 }
 
 const acceptNewModDb = async () => {
-    if (!generatedModDbAddress.value || !generatedVariableIds.value) {
+    if (!generatedModDbAddress.value || !generatedVariableIds.value || !generatedRiffSwarmId.value) {
         throw new Error("Mod DB and variables not generated.")
     }
-    riff.setModDb({ modDbId: generatedModDbAddress.value, variableIds: generatedVariableIds.value });
+    riff.setModDb({ 
+        modDbId: generatedModDbAddress.value, 
+        riffSwarmId: generatedRiffSwarmId.value, 
+        variableIds: generatedVariableIds.value
+    });
 }
 
 let forgetModDbAddress: (()=>void) | undefined = undefined

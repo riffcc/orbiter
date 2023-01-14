@@ -1,7 +1,6 @@
-import { importateur } from "@constl/ipa";
 import { App } from "vue"
 import RiffApp from "./riff"
-import { VariableIds } from "./types";
+import { possiblyIncompleteVariableIds, VariableIds } from "./types";
 
 export default {
   install: (app: App) => {
@@ -18,44 +17,36 @@ export default {
   }
 }
 
-const getVariableIds = (): VariableIds | undefined  => {
+const getVariableIds = (): VariableIds  => {
   const {
-    VITE_TRUSTED_SITES_VAR_ID,
+    VITE_TRUSTED_SITES_MOD_DB_VAR_ID,
+    VITE_TRUSTED_SITES_SWARM_VAR_ID,
     VITE_TRUSTED_SITES_NAME_VAR_ID,
     VITE_BLOCKED_CIDS_VAR_ID,
-    VITE_MEMBER_ID_VAR_ID,
-    VITE_MEMBER_STATUS_VAR_ID,
-    VITE_RIFF_SWARM_ID,
-    VITE_RELEASES_CID_VAR_ID,
+    VITE_RELEASES_FILE_VAR_ID,
+    VITE_RELEASES_TYPE_VAR_ID,
     VITE_RELEASES_AUTHOR_VAR_ID,
     VITE_RELEASES_CONTENT_NAME_VAR_ID,
     VITE_RELEASES_METADATA_VAR_ID,
     VITE_RELEASES_THUMBNAIL_VAR_ID,
   } = import.meta.env;
   
-  if (
-    VITE_TRUSTED_SITES_VAR_ID &&
-    VITE_TRUSTED_SITES_NAME_VAR_ID &&
-    VITE_BLOCKED_CIDS_VAR_ID &&
-    VITE_RELEASES_CID_VAR_ID &&
-    VITE_RELEASES_AUTHOR_VAR_ID &&
-    VITE_RELEASES_CONTENT_NAME_VAR_ID &&
-    VITE_RELEASES_METADATA_VAR_ID &&
-    VITE_RELEASES_THUMBNAIL_VAR_ID
-  ) {
-    const variableIds: VariableIds = {
-      trustedSitesVariableId: VITE_TRUSTED_SITES_VAR_ID,
-      trustedSitesNameVariableId: VITE_TRUSTED_SITES_NAME_VAR_ID,
-      blockedCidsVariableId: VITE_BLOCKED_CIDS_VAR_ID,
-      
+  const variableIds: possiblyIncompleteVariableIds = {
+    trustedSitesModDbVariableId: VITE_TRUSTED_SITES_MOD_DB_VAR_ID,
+    trustedSitesSwarmVariableId: VITE_TRUSTED_SITES_SWARM_VAR_ID,
+    trustedSitesNameVariableId: VITE_TRUSTED_SITES_NAME_VAR_ID,
+    blockedCidsVariableId: VITE_BLOCKED_CIDS_VAR_ID,
+    
 
-      releasesCidVar: VITE_RELEASES_CID_VAR_ID,
-      releasesAuthorVar: VITE_RELEASES_AUTHOR_VAR_ID,
-      releasesContentNameVar: VITE_RELEASES_CONTENT_NAME_VAR_ID,
-      releasesMetadataVar: VITE_RELEASES_METADATA_VAR_ID,
-      releasesThumbnailVar: VITE_RELEASES_THUMBNAIL_VAR_ID,
-    }
-    return variableIds
-  }
+    releasesFileVar: VITE_RELEASES_FILE_VAR_ID,
+    releasesTypeVar: VITE_RELEASES_TYPE_VAR_ID,
+    releasesAuthorVar: VITE_RELEASES_AUTHOR_VAR_ID,
+    releasesContentNameVar: VITE_RELEASES_CONTENT_NAME_VAR_ID,
+    releasesMetadataVar: VITE_RELEASES_METADATA_VAR_ID,
+    releasesThumbnailVar: VITE_RELEASES_THUMBNAIL_VAR_ID,
+  };
+
+
+  return variableIds
 
 }
