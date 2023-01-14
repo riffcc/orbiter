@@ -96,7 +96,7 @@ import initiateAccount from '@/components/initiateAccount.vue';
 const riff: Riff = inject('riff')!
 
 const riffReady = ref<boolean>(false);
-riff.ready().then(()=>riffReady.value = true)
+riff.riffReady().then(()=>riffReady.value = true)
 
 const accountExists = ref<boolean>();
 

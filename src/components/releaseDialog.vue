@@ -11,6 +11,7 @@
             <v-card-title>{{ newRelease ? "New release" : "Edit release" }}</v-card-title>
             <v-card-text>
                 <v-file-input v-model="file" variant="outlined" label="Content file"></v-file-input>
+                <v-select v-model="releaseType" :items="Riff.contentTypes"></v-select>
                 <v-file-input v-model="thumbnail" accept="image/*" variant="outlined" label="File icon (optional)"></v-file-input>
                 <v-text-field v-model="releaseName" variant="outlined" label="Release name" hint="The name of the content"></v-text-field>
                 <v-text-field v-model="metadata" variant="outlined" label="Description" hint=""></v-text-field>
@@ -33,6 +34,7 @@ import { élémentDeMembre } from '@constl/ipa/dist/reseau';
 
 import Riff from '@/plugins/riff/riff';
 import { Release } from "@/plugins/riff/types"
+import { RELEASES_AUTHOR_COLUMN, RELEASES_FILE_COLUMN, RELEASES_METADATA_COLUMN, RELEASES_NAME_COLUMN, RELEASES_THUMBNAIL_COLUMN, RELEASES_TYPE_COLUMN } from '@/plugins/riff/consts';
 
 const riff = inject<Riff>("riff")!;
 
@@ -50,13 +52,14 @@ const props = defineProps({
 const newRelease = computed(()=>!props.release);
 
 const readyToSave = computed(()=>{
-    return !!((file.value || existingFileCid.value) && author.value && releaseName.value)
+    return !!((file.value || existingFileCid.value) && author.value && releaseName.value && releaseType.value)
 })
 
 const dialog = ref(false);
 const saving = ref(false);
 
 const file = ref<File[]>();
+const releaseType = ref<string>();
 const thumbnail = ref<File[]>();
 const author = ref<string>();
 const releaseName = ref<string>();
@@ -84,11 +87,12 @@ const save = async () => {
 
     if (newRelease.value) {
         await riff.addRelease({
-            file: fileEntry,
-            thumbnail: thumbnailEntry,
-            contentName: releaseName.value!,
-            metadata: metadata?.value,
-            author: author.value!
+            [RELEASES_FILE_COLUMN]: fileEntry,
+            [RELEASES_TYPE_COLUMN]: releaseType.value,
+            [RELEASES_THUMBNAIL_COLUMN]: thumbnailEntry,
+            [RELEASES_NAME_COLUMN]: releaseName.value!,
+            [RELEASES_METADATA_COLUMN]: metadata?.value,
+            [RELEASES_AUTHOR_COLUMN]: author.value!
         });
     } else {
         await riff.editRelease({

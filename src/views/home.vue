@@ -20,7 +20,7 @@ const riffReady = ref<boolean>(false);
 const accountExists = ref<boolean>();
 const enterAnonymously = ref(false);
 
-riff.ready().then(()=>riffReady.value = true)
+riff.riffReady().then(()=>riffReady.value = true)
 
 let forgetAccountExists: (()=>void) | undefined = undefined;
 

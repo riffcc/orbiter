@@ -15,8 +15,10 @@
                 <v-textarea 
                 class="mt-4"
                 :value="envFileText" 
+                :append-inner-icon="textCopied ? 'mdi-check' : 'mdi-content-copy'"
                 readonly
                 variant="outlined"
+                @click:appendInner="copyGeneratedEnvFile"
                 />
             </v-card-text>
             <v-card-actions v-if="!generatedModDbAddress">
@@ -117,6 +119,14 @@ const downloadEnvFile = async () => {
     downloadFile(".env", contents);
 
     generatingEnvFile.value = false;
+}
+
+const textCopied = ref(false);
+const copyGeneratedEnvFile = async () => {
+    if (navigator.clipboard) {
+        await navigator.clipboard.writeText(envFileText.value);
+    }
+    textCopied.value = true;
 }
 
 const acceptNewModDb = async () => {
