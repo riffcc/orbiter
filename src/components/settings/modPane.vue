@@ -32,10 +32,10 @@
                     />
                 </v-list-item-title>
             </v-list-item>
-            <v-list-item v-for="cid in blockedCIDs">
-                <v-list-item-title>{{ cid }}</v-list-item-title>
+            <v-list-item v-for="b in blockedCIDs">
+                <v-list-item-title>{{ b.cid }}</v-list-item-title>
                 <template v-slot:append>
-                    <v-btn text @click="()=>unblockRelease(cid)">Unblock</v-btn>
+                    <v-btn text @click="()=>unblockRelease(b.hash)">Unblock</v-btn>
                 </template>
             </v-list-item>
         </v-list>
@@ -46,11 +46,26 @@
 import { inject, ref, onMounted, onUnmounted } from 'vue'
 
 import Riff from '@/plugins/riff/riff';
+import { TrustedSite } from '@/plugins/riff/types';
 
 const riff: Riff = inject('riff')!;
 
 const blockedCIDs = ref<string[]>();
-const trustedSites = ref<string[]>();
+const trustedSites = ref<TrustedSite[]>();
+
+const blockRelease = async (cid: string) => {
+    await riff.blockRelease(cid);
+};
+const unblockRelease = async (cid: string) => {
+    await riff.unblockRelease(cid);
+}
+
+const trustSite = async ({ siteModDb, siteSwarm, siteName }: {siteModDb: string, siteSwarm: string, siteName: string}) => {
+    await riff.trustSite({ siteModDb, siteSwarm, siteName })
+}
+const untrustSite = async (siteHash: string) => {
+    await riff.untrustSite(siteHash)
+}
 
 let forgetBlockedCIDs: (()=>void) | undefined = undefined
 let forgetTrustedSites: (()=>void) | undefined = undefined
@@ -63,5 +78,6 @@ onMounted(async () => {
 onUnmounted(async () => {
     if (forgetBlockedCIDs) await forgetBlockedCIDs()
     if (forgetTrustedSites) await forgetTrustedSites()
-})
+});
+
 </script>
