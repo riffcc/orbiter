@@ -435,7 +435,7 @@ export default class Riff {
         return await this.constellation!.bds!.suivreDonnéesDeTableauParClef<TrustedSite>({
             idBd: this.modDbAddress!,
             clefTableau: TRUSTED_SITES_TABLE_KEY,
-            f: (data)=>f(data)
+            f
         })
     }
 
