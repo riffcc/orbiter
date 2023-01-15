@@ -72,7 +72,6 @@ export default class Riff {
     }
 
     checkVariableIdsComplete(ids: possiblyIncompleteVariableIds) {
-        console.log({ids, complete: variableIdKeys.every(k=>Object.keys(ids).includes(k) && ids[k])})
         return variableIdKeys.every(k=>Object.keys(ids).includes(k) && ids[k])
     }
 
@@ -193,7 +192,7 @@ export default class Riff {
                                 idColonne: TRUSTED_SITES_NAME_COL
                             }
                         ],
-                        clef: "trusted sites"
+                        clef: TRUSTED_SITES_TABLE_KEY
                     },
                     {
                         cols: [
@@ -243,14 +242,6 @@ export default class Riff {
         releasesContentNameVar: string;
         releasesMetadataVar: string
     }): bds.schémaSpécificationBd {
-        console.log({
-            releasesFileVar, 
-            releasesTypeVar, 
-            releasesThumbnailVar, 
-            releasesAuthorVar, 
-            releasesContentNameVar,
-            releasesMetadataVar
-        })
         return {
             licence: "ODbl-1_0",
             tableaux: [
