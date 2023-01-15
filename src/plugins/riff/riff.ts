@@ -373,6 +373,8 @@ export default class Riff {
     }
 
     async onReleasesChange({ f }: {f: (releases?: réseau.élémentDeMembre<Release>[]) => void}): Promise<offFunction> {
+        await this.riffReady();
+
         type SiteInfo = {
             blockedCids?: string[];
             entries?: élémentDeMembre<Release>[];
@@ -384,6 +386,7 @@ export default class Riff {
         let lock = new Lock();
 
         const fFinal = async () => {
+            console.log({siteInfos})
             const blockedCids = Object.values(siteInfos).map(s=>s.blockedCids || []).flat()
             const releases = Object.values(siteInfos).map(s=>s.entries || []).flat().filter(
                 r=>!blockedCids.includes(r.élément.données.file.cid)
@@ -392,30 +395,35 @@ export default class Riff {
         }
 
         const fFollowTrustedSites = async (sites?: valid.élémentDonnées<TrustedSite>[]) => {
-            const sitesList = sites || [];
+            const sitesList = (sites || []).map(s=>s.données);
+            sitesList.push({
+                [TRUSTED_SITES_MOD_DB_COL]: this.modDbAddress!,
+                [TRUSTED_SITES_SWARM_COL]: this.riffSwarmId!,
+                [TRUSTED_SITES_NAME_COL]: "Me !"
+            })
 
             await lock.acquire();
             if (cancelled) return;
 
-            const newSites = sitesList.filter(s=>!Object.keys(siteInfos).includes(s.données.siteName));
-            const obsoleteSites = Object.keys(siteInfos).filter(s=>!sitesList.some(x=>x.données.siteName === s))
+            const newSites = sitesList.filter(s=>!Object.keys(siteInfos).includes(s.siteName));
+            const obsoleteSites = Object.keys(siteInfos).filter(s=>!sitesList.some(x=>x.siteName === s))
             
             for (const site of newSites) {
-                const { siteName } = site.données;
+                const { siteName } = site;
                 siteInfos[siteName] = {};
                 const forgetSiteBlockedCids = await this.onBlockedReleasesChange({
                     f: async (cids) => {
                         siteInfos[siteName].blockedCids = cids?.map(c=>c.cid);
                         await fFinal();
                     },
-                    modDbAddress: site.données.siteModDbAddress
+                    modDbAddress: site.siteModDbAddress
                 });
                 const forgetSiteReleases = await this.onSiteReleasesChange({
                     f: async (entries) => {
                         siteInfos[siteName].entries = entries;
                         await fFinal();
                     },
-                    swarmId: site.données.siteSwarmId
+                    swarmId: site.siteSwarmId
                 });
                 siteInfos[siteName].fForget = async () => {
                     await Promise.all([forgetSiteBlockedCids(), forgetSiteReleases()])
@@ -426,9 +434,9 @@ export default class Riff {
                 const { fForget } = siteInfos[site];
                 if (fForget) await fForget();
                 delete siteInfos[site];
-                await fFinal();
-            }
-            
+            };
+
+            await fFinal();
             lock.release();
         }
 

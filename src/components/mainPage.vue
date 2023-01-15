@@ -31,7 +31,6 @@ import ReleaseDialog from "@/components/releaseDialog.vue";
 import { ref, inject, onMounted, onUnmounted, computed } from 'vue'
 import { élémentDeMembre } from "@constl/ipa/dist/reseau";
 
-
 const riff = inject('riff') as Riff;
 
 const accountInitialised = ref<boolean|undefined>(undefined);
