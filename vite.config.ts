@@ -17,7 +17,8 @@ export default defineConfig({
     rollupOptions: {
       plugins: [
         rollupNodePolyFill()
-      ]
+      ],
+      external: ["chokidar"],
     },
   },
   optimizeDeps: {
