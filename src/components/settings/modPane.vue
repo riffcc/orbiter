@@ -10,7 +10,7 @@
         </div>
         
         <v-list>
-            <TrustedSiteListItem v-for="site in trustedSites" :key="site.empreinte" :site="site.données" />
+            <TrustedSiteListItem v-for="site in trustedSites" :key="site.empreinte" :hash="site.empreinte" :site="site.données" />
         </v-list>
 
         <v-divider class="my-2"/>
@@ -49,7 +49,7 @@ import TrustedSiteListItem from './trustedSites/trustedSite.vue';
 
 const riff: Riff = inject('riff')!;
 
-const blockedCIDs = ref<BlockedCid[]>();
+const blockedCIDs = ref<{cid: string, hash: string}[]>();
 const toBlock = ref<string>();
 
 const trustedSites = ref<élémentDonnées<TrustedSite>[]>();
@@ -60,10 +60,6 @@ const blockRelease = async (cid: string) => {
 };
 const unblockRelease = async (cid: string) => {
     await riff.unblockRelease(cid);
-}
-
-const untrustSite = async (siteHash: string) => {
-    await riff.untrustSite(siteHash)
 }
 
 let forgetBlockedCIDs: (()=>void) | undefined = undefined

@@ -26,7 +26,6 @@ type offFunction = () => Promise<void>
 export default class Riff {
     modDbAddress?: string;
     riffSwarmId?: string;
-    releasesDbFormat?: bds.schémaSpécificationBd;
 
     initialVariableIds: possiblyIncompleteVariableIds;
     variableIds?: VariableIds;
@@ -73,7 +72,8 @@ export default class Riff {
     }
 
     checkVariableIdsComplete(ids: possiblyIncompleteVariableIds) {
-        return variableIdKeys.every(k=>Object.keys(ids).includes(k))
+        console.log({ids, complete: variableIdKeys.every(k=>Object.keys(ids).includes(k) && ids[k])})
+        return variableIdKeys.every(k=>Object.keys(ids).includes(k) && ids[k])
     }
 
     async constellationReady() {
@@ -93,38 +93,38 @@ export default class Riff {
         await this.constellationReady();
 
         // Variables for moderation database
-        const trustedSitesModDbVariableId = this.variableIds?.trustedSitesModDbVariableId || await this.constellation!.variables!.créerVariable(
+        const trustedSitesModDbVariableId = this.initialVariableIds.trustedSitesModDbVariableId || await this.constellation!.variables!.créerVariable(
             { catégorie: "chaîne"}
         )
-        const trustedSitesSwarmVariableId = this.variableIds?.trustedSitesSwarmVariableId || await this.constellation!.variables!.créerVariable(
+        const trustedSitesSwarmVariableId = this.initialVariableIds.trustedSitesSwarmVariableId || await this.constellation!.variables!.créerVariable(
             { catégorie: "chaîne"}
         )
-        const trustedSitesNameVariableId = this.variableIds?.trustedSitesNameVariableId || await this.constellation!.variables!.créerVariable(
+        const trustedSitesNameVariableId = this.initialVariableIds.trustedSitesNameVariableId || await this.constellation!.variables!.créerVariable(
             { catégorie : "chaîne" }
         )
-        const blockedCidsVariableId = this.variableIds?.blockedCidsVariableId || await this.constellation!.variables!.créerVariable({
+        const blockedCidsVariableId = this.initialVariableIds.blockedCidsVariableId || await this.constellation!.variables!.créerVariable({
             catégorie: "chaîne"
         })
 
         // Variables for individual releases databases
-        const releasesFileVar = this.variableIds?.releasesFileVar || await this.constellation!.variables!.créerVariable({
+        const releasesFileVar = this.initialVariableIds.releasesFileVar || await this.constellation!.variables!.créerVariable({
             catégorie: "fichier"
         })
-        const releasesThumbnailVar = this.variableIds?.releasesThumbnailVar || await this.constellation!.variables!.créerVariable({
+        const releasesThumbnailVar = this.initialVariableIds.releasesThumbnailVar || await this.constellation!.variables!.créerVariable({
             catégorie: "fichier"
         })
-        const releasesAuthorVar = this.variableIds?.releasesAuthorVar || await this.constellation!.variables!.créerVariable({
+        const releasesAuthorVar = this.initialVariableIds.releasesAuthorVar || await this.constellation!.variables!.créerVariable({
             catégorie: "chaîne"
         })
-        const releasesMetadataVar = this.variableIds?.releasesMetadataVar || await this.constellation!.variables!.créerVariable({
+        const releasesMetadataVar = this.initialVariableIds.releasesMetadataVar || await this.constellation!.variables!.créerVariable({
             catégorie: "chaîne"
         })
 
         // The release type variable is a bit more complicated, because we need to specify
         // allowed categories to enforce.
         let releasesTypeVar: string
-        if (this.variableIds?.releasesTypeVar) {
-            releasesTypeVar = this.variableIds?.releasesTypeVar;
+        if (this.initialVariableIds.releasesTypeVar) {
+            releasesTypeVar = this.initialVariableIds.releasesTypeVar;
         } else {
             releasesTypeVar = await this.constellation!.variables!.créerVariable({
                 catégorie: "catégorique"
@@ -141,47 +141,15 @@ export default class Riff {
                 }
             })
         }
-        const releasesContentNameVar = this.variableIds?.releasesContentNameVar || await this.constellation!.variables!.créerVariable({
+        const releasesContentNameVar = this.initialVariableIds.releasesContentNameVar || await this.constellation!.variables!.créerVariable({
             catégorie: "chaîne"
         })
 
         // Now we can specify the format for individual release dbs
         // Todo: for consistency, should this be set here or in setModDb()?
-        this.releasesDbFormat = {
-            licence: "ODbl-1_0",
-            tableaux: [
-                {
-                    cols: [
-                        {
-                            idVariable: releasesFileVar,
-                            idColonne: RELEASES_FILE_COLUMN,
-                        },
-                        {
-                            idVariable: releasesTypeVar,
-                            idColonne: RELEASES_TYPE_COLUMN,
-                        },
-                        {
-                            idVariable: releasesThumbnailVar,
-                            idColonne: RELEASES_THUMBNAIL_COLUMN,
-                        },
-                        {
-                            idVariable: releasesAuthorVar,
-                            idColonne: RELEASES_AUTHOR_COLUMN,
-                        },
-                        {
-                            idVariable: releasesContentNameVar,
-                            idColonne: RELEASES_NAME_COLUMN,
-                        },
-                        {
-                            idVariable: releasesMetadataVar,
-                            idColonne: RELEASES_METADATA_COLUMN
-                        }
-                        
-                    ],
-                    clef: RELEASES_DB_TABLE_KEY
-                }
-            ]
-        };
+        const releasesDbFormat = this.getReleasesDbFormat({
+            releasesFileVar, releasesTypeVar, releasesThumbnailVar, releasesAuthorVar, releasesContentNameVar, releasesMetadataVar
+        });
 
         // Swarm ID for site
         let riffSwarmId: string;
@@ -189,7 +157,7 @@ export default class Riff {
             riffSwarmId = this.riffSwarmId
         } else {
             riffSwarmId = await this.constellation!.nuées!.créerNuée({});
-            for (const table of this.releasesDbFormat.tableaux) {
+            for (const table of releasesDbFormat.tableaux) {
                 const tableKey = table.clef;
                 const idTableau = await this.constellation!.nuées!.ajouterTableauNuée({
                     idNuée: riffSwarmId,
@@ -260,6 +228,66 @@ export default class Riff {
         }
     }
 
+    getReleasesDbFormat({
+        releasesFileVar, 
+        releasesTypeVar, 
+        releasesThumbnailVar, 
+        releasesAuthorVar, 
+        releasesContentNameVar,
+        releasesMetadataVar
+    }: {
+        releasesFileVar: string; 
+        releasesTypeVar: string; 
+        releasesThumbnailVar: string; 
+        releasesAuthorVar: string; 
+        releasesContentNameVar: string;
+        releasesMetadataVar: string
+    }): bds.schémaSpécificationBd {
+        console.log({
+            releasesFileVar, 
+            releasesTypeVar, 
+            releasesThumbnailVar, 
+            releasesAuthorVar, 
+            releasesContentNameVar,
+            releasesMetadataVar
+        })
+        return {
+            licence: "ODbl-1_0",
+            tableaux: [
+                {
+                    cols: [
+                        {
+                            idVariable: releasesFileVar,
+                            idColonne: RELEASES_FILE_COLUMN,
+                        },
+                        {
+                            idVariable: releasesTypeVar,
+                            idColonne: RELEASES_TYPE_COLUMN,
+                        },
+                        {
+                            idVariable: releasesThumbnailVar,
+                            idColonne: RELEASES_THUMBNAIL_COLUMN,
+                        },
+                        {
+                            idVariable: releasesAuthorVar,
+                            idColonne: RELEASES_AUTHOR_COLUMN,
+                        },
+                        {
+                            idVariable: releasesContentNameVar,
+                            idColonne: RELEASES_NAME_COLUMN,
+                        },
+                        {
+                            idVariable: releasesMetadataVar,
+                            idColonne: RELEASES_METADATA_COLUMN
+                        }
+                        
+                    ],
+                    clef: RELEASES_DB_TABLE_KEY
+                }
+            ]
+        };
+    }
+
     setModDb({ modDbId, riffSwarmId, variableIds }: {modDbId: string, riffSwarmId: string; variableIds: VariableIds}) {
         if (this.modDbAddress) throw new Error(
             "Cannot change moderation DB address after Riff initialisation. Sorry."
@@ -268,24 +296,38 @@ export default class Riff {
         this.modDbAddress = modDbId;
         this.riffSwarmId = riffSwarmId;
         this.variableIds = variableIds;
-        this.events.emit("mod db changed")
+        this.events.emit("site configured");
     }
 
-    async onModDbSet({ f }: {f: (id?: string) => void}): Promise<offFunction> {
-        const fFollow = () => f(this.modDbAddress);
-        if (this.modDbAddress) fFollow();
+    async siteConfigured(): Promise<void> {
+        if (
+            this.modDbAddress && 
+            this.riffSwarmId && 
+            this.variableIds && 
+            this.checkVariableIdsComplete(this.variableIds)
+        ) return;
+        await once(this.events, "site configured");
+    }
 
-        this.events.on("mod db changed", fFollow);
+    async isSiteConfigured({ f }: { f: (x: boolean) => void }): Promise<offFunction> {
+        await this.constellationReady();
+        const configured = () => {
+            return !!(this.modDbAddress && 
+                this.riffSwarmId && 
+                this.variableIds && 
+                this.checkVariableIdsComplete(this.variableIds))
+        }
+        f(configured());
+        const fFinal = ()=>f(configured())
+        this.events.on("site configured", fFinal);
         return async () => {
-            this.events.off("mod db changed", fFollow)
-        };        
+            this.events.off("site configured", fFinal);
+        }
     }
 
     async riffReady(): Promise<void> {
         await this.constellationReady();
-
-        if (this.modDbAddress && this.riffSwarmId) return;
-        await once(this.events, "mod db changed");
+        await this.siteConfigured();
     }
 
     async onAccountExists({
@@ -354,7 +396,7 @@ export default class Riff {
 
         const forgetBlockedCids = await this.onBlockedReleasesChange({
             f: async blockedCids => {
-                info.blockedCids = blockedCids;
+                if (blockedCids) info.blockedCids = blockedCids.map(x => x.cid);
                 await fFinal();
             }
         });
@@ -422,7 +464,7 @@ export default class Riff {
         }
 
         await this.constellation!.bds!.ajouterÉlémentÀTableauUnique({
-            schémaBd: await this.releasesDbFormat!,
+            schémaBd: this.getReleasesDbFormat(this.variableIds!),
             idNuéeUnique: this.riffSwarmId!,
             clefTableau: RELEASES_DB_TABLE_KEY,
             vals
@@ -433,7 +475,7 @@ export default class Riff {
         await this.riffReady();
 
         await this.constellation!.bds!.effacerÉlémentDeTableauUnique({
-            schémaBd: await this.releasesDbFormat!,
+            schémaBd: this.getReleasesDbFormat(this.variableIds!),
             idNuéeUnique: this.riffSwarmId!,
             clefTableau: RELEASES_DB_TABLE_KEY,
             empreinte: releaseHash
@@ -445,7 +487,7 @@ export default class Riff {
 
         return await this.constellation!.bds!.modifierÉlémentDeTableauUnique({
             vals: release,
-            schémaBd: await this.releasesDbFormat!,
+            schémaBd: this.getReleasesDbFormat(this.variableIds!),
             idNuéeUnique: this.riffSwarmId!,
             clefTableau: RELEASES_DB_TABLE_KEY,
             empreintePrécédente: releaseHash,

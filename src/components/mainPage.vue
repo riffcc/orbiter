@@ -12,10 +12,10 @@
             </template>
         </ReleaseDialog>
     </v-list>
-    <v-list v-if="!!releasesToShow && releasesToShow.length" class="text-start">
-        <release v-for="r in releasesToShow" :key="r.élément.données.CID" :info="r"/>
+    <v-list v-if="!!releases && releases.length" class="text-start">
+        <release v-for="r in releases" :key="r.élément.données.file.cid" :info="r"/>
     </v-list>
-    <h3 class="text-center mt-4" v-if="!!releasesToShow && releasesToShow.length===0">
+    <h3 class="text-center mt-4" v-if="!!releases && releases.length===0">
         No releases found
     </h3>
     
@@ -36,28 +36,22 @@ const riff = inject('riff') as Riff;
 
 const accountInitialised = ref<boolean|undefined>(undefined);
 const account = ref<string>();
-const allReleases = ref<élémentDeMembre<ReleaseInfo>[]>();
-const blockedCIDs = ref<string[]>();
-
-const releasesToShow = computed(() => allReleases.value?.filter(r=>blockedCIDs.value && !blockedCIDs.value.includes(r.élément.données.CID)))
+const releases = ref<élémentDeMembre<ReleaseInfo>[]>();
 
 let forgetAccountExists: (() => void) | undefined = undefined
 let forgetAccount: (() => void) | undefined = undefined
 let forgetReleases: (() => void) | undefined = undefined
-let forgetBlockedCIDs: (() => void) | undefined = undefined
 
 onMounted(async () => {
   forgetAccountExists = await riff.onAccountExists({f: a=>accountInitialised.value = a})
   forgetAccount = await riff.onAccountChange({f: a=>account.value = a})
-  forgetReleases = await riff.onReleasesChange({f: rs=>allReleases.value = rs})
-  forgetBlockedCIDs = await riff.onBlockedReleasesChange({f: x=>blockedCIDs.value = x})
+  forgetReleases = await riff.onReleasesChange({f: rs=>releases.value = rs})
 })
 
 onUnmounted(async () => {
   if (forgetAccountExists) await forgetAccountExists()
   if (forgetAccount) await forgetAccount()
   if (forgetReleases) await forgetReleases()
-  if (forgetBlockedCIDs) await forgetBlockedCIDs()
 })
 
 </script>

@@ -12,13 +12,11 @@
             <v-list-item-subtitle>
               {{ info.élément.données.metadata }}
             </v-list-item-subtitle>
-            <v-list-item-content>
               <div class="my-2">
                 <UserChip :accountId="info.idBdCompte" />
-                <v-chip class="mx-2" label @click.stop>CID: {{info.élément.données.cid}}</v-chip>
+                <v-chip class="mx-2" label @click.stop>CID: {{info.élément.données.file.cid}}</v-chip>
                 <v-chip class="mx-2" label @click.stop>Author: {{info.élément.données.author || "Anonymous"}}</v-chip>
               </div>
-            </v-list-item-content>
             
             <template v-slot:append>
               <v-btn

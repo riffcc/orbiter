@@ -1,6 +1,6 @@
 <template>
     <v-dialog
-        v-model="modDbMissing" persistent
+        v-model="siteNotConfigured" persistent
         max-width="800"
     >
         <v-card>
@@ -58,8 +58,8 @@ import { downloadFile } from "@/utils";
 
 const riff: Riff = inject('riff')!
 
-const modDbAddress = ref<string>();
-const modDbMissing = computed(() => !modDbAddress.value)
+const siteConfigured = ref<boolean>();
+const siteNotConfigured = computed(() => siteConfigured.value === false);
 
 const generatingDb = ref<boolean>(false);
 const generatedModDbAddress = ref<string>();
@@ -88,6 +88,7 @@ const envFileText = computed(() => {
 
     const riffSwarmId = "VITE_RIFF_SWARM_ID=" + generatedRiffSwarmId.value;
     const releasesFileVar = "VITE_RELEASES_FILE_VAR_ID=" + generatedVariableIds.value?.releasesFileVar;
+    const releasesTypeVar = "VITE_RELEASES_TYPE_VAR_ID=" + generatedVariableIds.value?.releasesTypeVar;
     const releasesAuthorVar = "VITE_RELEASES_AUTHOR_VAR_ID=" + generatedVariableIds.value?.releasesAuthorVar;
     const releasesContentNameVar = "VITE_RELEASES_CONTENT_NAME_VAR_ID=" + generatedVariableIds.value?.releasesContentNameVar;
     const releasesMetadataVar = "VITE_RELEASES_METADATA_VAR_ID=" + generatedVariableIds.value?.releasesMetadataVar;
@@ -105,6 +106,7 @@ const envFileText = computed(() => {
         trustedSitesNameVar + "\n" +
         blockedCidsVar + "\n" +
         releasesFileVar + "\n" +
+        releasesTypeVar + "\n" +
         releasesAuthorVar + "\n" +
         releasesContentNameVar + "\n" +
         releasesMetadataVar + "\n" +
@@ -140,14 +142,14 @@ const acceptNewModDb = async () => {
     });
 }
 
-let forgetModDbAddress: (()=>void) | undefined = undefined
+let forgetSiteConfigured: (()=>void) | undefined = undefined
 
 onMounted(async () => {
-    forgetModDbAddress = await riff.onModDbSet({f: id => {modDbAddress.value = id}});
+    forgetSiteConfigured = await riff.isSiteConfigured({f: configured => {siteConfigured.value = configured}});
 })
 
 onUnmounted(async () => {
-    if (forgetModDbAddress) await forgetModDbAddress();
+    if (forgetSiteConfigured) await forgetSiteConfigured();
 })
 
 </script>

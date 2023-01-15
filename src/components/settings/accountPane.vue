@@ -7,7 +7,7 @@
                 Account ID: {{ account ? account.slice(9, 25) + "..." : "" }}
                 <v-icon 
                     small 
-                    @click="()=>copyAccountId(account, accountIdCopied)"
+                    @click="()=>copyAccountId()"
                 >
                     {{ accountIdCopied ? 'mdi-check' : 'mdi-content-copy' }}
                 </v-icon>
@@ -25,7 +25,7 @@
                 variant="outlined" 
                 readonly
                  :append-inner-icon="modDbAddressCopied ? 'mdi-check' : 'mdi-content-copy'"
-                @click:appendInner="()=>copyModDbAddress(modDbAddress)"
+                @click:appendInner="()=>copyModDbAddress()"
             >
                 Moderation DB: {{ modDbAddress ? modDbAddress.slice(0, 35) + "..." : ""  }}
             </v-text-field>
@@ -34,7 +34,7 @@
                 variant="outlined" 
                 readonly
                  :append-inner-icon="riffSwarmIdCopied ? 'mdi-check' : 'mdi-content-copy'"
-                @click:appendInner="()=>copySwarmId(riffSwarmId)"
+                @click:appendInner="()=>copySwarmId()"
             >
                 Swarm ID: {{ riffSwarmId ? riffSwarmId.slice(0, 40) + "..." : "" }}
             </v-text-field>
