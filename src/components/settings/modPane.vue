@@ -10,7 +10,7 @@
         </div>
         
         <v-list>
-            <TrustedSiteListItem v-for="site in trustedSites" :key="site.empreinte" :hash="site.empreinte" :site="site.données" />
+            <TrustedSiteListItem v-for="site in trustedSites" :key="site.empreinte" :site="site" />
         </v-list>
 
         <v-divider class="my-2"/>
@@ -41,7 +41,7 @@
 import { inject, ref, onMounted, onUnmounted } from 'vue'
 
 import Riff from '@/plugins/riff/riff';
-import { BlockedCid, TrustedSite } from '@/plugins/riff/types';
+import { TrustedSite } from '@/plugins/riff/types';
 import { élémentDonnées } from '@constl/ipa/dist/valid';
 
 import TrustSiteDialog from './trustedSites/trustSiteDialog.vue';

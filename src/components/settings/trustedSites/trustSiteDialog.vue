@@ -27,13 +27,17 @@
 import { computed, inject, ref, watchEffect } from 'vue';
 
 import { TrustedSite } from '@/plugins/riff/types';
-import { élémentDeMembre } from '@constl/ipa/dist/reseau';
 import Riff from '@/plugins/riff/riff';
-import { TRUSTED_SITES_MOD_DB_COL, TRUSTED_SITES_NAME_COL, TRUSTED_SITES_SWARM_COL } from '@/plugins/riff/consts';
+import { 
+    TRUSTED_SITES_MOD_DB_COL, 
+    TRUSTED_SITES_NAME_COL, 
+    TRUSTED_SITES_SWARM_COL 
+} from '@/plugins/riff/consts';
+import { élémentDonnées } from '@constl/ipa/dist/valid';
 
 const riff = inject<Riff>("riff")!;
 
-const props = defineProps<{site?: élémentDeMembre<TrustedSite>}>();
+const props = defineProps<{site?: élémentDonnées<TrustedSite>}>();
 
 const dialog = ref(false);
 const saving = ref(false);
@@ -64,7 +68,7 @@ const save = async () => {
         await riff.trustSite(siteInfo);
     } else {
         await riff.editTrustedSite({
-            siteHash: props.site!.élément.empreinte, 
+            siteHash: props.site!.empreinte, 
             site: siteInfo
         })
     }
@@ -83,8 +87,8 @@ const clearDialog = () => {
     saving.value = false;
 };
 
-watchEffect(()=>siteName.value = props.site?.élément.données.siteName);
-watchEffect(()=>modDbAddress.value = props.site?.élément.données.siteModDbAddress);
-watchEffect(()=>swarmId.value = props.site?.élément.données.siteSwarmId);
+watchEffect(()=>siteName.value = props.site?.données.siteName);
+watchEffect(()=>modDbAddress.value = props.site?.données.siteModDbAddress);
+watchEffect(()=>swarmId.value = props.site?.données.siteSwarmId);
 
 </script>

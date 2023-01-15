@@ -1,4 +1,7 @@
 import { EventEmitter, once } from "events";
+
+import { Lock } from 'semaphore-async-await';
+
 import ClientConstellation, { bds, réseau, valid } from "@constl/ipa";
 import type { élémentsBd } from "@constl/ipa/dist/utils";
 import { élémentDeMembre } from "@constl/ipa/dist/reseau";
@@ -370,6 +373,75 @@ export default class Riff {
     }
 
     async onReleasesChange({ f }: {f: (releases?: réseau.élémentDeMembre<Release>[]) => void}): Promise<offFunction> {
+        type SiteInfo = {
+            blockedCids?: string[];
+            entries?: élémentDeMembre<Release>[];
+            fForget?: offFunction;
+        }
+        const siteInfos: { [site: string]: SiteInfo } = {};
+
+        let cancelled = false;
+        let lock = new Lock();
+
+        const fFinal = async () => {
+            const blockedCids = Object.values(siteInfos).map(s=>s.blockedCids || []).flat()
+            const releases = Object.values(siteInfos).map(s=>s.entries || []).flat().filter(
+                r=>!blockedCids.includes(r.élément.données.file.cid)
+            )
+            await f(releases);
+        }
+
+        const fFollowTrustedSites = async (sites?: valid.élémentDonnées<TrustedSite>[]) => {
+            const sitesList = sites || [];
+
+            await lock.acquire();
+            if (cancelled) return;
+
+            const newSites = sitesList.filter(s=>!Object.keys(siteInfos).includes(s.données.siteName));
+            const obsoleteSites = Object.keys(siteInfos).filter(s=>!sitesList.some(x=>x.données.siteName === s))
+            
+            for (const site of newSites) {
+                const { siteName } = site.données;
+                siteInfos[siteName] = {};
+                const forgetSiteBlockedCids = await this.onBlockedReleasesChange({
+                    f: async (cids) => {
+                        siteInfos[siteName].blockedCids = cids?.map(c=>c.cid);
+                        await fFinal();
+                    },
+                    modDbAddress: site.données.siteModDbAddress
+                });
+                const forgetSiteReleases = await this.onSiteReleasesChange({
+                    f: async (entries) => {
+                        siteInfos[siteName].entries = entries;
+                        await fFinal();
+                    },
+                    swarmId: site.données.siteSwarmId
+                });
+                siteInfos[siteName].fForget = async () => {
+                    await Promise.all([forgetSiteBlockedCids(), forgetSiteReleases()])
+                }
+                await fFinal();
+            }
+            for (const site of obsoleteSites) {
+                const { fForget } = siteInfos[site];
+                if (fForget) await fForget();
+                delete siteInfos[site];
+                await fFinal();
+            }
+            
+            lock.release();
+        }
+
+        const forgetTrustedSites = await this.onTrustedSitesChange({ f: fFollowTrustedSites })
+        const fForget = async () => {
+            cancelled=true;
+            await forgetTrustedSites();
+            await Promise.all(Object.values(siteInfos).map(s=>s.fForget ? s.fForget() : Promise.resolve()))
+        }
+        return fForget
+    }
+
+    async onSiteReleasesChange({ f, swarmId }: {f: (releases?: réseau.élémentDeMembre<Release>[]) => void, swarmId?: string}): Promise<offFunction> {
         await this.riffReady();
 
         const info: {
@@ -395,7 +467,7 @@ export default class Riff {
         const { 
             fOublier:  fForgetEntries 
         } = await this.constellation!.réseau!.suivreÉlémentsDeTableauxUniques<Release>({
-            idNuéeUnique: this.riffSwarmId!,
+            idNuéeUnique: swarmId || this.riffSwarmId!,
             clef: RELEASES_DB_TABLE_KEY,
             f: async (entries) => {
                 info.entries = entries;
@@ -412,11 +484,11 @@ export default class Riff {
         return fForget;
     }
 
-    async onBlockedReleasesChange({ f }: {f: (releases?: {cid: string, hash: string}[]) => void}): Promise<offFunction> {
+    async onBlockedReleasesChange({ f, modDbAddress }: {f: (releases?: {cid: string, hash: string}[]) => void, modDbAddress?: string}): Promise<offFunction> {
         await this.riffReady();
 
         return await this.constellation!.bds!.suivreDonnéesDeTableauParClef<BlockedCid>({
-            idBd: this.modDbAddress!,
+            idBd: modDbAddress || this.modDbAddress!,
             clefTableau: BLOCKED_RELEASES_TABLE_KEY,
             f: async (releases) => {
                 await f(releases.map(r=>{
