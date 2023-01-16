@@ -1,45 +1,38 @@
+[![Contributors](https://img.shields.io/opencollective/all/riffcc?style=flat-square)](https://opencollective.com/riffcc)
+
 # Riff.CC "Orbiter"
-The OrbitDB prototype for Riff.CC.
+A proof-of-concept version of Riff.CC, implemented using OrbitDB, Constellation, IPFS and other tools. Funding provided via [OpenCollective](https://opencollective.com/riffcc).
 
-## Project setup
+## Getting started
+* Install dependencies:
 
 ```
-# yarn
 yarn
-
-# npm
-npm install
-
-# pnpm
-pnpm install
 ```
 
-### Compiles and hot-reloads for development
+* Run the application in development mode (with hot reloading)
 
 ```
-# yarn
 yarn dev
-
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
 ```
 
-### Compiles and minifies for production
+* Visit the application in your browser, generate a moderation database, copy the parameters the application gives you, and copy them to `./.env.local`
+
+* Stop and re-run the application to apply the new moderation database.
+
+## Deploying to production
+
+Compile and minify the application:
 
 ```
-# yarn
 yarn build
-
-# npm
-npm run build
-
-# pnpm
-pnpm build
 ```
 
-### Customize configuration
+Then deploy the bundle of HTML/CSS/JS that is produced.
+
+## Customize configuration
 
 See [Configuration Reference](https://vitejs.dev/config/).
+
+## Credits
+Authored by [@julienmalard](https://github.com/julienmalard), [@Zorlin](https://github.com/Zorlin), and the Riff.CC Project.
