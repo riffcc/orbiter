@@ -1,4 +1,5 @@
-# default
+# Riff.CC "Orbiter"
+The OrbitDB prototype for Riff.CC.
 
 ## Project setup
 
