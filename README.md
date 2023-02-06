@@ -36,3 +36,9 @@ See [Configuration Reference](https://vitejs.dev/config/).
 
 ## Credits
 Authored by [@julienmalard](https://github.com/julienmalard), [@Zorlin](https://github.com/Zorlin), and the Riff.CC Project.
+
+
+## Sponsors
+Thank you to our sponsors, who have generously provided funding for the development of the Riff.CC Project:
+
+* [Money Every 3 Days](http://moneyevery3days.com/)
