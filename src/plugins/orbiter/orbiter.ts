@@ -26,9 +26,9 @@ import { élémentDonnées } from "@constl/ipa/dist/valid";
 
 type offFunction = () => Promise<void>
 
-export default class Riff {
+export default class Orbiter {
     modDbAddress?: string;
-    riffSwarmId?: string;
+    orbiterSwarmId?: string;
 
     initialVariableIds: possiblyIncompleteVariableIds;
     variableIds?: VariableIds;
@@ -49,17 +49,17 @@ export default class Riff {
 
     constructor ({
         modDbAddress,
-        riffSwarmId,
+        orbiterSwarmId,
         variableIds,
     }: {
         modDbAddress?: string;
-        riffSwarmId?: string;
+        orbiterSwarmId?: string;
         variableIds: possiblyIncompleteVariableIds
     }) {
         this.events = new EventEmitter();
         
         this.modDbAddress = modDbAddress;
-        this.riffSwarmId = riffSwarmId;
+        this.orbiterSwarmId = orbiterSwarmId;
         this.initialVariableIds = variableIds;
 
         if (this.checkVariableIdsComplete(variableIds)) {
@@ -90,7 +90,7 @@ export default class Riff {
         }
     }
 
-    async generateModDb(): Promise<{ modDbId: string, riffSwarmId: string, variableIds: VariableIds}> {
+    async generateModDb(): Promise<{ modDbId: string, orbiterSwarmId: string, variableIds: VariableIds}> {
         
         await this.constellationReady();
 
@@ -154,15 +154,15 @@ export default class Riff {
         });
 
         // Swarm ID for site
-        let riffSwarmId: string;
-        if (this.riffSwarmId) {
-            riffSwarmId = this.riffSwarmId
+        let orbiterSwarmId: string;
+        if (this.orbiterSwarmId) {
+            orbiterSwarmId = this.orbiterSwarmId
         } else {
-            riffSwarmId = await this.constellation!.nuées!.créerNuée({});
+            orbiterSwarmId = await this.constellation!.nuées!.créerNuée({});
             for (const table of releasesDbFormat.tableaux) {
                 const tableKey = table.clef;
                 const idTableau = await this.constellation!.nuées!.ajouterTableauNuée({
-                    idNuée: riffSwarmId,
+                    idNuée: orbiterSwarmId,
                     clefTableau: tableKey
                 });
                 for (const col of table.cols) {
@@ -225,7 +225,7 @@ export default class Riff {
 
         return {
             modDbId,
-            riffSwarmId,
+            orbiterSwarmId,
             variableIds
         }
     }
@@ -282,13 +282,13 @@ export default class Riff {
         };
     }
 
-    setModDb({ modDbId, riffSwarmId, variableIds }: {modDbId: string, riffSwarmId: string; variableIds: VariableIds}) {
+    setModDb({ modDbId, orbiterSwarmId, variableIds }: {modDbId: string, orbiterSwarmId: string; variableIds: VariableIds}) {
         if (this.modDbAddress) throw new Error(
-            "Cannot change moderation DB address after Riff initialisation. Sorry."
+            "Cannot change moderation DB address after Orbiter initialisation. Sorry."
             );
 
         this.modDbAddress = modDbId;
-        this.riffSwarmId = riffSwarmId;
+        this.orbiterSwarmId = orbiterSwarmId;
         this.variableIds = variableIds;
         this.events.emit("site configured");
     }
@@ -296,7 +296,7 @@ export default class Riff {
     async siteConfigured(): Promise<void> {
         if (
             this.modDbAddress && 
-            this.riffSwarmId && 
+            this.orbiterSwarmId && 
             this.variableIds && 
             this.checkVariableIdsComplete(this.variableIds)
         ) return;
@@ -307,7 +307,7 @@ export default class Riff {
         await this.constellationReady();
         const configured = () => {
             return !!(this.modDbAddress && 
-                this.riffSwarmId && 
+                this.orbiterSwarmId && 
                 this.variableIds && 
                 this.checkVariableIdsComplete(this.variableIds))
         }
@@ -319,7 +319,7 @@ export default class Riff {
         }
     }
 
-    async riffReady(): Promise<void> {
+    async orbiterReady(): Promise<void> {
         await this.constellationReady();
         await this.siteConfigured();
     }
@@ -364,7 +364,7 @@ export default class Riff {
     }
 
     async onIsModChange({ f }: {f: (isMod: boolean) => void}): Promise<offFunction> {
-        await this.riffReady();
+        await this.orbiterReady();
 
         return await this.constellation!.suivrePermissionÉcrire({
             id: this.modDbAddress!,
@@ -373,7 +373,7 @@ export default class Riff {
     }
 
     async onReleasesChange({ f }: {f: (releases?: réseau.élémentDeMembre<Release>[]) => void}): Promise<offFunction> {
-        await this.riffReady();
+        await this.orbiterReady();
 
         type SiteInfo = {
             blockedCids?: string[];
@@ -398,7 +398,7 @@ export default class Riff {
             const sitesList = (sites || []).map(s=>s.données);
             sitesList.push({
                 [TRUSTED_SITES_MOD_DB_COL]: this.modDbAddress!,
-                [TRUSTED_SITES_SWARM_COL]: this.riffSwarmId!,
+                [TRUSTED_SITES_SWARM_COL]: this.orbiterSwarmId!,
                 [TRUSTED_SITES_NAME_COL]: "Me !"
             })
 
@@ -450,7 +450,7 @@ export default class Riff {
     }
 
     async onSiteReleasesChange({ f, swarmId }: {f: (releases?: réseau.élémentDeMembre<Release>[]) => void, swarmId?: string}): Promise<offFunction> {
-        await this.riffReady();
+        await this.orbiterReady();
 
         const info: {
             blockedCids?: string[];
@@ -475,7 +475,7 @@ export default class Riff {
         const { 
             fOublier:  fForgetEntries 
         } = await this.constellation!.réseau!.suivreÉlémentsDeTableauxUniques<Release>({
-            idNuéeUnique: swarmId || this.riffSwarmId!,
+            idNuéeUnique: swarmId || this.orbiterSwarmId!,
             clef: RELEASES_DB_TABLE_KEY,
             f: async (entries) => {
                 info.entries = entries;
@@ -493,7 +493,7 @@ export default class Riff {
     }
 
     async onBlockedReleasesChange({ f, modDbAddress }: {f: (releases?: {cid: string, hash: string}[]) => void, modDbAddress?: string}): Promise<offFunction> {
-        await this.riffReady();
+        await this.orbiterReady();
 
         return await this.constellation!.bds!.suivreDonnéesDeTableauParClef<BlockedCid>({
             idBd: modDbAddress || this.modDbAddress!,
@@ -510,7 +510,7 @@ export default class Riff {
     }
 
     async onTrustedSitesChange({ f }: {f: (sites?: élémentDonnées<TrustedSite>[]) => void}): Promise<offFunction> {
-        await this.riffReady();
+        await this.orbiterReady();
         
         return await this.constellation!.bds!.suivreDonnéesDeTableauParClef<TrustedSite>({
             idBd: this.modDbAddress!,
@@ -520,7 +520,7 @@ export default class Riff {
     }
 
     async addRelease(r: Release) {
-        await this.riffReady();
+        await this.orbiterReady();
 
         const vals: {[key: string]: élémentsBd} = {
             [RELEASES_FILE_COLUMN]: r.file,
@@ -536,37 +536,37 @@ export default class Riff {
 
         await this.constellation!.bds!.ajouterÉlémentÀTableauUnique({
             schémaBd: this.getReleasesDbFormat(this.variableIds!),
-            idNuéeUnique: this.riffSwarmId!,
+            idNuéeUnique: this.orbiterSwarmId!,
             clefTableau: RELEASES_DB_TABLE_KEY,
             vals
         });
     }
 
     async removeRelease(releaseHash: string) {
-        await this.riffReady();
+        await this.orbiterReady();
 
         await this.constellation!.bds!.effacerÉlémentDeTableauUnique({
             schémaBd: this.getReleasesDbFormat(this.variableIds!),
-            idNuéeUnique: this.riffSwarmId!,
+            idNuéeUnique: this.orbiterSwarmId!,
             clefTableau: RELEASES_DB_TABLE_KEY,
             empreinte: releaseHash
         });
     }
 
     async editRelease({ release, releaseHash }: { release: Release; releaseHash: string }): Promise<string> {
-        await this.riffReady();
+        await this.orbiterReady();
 
         return await this.constellation!.bds!.modifierÉlémentDeTableauUnique({
             vals: release,
             schémaBd: this.getReleasesDbFormat(this.variableIds!),
-            idNuéeUnique: this.riffSwarmId!,
+            idNuéeUnique: this.orbiterSwarmId!,
             clefTableau: RELEASES_DB_TABLE_KEY,
             empreintePrécédente: releaseHash,
         })
     }
 
     async blockRelease(cid: string) {
-        await this.riffReady();
+        await this.orbiterReady();
 
         await this.constellation!.bds!.ajouterÉlémentÀTableauParClef({
             idBd: this.modDbAddress!,
@@ -576,7 +576,7 @@ export default class Riff {
     }
 
     async unblockRelease(releaseHash: string) {
-        await this.riffReady();
+        await this.orbiterReady();
 
         await this.constellation!.bds!.effacerÉlémentDeTableauParClef({
             idBd: this.modDbAddress!,
@@ -586,7 +586,7 @@ export default class Riff {
     }
     
     async trustSite(site: TrustedSite) {
-        await this.riffReady();
+        await this.orbiterReady();
 
         await this.constellation!.bds!.ajouterÉlémentÀTableauParClef<TrustedSite>({
             idBd: this.modDbAddress!,
@@ -602,7 +602,7 @@ export default class Riff {
         siteHash: string,
         site: TrustedSite
     }) {
-        await this.riffReady();
+        await this.orbiterReady();
 
         await this.constellation!.bds!.modifierÉlémentDeTableauParClef({
             idBd: this.modDbAddress!,
@@ -613,7 +613,7 @@ export default class Riff {
     }
 
     async untrustSite(siteHash: string) {
-        await this.riffReady();
+        await this.orbiterReady();
         await this.constellation!.bds!.effacerÉlémentDeTableauParClef({
             idBd: this.modDbAddress!,
             clefTableau: TRUSTED_SITES_TABLE_KEY,

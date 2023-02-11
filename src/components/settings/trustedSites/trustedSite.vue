@@ -24,17 +24,17 @@ import { inject } from 'vue';
 
 import TrustSiteDialog from './trustSiteDialog.vue';
 
-import Riff from '@/plugins/riff/riff';
-import { TrustedSite } from '@/plugins/riff/types';
+import Orbiter from '@/plugins/orbiter/orbiter';
+import { TrustedSite } from '@/plugins/orbiter/types';
 import { élémentDonnées } from '@constl/ipa/dist/valid';
 
 
 const props = defineProps<{site: élémentDonnées<TrustedSite>}>();
 
-const riff = inject<Riff>("riff")!;
+const orbiter = inject<Orbiter>("orbiter")!;
 
 const untrustSite = async () => {
-    await riff.untrustSite(props.site.empreinte);
+    await orbiter.untrustSite(props.site.empreinte);
 }
 
 </script>

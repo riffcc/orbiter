@@ -5,12 +5,12 @@
 </template>
 
 <script setup lang="ts">
-import Riff from '@/plugins/riff/riff';
+import Orbiter from '@/plugins/orbiter/orbiter';
 import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
 import { selectTranslation } from '@/utils';
 
-const riff: Riff = inject("riff")!;
+const orbiter: Orbiter = inject("orbiter")!;
 
 const props = defineProps<{accountId: string}>();
 
@@ -23,7 +23,7 @@ const displayName = computed(()=>{
 let forgetNames: (() => Promise<void>)|undefined = undefined;
 
 onMounted(async () => {
-    forgetNames = await riff.onNameChange({
+    forgetNames = await orbiter.onNameChange({
         f: x => names.value = x,
         accountId: props.accountId
     })

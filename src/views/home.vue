@@ -1,7 +1,7 @@
 <template>
   <v-container class="fill-height">
     <v-responsive class="d-flex align-center text-center fill-height">
-      <main-page v-if="riffReady && (accountExists || enterAnonymously)" />
+      <main-page v-if="orbiterReady && (accountExists || enterAnonymously)" />
       <init-screen v-else @enter="enterAnonymously = true; emit('enter')"/>
     </v-responsive>
   </v-container>
@@ -12,20 +12,20 @@ import mainPage from '@/components/mainPage.vue'
 import initScreen from '@/components/initScreen.vue'
 
 import { ref, inject, onMounted, onUnmounted } from 'vue'
-import Riff from '@/plugins/riff/riff';
+import Orbiter from '@/plugins/orbiter/orbiter';
 
-const riff: Riff = inject('riff')!
+const orbiter: Orbiter = inject('orbiter')!
 
-const riffReady = ref<boolean>(false);
+const orbiterReady = ref<boolean>(false);
 const accountExists = ref<boolean>();
 const enterAnonymously = ref(false);
 
-riff.riffReady().then(()=>riffReady.value = true)
+orbiter.orbiterReady().then(()=>orbiterReady.value = true)
 
 let forgetAccountExists: (()=>void) | undefined = undefined;
 
 onMounted(async () => {
-  forgetAccountExists = await riff.onAccountExists({f: a=>accountExists.value = a})
+  forgetAccountExists = await orbiter.onAccountExists({f: a=>accountExists.value = a})
 })
 
 onUnmounted(async () => {

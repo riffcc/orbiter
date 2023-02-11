@@ -40,14 +40,14 @@
 <script setup lang="ts">
 import { inject, ref, onMounted, onUnmounted } from 'vue'
 
-import Riff from '@/plugins/riff/riff';
-import { TrustedSite } from '@/plugins/riff/types';
+import Orbiter from '@/plugins/orbiter/orbiter';
+import { TrustedSite } from '@/plugins/orbiter/types';
 import { élémentDonnées } from '@constl/ipa/dist/valid';
 
 import TrustSiteDialog from './trustedSites/trustSiteDialog.vue';
 import TrustedSiteListItem from './trustedSites/trustedSite.vue';
 
-const riff: Riff = inject('riff')!;
+const orbiter: Orbiter = inject('orbiter')!;
 
 const blockedCIDs = ref<{cid: string, hash: string}[]>();
 const toBlock = ref<string>();
@@ -55,19 +55,19 @@ const toBlock = ref<string>();
 const trustedSites = ref<élémentDonnées<TrustedSite>[]>();
 
 const blockRelease = async (cid: string) => {
-    await riff.blockRelease(cid);
+    await orbiter.blockRelease(cid);
     toBlock.value = undefined;
 };
 const unblockRelease = async (cid: string) => {
-    await riff.unblockRelease(cid);
+    await orbiter.unblockRelease(cid);
 }
 
 let forgetBlockedCIDs: (()=>void) | undefined = undefined
 let forgetTrustedSites: (()=>void) | undefined = undefined
 
 onMounted(async () => {
-    forgetBlockedCIDs = await riff.onBlockedReleasesChange({f: x=>blockedCIDs.value = x})
-    forgetTrustedSites = await riff.onTrustedSitesChange({f: x=>trustedSites.value = x})
+    forgetBlockedCIDs = await orbiter.onBlockedReleasesChange({f: x=>blockedCIDs.value = x})
+    forgetTrustedSites = await orbiter.onTrustedSitesChange({f: x=>trustedSites.value = x})
 })
 
 onUnmounted(async () => {

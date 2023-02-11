@@ -50,20 +50,21 @@
 
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, ref, watchEffect } from 'vue'
-import Riff from "@/plugins/riff/riff";
-import { Release } from "@/plugins/riff/types"
+import Orbiter from "@/plugins/orbiter/orbiter";
+import { Release } from "@/plugins/orbiter/types"
 
 import { élémentDeMembre } from '@constl/ipa/dist/reseau';
 import UserChip from '@/components/userChip.vue';
 import ReleaseDialog from '@/components/releaseDialog.vue';
 import { downloadFile } from '@/utils';
 
-const riff: Riff = inject('riff')!;
-
-interface Props {
+export interface ReleaseProps {
   info: élémentDeMembre<Release>
 }
-const props = defineProps<Props>()
+
+const orbiter: Orbiter = inject('orbiter')!;
+
+const props = defineProps<ReleaseProps>()
 
 const myAccountId = ref<string>();
 
@@ -76,7 +77,7 @@ watchEffect(async () => {
   const { thumbnail } = props.info.élément.données;
 
   if (thumbnail) {
-    const image = await riff.constellation!.obtFichierSFIP({
+    const image = await orbiter.constellation!.obtFichierSFIP({
       id: thumbnail.cid,
       max: 1500 * 1000 // 1.5 MB,
     });
@@ -93,13 +94,13 @@ watchEffect(async () => {
 })
 
 async function removeRelease() {
-  await riff.removeRelease(props.info.élément.empreinte)
+  await orbiter.removeRelease(props.info.élément.empreinte)
 }
 
 async function downloadRelease() {
   const { file, contentName } = props.info.élément.données
 
-  const releaseFile = await riff.constellation!.obtFichierSFIP({
+  const releaseFile = await orbiter.constellation!.obtFichierSFIP({
     id: file.cid
   });
   const filename = `${contentName}.${file.ext}`
@@ -110,13 +111,13 @@ async function downloadRelease() {
 }
 
 async function blockRelease() {
-  await riff.blockRelease(props.info.élément.données.file.cid)
+  await orbiter.blockRelease(props.info.élément.données.file.cid)
 }
 
 let forgetAccountId: (()=>Promise<void>)|undefined = undefined;
 
 onMounted(async () => {
-  forgetAccountId = await riff.onAccountChange({ f: a => myAccountId.value = a});
+  forgetAccountId = await orbiter.onAccountChange({ f: a => myAccountId.value = a});
 });
 
 onUnmounted(async () => {

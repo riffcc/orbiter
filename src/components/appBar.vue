@@ -4,7 +4,7 @@
             <v-app-bar-nav-icon v-show="false"></v-app-bar-nav-icon>
         </template>
 
-        <v-app-bar-title>Riff.CC</v-app-bar-title>
+        <v-app-bar-title>Orbiter.CC</v-app-bar-title>
 
         <template v-slot:append>
             <SettingsDialog/>

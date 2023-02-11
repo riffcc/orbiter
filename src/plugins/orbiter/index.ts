@@ -1,19 +1,19 @@
 import { App } from "vue"
-import RiffApp from "./riff"
+import OrbiterApp from "./orbiter"
 import { possiblyIncompleteVariableIds, VariableIds } from "./types";
 
 export default {
   install: (app: App) => {
     const variableIds = getVariableIds();
 
-    const riffApp = new RiffApp({
+    const orbiterApp = new OrbiterApp({
       modDbAddress: variableIds ? import.meta.env.VITE_MOD_BD_ADDRESS : undefined,
-      riffSwarmId: variableIds ? import.meta.env.VITE_RIFF_SWARM_ID : undefined,
+      orbiterSwarmId: variableIds ? import.meta.env.VITE_ORBITER_SWARM_ID : undefined,
       variableIds,
     });
-    app.config.globalProperties.$riff = riffApp;
+    app.config.globalProperties.$orbiter = orbiterApp;
 
-    app.provide('riff', riffApp);
+    app.provide('orbiter', orbiterApp);
   }
 }
 

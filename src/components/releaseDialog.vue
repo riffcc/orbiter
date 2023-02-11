@@ -11,7 +11,7 @@
             <v-card-title>{{ newRelease ? "New release" : "Edit release" }}</v-card-title>
             <v-card-text>
                 <v-file-input v-model="file" variant="outlined" label="Content file"></v-file-input>
-                <v-select v-model="releaseType" :items="riff.contentTypes" variant="outlined" label="Content type"></v-select>
+                <v-select v-model="releaseType" :items="orbiter.contentTypes" variant="outlined" label="Content type"></v-select>
                 <v-file-input v-model="thumbnail" accept="image/*" variant="outlined" label="File icon (optional)"></v-file-input>
                 <v-text-field v-model="releaseName" variant="outlined" label="Release name" hint="The name of the content"></v-text-field>
                 <v-text-field v-model="metadata" variant="outlined" label="Description" hint=""></v-text-field>
@@ -32,11 +32,11 @@ import { computed, inject, PropType, ref, watchEffect } from 'vue';
 
 import { élémentDeMembre } from '@constl/ipa/dist/reseau';
 
-import Riff from '@/plugins/riff/riff';
-import { Release } from "@/plugins/riff/types"
-import { RELEASES_AUTHOR_COLUMN, RELEASES_FILE_COLUMN, RELEASES_METADATA_COLUMN, RELEASES_NAME_COLUMN, RELEASES_THUMBNAIL_COLUMN, RELEASES_TYPE_COLUMN } from '@/plugins/riff/consts';
+import Orbiter from '@/plugins/orbiter/orbiter';
+import { Release } from "@/plugins/orbiter/types"
+import { RELEASES_AUTHOR_COLUMN, RELEASES_FILE_COLUMN, RELEASES_METADATA_COLUMN, RELEASES_NAME_COLUMN, RELEASES_THUMBNAIL_COLUMN, RELEASES_TYPE_COLUMN } from '@/plugins/orbiter/consts';
 
-const riff = inject<Riff>("riff")!;
+const orbiter = inject<Orbiter>("orbiter")!;
 
 const props = defineProps({
     release: {
@@ -71,7 +71,7 @@ const save = async () => {
     saving.value = true;
 
     const fileEntry = file.value?.length ? {
-        cid: await riff.constellation!.ajouterÀSFIP({
+        cid: await orbiter.constellation!.ajouterÀSFIP({
             fichier: file.value![0]
         }),
         ext: file.value![0].name.split(".").pop()!,
@@ -79,14 +79,14 @@ const save = async () => {
 
     // If not specified, use existing CID if available (only relevant on editing existing release).
     const thumbnailEntry = thumbnail.value?.length ? { 
-        cid: await riff.constellation!.ajouterÀSFIP({
+        cid: await orbiter.constellation!.ajouterÀSFIP({
             fichier: thumbnail.value[0]
         }), 
         ext: thumbnail.value[0].name.split(".").pop()!
     } : existingThumbnailFile.value
 
     if (newRelease.value) {
-        await riff.addRelease({
+        await orbiter.addRelease({
             [RELEASES_FILE_COLUMN]: fileEntry,
             [RELEASES_TYPE_COLUMN]: releaseType.value!,
             [RELEASES_THUMBNAIL_COLUMN]: thumbnailEntry,
@@ -95,7 +95,7 @@ const save = async () => {
             [RELEASES_AUTHOR_COLUMN]: author.value!
         });
     } else {
-        await riff.editRelease({
+        await orbiter.editRelease({
             releaseHash: props.release!.élément.empreinte, 
             release: {
                 [RELEASES_FILE_COLUMN]: fileEntry,

@@ -22,8 +22,8 @@
 </template>
 
 <script setup lang="ts">
-import Riff from "@/plugins/riff/riff"
-import { Release as ReleaseInfo } from "@/plugins/riff/types"
+import Orbiter from "@/plugins/orbiter/orbiter"
+import { Release as ReleaseInfo } from "@/plugins/orbiter/types"
 
 import Release from "@/components/release.vue";
 import ReleaseDialog from "@/components/releaseDialog.vue";
@@ -31,7 +31,7 @@ import ReleaseDialog from "@/components/releaseDialog.vue";
 import { ref, inject, onMounted, onUnmounted, computed } from 'vue'
 import { élémentDeMembre } from "@constl/ipa/dist/reseau";
 
-const riff = inject('riff') as Riff;
+const orbiter = inject('orbiter') as Orbiter;
 
 const accountInitialised = ref<boolean|undefined>(undefined);
 const account = ref<string>();
@@ -42,9 +42,9 @@ let forgetAccount: (() => void) | undefined = undefined
 let forgetReleases: (() => void) | undefined = undefined
 
 onMounted(async () => {
-  forgetAccountExists = await riff.onAccountExists({f: a=>accountInitialised.value = a})
-  forgetAccount = await riff.onAccountChange({f: a=>account.value = a})
-  forgetReleases = await riff.onReleasesChange({f: rs=>releases.value = rs})
+  forgetAccountExists = await orbiter.onAccountExists({f: a=>accountInitialised.value = a})
+  forgetAccount = await orbiter.onAccountChange({f: a=>account.value = a})
+  forgetReleases = await orbiter.onReleasesChange({f: rs=>releases.value = rs})
 })
 
 onUnmounted(async () => {

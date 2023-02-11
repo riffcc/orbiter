@@ -39,14 +39,14 @@
 </template>
 
 <script setup lang="ts">
-import Riff from "@/plugins/riff/riff";
+import Orbiter from "@/plugins/orbiter/orbiter";
 import { ref, inject, computed } from "vue";
 import { 
     retamabälChabäl as languageInfo,
     rubiChabäl as languageCodetoName 
 } from "nuchabal"
 
-const riff: Riff = inject("riff")!;
+const orbiter: Orbiter = inject("orbiter")!;
 
 const dialog = ref<boolean>(false);
 
@@ -57,7 +57,7 @@ const userName = ref<string>();
 const saveName = async () => {
     if (!userNameLanguage.value || !userName.value) throw new Error("Name or language not specified.")
     const code: string = typeof userNameLanguage.value === "string" ? userNameLanguage.value : userNameLanguage.value["value"]
-    await riff.changeName({ name: userName.value, language: code })
+    await orbiter.changeName({ name: userName.value, language: code })
 }
 
 </script>

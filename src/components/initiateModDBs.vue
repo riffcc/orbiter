@@ -6,12 +6,12 @@
         <v-card>
             <v-card-title>Missing moderation database addresses</v-card-title>
             <v-card-text v-if="!generatedModDbAddress">
-                Each instance of Riff.CC must be compiled with a moderation database address.
+                Each instance of Orbiter.CC must be compiled with a moderation database address.
                 Click below to generate the moderation DB.
             </v-card-text>
             <v-card-text v-else>
                 Moderation DB generated! Be sure to copy the code below into a <code>.env</code> file and place
-                it at the root of your Riff.CC project.
+                it at the root of your Orbiter.CC project.
                 <v-textarea 
                 class="mt-4"
                 :value="envFileText" 
@@ -52,18 +52,18 @@
 
 <script setup lang="ts">
 import { ref, inject, onMounted, onUnmounted, computed } from "vue"
-import Riff from '@/plugins/riff/riff';
-import { VariableIds } from "@/plugins/riff/types";
+import Orbiter from '@/plugins/orbiter/orbiter';
+import { VariableIds } from "@/plugins/orbiter/types";
 import { downloadFile } from "@/utils";
 
-const riff: Riff = inject('riff')!
+const orbiter: Orbiter = inject('orbiter')!
 
 const siteConfigured = ref<boolean>();
 const siteNotConfigured = computed(() => siteConfigured.value === false);
 
 const generatingDb = ref<boolean>(false);
 const generatedModDbAddress = ref<string>();
-const generatedRiffSwarmId = ref<string>();
+const generatedOrbiterSwarmId = ref<string>();
 const generatedVariableIds = ref<VariableIds>();
 
 const generatingEnvFile = ref<boolean>(false);
@@ -71,11 +71,11 @@ const generatingEnvFile = ref<boolean>(false);
 const generateDb = async () => {
     generatingDb.value = true;
 
-    const { modDbId, riffSwarmId, variableIds } = await riff.generateModDb();
+    const { modDbId, orbiterSwarmId, variableIds } = await orbiter.generateModDb();
 
     generatedModDbAddress.value = modDbId;
     generatedVariableIds.value = variableIds;
-    generatedRiffSwarmId.value = riffSwarmId;
+    generatedOrbiterSwarmId.value = orbiterSwarmId;
 
     generatingDb.value = false;
 }
@@ -86,7 +86,7 @@ const envFileText = computed(() => {
     const trustedSitesNameVar = "VITE_TRUSTED_SITES_NAME_VAR_ID=" + generatedVariableIds.value?.trustedSitesNameVariableId;
     const blockedCidsVar = "VITE_BLOCKED_CIDS_VAR_ID=" + generatedVariableIds.value?.blockedCidsVariableId;
 
-    const riffSwarmId = "VITE_RIFF_SWARM_ID=" + generatedRiffSwarmId.value;
+    const orbiterSwarmId = "VITE_ORBITER_SWARM_ID=" + generatedOrbiterSwarmId.value;
     const releasesFileVar = "VITE_RELEASES_FILE_VAR_ID=" + generatedVariableIds.value?.releasesFileVar;
     const releasesTypeVar = "VITE_RELEASES_TYPE_VAR_ID=" + generatedVariableIds.value?.releasesTypeVar;
     const releasesAuthorVar = "VITE_RELEASES_AUTHOR_VAR_ID=" + generatedVariableIds.value?.releasesAuthorVar;
@@ -96,11 +96,11 @@ const envFileText = computed(() => {
 
     const modDBAddress = "VITE_MOD_BD_ADDRESS=" + generatedModDbAddress.value;
 
-    return  "# The address below should be regenerated for each Riff.CC site. If you are setting up an independent site, erase the value below and run the site in development mode (`pnpm dev`) to automatically regenerate. \n" +
+    return  "# The address below should be regenerated for each Orbiter.CC site. If you are setting up an independent site, erase the value below and run the site in development mode (`pnpm dev`) to automatically regenerate. \n" +
         modDBAddress + "\n" + 
-        riffSwarmId + "\n" + "\n" +
+        orbiterSwarmId + "\n" + "\n" +
         
-        "# These should ideally stay the same for all Riff.CC sites for optimal performance. Only change if you know what you are doing.\n" +
+        "# These should ideally stay the same for all Orbiter.CC sites for optimal performance. Only change if you know what you are doing.\n" +
         trustedSitesModDbVar + "\n" +
         trustedSitesSwarmVar + "\n" +
         trustedSitesNameVar + "\n" +
@@ -132,12 +132,12 @@ const copyGeneratedEnvFile = async () => {
 }
 
 const acceptNewModDb = async () => {
-    if (!generatedModDbAddress.value || !generatedVariableIds.value || !generatedRiffSwarmId.value) {
+    if (!generatedModDbAddress.value || !generatedVariableIds.value || !generatedOrbiterSwarmId.value) {
         throw new Error("Mod DB and variables not generated.")
     }
-    riff.setModDb({ 
+    orbiter.setModDb({ 
         modDbId: generatedModDbAddress.value, 
-        riffSwarmId: generatedRiffSwarmId.value, 
+        orbiterSwarmId: generatedOrbiterSwarmId.value, 
         variableIds: generatedVariableIds.value
     });
 }
@@ -145,7 +145,7 @@ const acceptNewModDb = async () => {
 let forgetSiteConfigured: (()=>void) | undefined = undefined
 
 onMounted(async () => {
-    forgetSiteConfigured = await riff.isSiteConfigured({f: configured => {siteConfigured.value = configured}});
+    forgetSiteConfigured = await orbiter.isSiteConfigured({f: configured => {siteConfigured.value = configured}});
 })
 
 onUnmounted(async () => {

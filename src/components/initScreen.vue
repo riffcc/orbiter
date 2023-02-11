@@ -7,7 +7,7 @@
 
     <div class="text-body-2 font-weight-light mb-n1">Welcome to</div>
 
-    <h1 class="text-h2 font-weight-bold">Riff.CC</h1>
+    <h1 class="text-h2 font-weight-bold">Orbiter.CC</h1>
 
     <div class="text-body-2 italic">E cinere surgemus</div>
 
@@ -15,7 +15,7 @@
 
     <initiateModDBs/>
 
-    <v-row v-if="riffReady" class="d-flex align-center justify-center">
+    <v-row v-if="orbiterReady" class="d-flex align-center justify-center">
         <v-col cols="auto">
             <v-btn
                 min-width="164"
@@ -87,22 +87,22 @@
 </template>
 
 <script setup lang="ts">
-import Riff from '@/plugins/riff/riff';
+import Orbiter from '@/plugins/orbiter/orbiter';
 import { ref, inject, onMounted, onUnmounted } from 'vue';
 
 import initiateModDBs from "@/components/initiateModDBs.vue"
 import initiateAccount from '@/components/initiateAccount.vue';
 
-const riff: Riff = inject('riff')!
+const orbiter: Orbiter = inject('orbiter')!
 
-const riffReady = ref<boolean>(false);
-riff.riffReady().then(()=>riffReady.value = true)
+const orbiterReady = ref<boolean>(false);
+orbiter.orbiterReady().then(()=>orbiterReady.value = true)
 
 const accountExists = ref<boolean>();
 
 let forgetAccountExists: (()=>void)|undefined = undefined
 onMounted(async () => {
-  forgetAccountExists = await riff.onAccountExists({f: a=>accountExists.value = a})
+  forgetAccountExists = await orbiter.onAccountExists({f: a=>accountExists.value = a})
 })
 
 onUnmounted(async () => {

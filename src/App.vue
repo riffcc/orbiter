@@ -11,16 +11,16 @@
   import Home from '@/views/home.vue'
   import appBar from '@/components/appBar.vue'
   import { ref, inject, onMounted, onUnmounted } from 'vue'
-import Riff from './plugins/riff/riff';
+import type Orbiter from './plugins/orbiter/orbiter';
 
-  const riff: Riff = inject('riff')!
+  const orbiter: Orbiter = inject('orbiter')!
 
   const accountExists = ref<boolean>();
   const enterAnonymously = ref(false);
 
   let forgetAccountExists: (() => void) | undefined = undefined
   onMounted(async () => {
-    forgetAccountExists = await riff.onAccountExists({f: a=>accountExists.value = a})
+    forgetAccountExists = await orbiter.onAccountExists({f: a=>accountExists.value = a})
   })
 
   onUnmounted(async () => {

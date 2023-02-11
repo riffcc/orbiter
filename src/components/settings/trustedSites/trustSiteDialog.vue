@@ -26,16 +26,16 @@
 <script setup lang="ts">
 import { computed, inject, ref, watchEffect } from 'vue';
 
-import { TrustedSite } from '@/plugins/riff/types';
-import Riff from '@/plugins/riff/riff';
+import { TrustedSite } from '@/plugins/orbiter/types';
+import Orbiter from '@/plugins/orbiter/orbiter';
 import { 
     TRUSTED_SITES_MOD_DB_COL, 
     TRUSTED_SITES_NAME_COL, 
     TRUSTED_SITES_SWARM_COL 
-} from '@/plugins/riff/consts';
+} from '@/plugins/orbiter/consts';
 import { élémentDonnées } from '@constl/ipa/dist/valid';
 
-const riff = inject<Riff>("riff")!;
+const orbiter = inject<Orbiter>("orbiter")!;
 
 const props = defineProps<{site?: élémentDonnées<TrustedSite>}>();
 
@@ -65,9 +65,9 @@ const save = async () => {
     }
 
     if (newSite.value) {
-        await riff.trustSite(siteInfo);
+        await orbiter.trustSite(siteInfo);
     } else {
-        await riff.editTrustedSite({
+        await orbiter.editTrustedSite({
             siteHash: props.site!.empreinte, 
             site: siteInfo
         })

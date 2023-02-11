@@ -18,7 +18,7 @@
         <h2>Advanced</h2>
         <p>
             You are on the site <code>{{ siteDomainName }}</code>.
-            If you are the moderator of another Riff.CC site and wish to
+            If you are the moderator of another Orbiter.CC site and wish to
             add this site to your list of trusted sites, copy the information below:
             <v-text-field 
                 class="my-2"
@@ -33,10 +33,10 @@
                 class="my-2"
                 variant="outlined" 
                 readonly
-                 :append-inner-icon="riffSwarmIdCopied ? 'mdi-check' : 'mdi-content-copy'"
+                 :append-inner-icon="orbiterSwarmIdCopied ? 'mdi-check' : 'mdi-content-copy'"
                 @click:appendInner="()=>copySwarmId()"
             >
-                Swarm ID: {{ riffSwarmId ? riffSwarmId.slice(0, 40) + "..." : "" }}
+                Swarm ID: {{ orbiterSwarmId ? orbiterSwarmId.slice(0, 40) + "..." : "" }}
             </v-text-field>
         </p>
 
@@ -51,10 +51,10 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
-import Riff from '@/plugins/riff/riff';
+import Orbiter from '@/plugins/orbiter/orbiter';
 import { selectTranslation, copyText } from '@/utils';
 
-const riff: Riff = inject('riff')!;
+const orbiter: Orbiter = inject('orbiter')!;
 
 const names = ref<{[language: string]: string}>();
 
@@ -80,28 +80,28 @@ const copyModDbAddress = async () => {
     modDbAddressCopied.value = true;
 };
 
-const riffSwarmIdCopied = ref(false);
-const riffSwarmId = ref<string>();
+const orbiterSwarmIdCopied = ref(false);
+const orbiterSwarmId = ref<string>();
 const copySwarmId = async () => {
-    await copyText(riffSwarmId.value)
-    riffSwarmIdCopied.value = true;
+    await copyText(orbiterSwarmId.value)
+    orbiterSwarmIdCopied.value = true;
 }
 
 async function deleteAccount() {
-    await riff.deleteAccount();
+    await orbiter.deleteAccount();
 };
 
 let forgetAccount: (()=>void) | undefined = undefined;
 let forgetNames: (()=>void) | undefined = undefined;
 
 onMounted(async () => {
-    forgetAccount = await riff.onAccountChange({ f: a=>account.value = a })
-    forgetNames = await riff.onNameChange({ f: n => names.value = n});
+    forgetAccount = await orbiter.onAccountChange({ f: a=>account.value = a })
+    forgetNames = await orbiter.onNameChange({ f: n => names.value = n});
     
     // These don't need to be dynamically followed, just noted once ready
-    await riff.riffReady();
-    modDbAddress.value = riff.modDbAddress
-    riffSwarmId.value = riff.riffSwarmId
+    await orbiter.orbiterReady();
+    modDbAddress.value = orbiter.modDbAddress
+    orbiterSwarmId.value = orbiter.orbiterSwarmId
 });
 
 onUnmounted(async () => {

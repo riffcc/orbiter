@@ -66,11 +66,11 @@ import { ref, inject, onMounted, onUnmounted } from 'vue';
 
 import initiateAccount from '@/components/initiateAccount.vue';
 
-import Riff from '@/plugins/riff/riff';
+import Orbiter from '@/plugins/orbiter/orbiter';
 import AccountPane from './accountPane.vue';
 import ModPane from './modPane.vue';
 
-const riff: Riff = inject('riff')!;
+const orbiter: Orbiter = inject('orbiter')!;
 
 const dialog = ref(false);
 const tab = ref("account");
@@ -86,9 +86,9 @@ let forgetAccountExists: (()=>void) | undefined = undefined
 let forgetModerator: (()=>void) | undefined = undefined
 
 onMounted(async () => {
-    forgetAccount = await riff.onAccountChange({ f: a=>account.value = a })
-    forgetAccountExists = await riff.onAccountExists({f: a => accountExists.value = a});
-    forgetModerator = await riff.onIsModChange({f: isMod => moderator.value = isMod});
+    forgetAccount = await orbiter.onAccountChange({ f: a=>account.value = a })
+    forgetAccountExists = await orbiter.onAccountExists({f: a => accountExists.value = a});
+    forgetModerator = await orbiter.onIsModChange({f: isMod => moderator.value = isMod});
 })
 
 onUnmounted(async () => {
