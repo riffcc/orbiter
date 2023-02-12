@@ -1,9 +1,44 @@
-# IUG Constellation
+[![Contributors](https://img.shields.io/opencollective/all/riffcc?style=flat-square)](https://opencollective.com/riffcc)
+
+# Riff.CC "Orbiter"
+A proof-of-concept version of Riff.CC, implemented using OrbitDB, Constellation, IPFS and other tools. Funding provided via [OpenCollective](https://opencollective.com/riffcc).
+
+## Getting started
+* Install dependencies:
+
+```
+yarn
+```
+
+* Run the application in development mode (with hot reloading)
+
+```
+yarn dev
+```
+
+* Visit the application in your browser, generate a moderation database, copy the parameters the application gives you, and copy them to `./.env.local`
+
+* Stop and re-run the application to apply the new moderation database.
+
+## Deploying to production
+
+Compile and minify the application:
+
+```
+yarn build
+```
+
+Then deploy the bundle of HTML/CSS/JS that is produced.
+
+## Customize configuration
+
+See [Configuration Reference](https://vitejs.dev/config/).
+
+## Credits
+Authored by [@julienmalard](https://github.com/julienmalard), [@Zorlin](https://github.com/Zorlin), and the Riff.CC Project.
 
 
-## Licence
-L'IUG de Constellation est distribué sous la licence AGPL-3.0. La structure du projet est basé sur [Vite Electron Builder Boilerplate](https://github.com/cawa-93/vite-electron-builder) de [Олександр Козак](https://kozack.me/) sous [licence MIT](https://choosealicense.com/licenses/mit/).
+## Sponsors
+Thank you to our sponsors, who have generously provided funding for the development of the Riff.CC Project:
 
-Les images et l'art dans l'interface proviennent de [unDraw](https://undraw.co/) et de [வள்ளுவர் வள்ளலார் வட்டம்](https://commons.wikimedia.org/wiki/User:Valluvar_Vallalar_Vattam?uselang=ta), de la catégorie [iconographie](https://commons.wikimedia.org/wiki/Category:Tamil_Iconography). Ces derniers sont disponibles selon la licence [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.fr).
-
-Les données partagées sur le réseau Constellation sont distribuées selon leurs propres licences tel qu'indiquées dans l'application. Veillez à bien lire les licences avant d'utiliser les données !
+* [Money Every 3 Days](http://moneyevery3days.com/)
