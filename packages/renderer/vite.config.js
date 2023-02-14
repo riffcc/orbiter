@@ -108,7 +108,7 @@ const config = {
     alias: générerAliasRésolution(),
     extensions: ['.js', '.json', '.jsx', '.mjs', '.ts', '.tsx', '.vue'],
   },
-  base: forElectron ? '' : '/iug/',
+  base: '',
   server: {
     fs: {
       strict: true,
