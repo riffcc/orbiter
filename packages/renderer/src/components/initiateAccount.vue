@@ -63,7 +63,7 @@ const nuchabäl = new Nuchabäl({});
 const dialog = ref<boolean>(false);
 
 const knownLanguageCodes = computed(() => nuchabäl.konojelChabäl);
-const userNameLanguage = ref<string | {label: string; value: string}>();
+const userNameLanguage = ref<string | {label: string; value: string}>('en');
 const userName = ref<string>();
 
 const saveName = async () => {
