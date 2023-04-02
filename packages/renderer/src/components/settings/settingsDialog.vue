@@ -29,6 +29,7 @@
             >
               Moderation
             </v-tab>
+            <v-tab value="connectivity">Connectivity</v-tab>
           </v-tabs>
           <v-card-text>
             <v-window v-model="tab">
@@ -41,6 +42,10 @@
                 value="moderation"
               >
                 <ModPane />
+              </v-window-item>
+
+              <v-window-item value="connectivity">
+                <ConnectivityPane />
               </v-window-item>
             </v-window>
           </v-card-text>
@@ -84,6 +89,7 @@ import initiateAccount from '/@/components/initiateAccount.vue';
 import type Orbiter from '/@/plugins/orbiter/orbiter';
 import AccountPane from './accountPane.vue';
 import ModPane from './modPane.vue';
+import ConnectivityPane from './connectivityPane.vue';
 
 const orbiter: Orbiter = inject('orbiter')!;
 
