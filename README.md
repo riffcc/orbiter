@@ -20,6 +20,9 @@ yarn dev
 
 * Stop and re-run the application to apply the new moderation database.
 
+### Note for linux:
+apt install libgtk-3-0 && apt install libgbm1 && apt-get install libasound2 && apt-get install libatk-1.0.so.0
+
 ## Deploying to production
 
 Compile and minify the application:
