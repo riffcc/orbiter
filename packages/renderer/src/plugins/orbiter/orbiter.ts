@@ -361,7 +361,6 @@ export default class Orbiter {
     f: (name: {[language: string]: string}) => void;
     accountId?: string;
   }): Promise<offFunction> {
-
     return await this.constellation.profil!.suivreNoms({
       f,
       idCompte: accountId || (await this.getAccountId()),

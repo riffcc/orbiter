@@ -34,7 +34,7 @@ import TrustSiteDialog from './trustSiteDialog.vue';
 
 import type Orbiter from '/@/plugins/orbiter/orbiter';
 import type {TrustedSite} from '/@/plugins/orbiter/types';
-import type { élémentDonnées } from '@constl/ipa/dist/src/valid';
+import type {élémentDonnées} from '@constl/ipa/dist/src/valid';
 
 const props = defineProps<{site: élémentDonnées<TrustedSite>}>();
 
