@@ -62,10 +62,10 @@
     "vue-tsc": "1.0.24"
   },
   "dependencies": {
-    "@constl/ipa": "0.6.21",
+    "@constl/ipa": "0.6.40",
     "@constl/mandataire": "^0.1.4",
-    "@constl/mandataire-electron-principal": "^0.2.3",
-    "@constl/mandataire-electron-rendu": "^0.2.3",
+    "@constl/mandataire-electron-principal": "^0.2.7",
+    "@constl/mandataire-electron-rendu": "^0.2.7",
     "@constl/serveur": "^0.2.1",
     "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
     "@lassi-js/kili": "^0.0.4",
