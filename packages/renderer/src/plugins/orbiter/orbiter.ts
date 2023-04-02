@@ -625,24 +625,25 @@ export default class Orbiter {
     });
   }
 
-  async trustSite(site: TrustedSite) {
+  async trustSite(site: string) {
+    const decodedSite = JSON.parse(btoa(site));
     await this.orbiterReady();
 
     await this.constellation.bds!.ajouterÉlémentÀTableauParClef<TrustedSite>({
       idBd: this.modDbAddress!,
       clefTableau: TRUSTED_SITES_TABLE_KEY,
-      vals: site,
+      vals: decodedSite,
     });
   }
 
-  async editTrustedSite({siteHash, site}: {siteHash: string; site: TrustedSite}) {
+  async editTrustedSite({siteHash, site}: {siteHash: string; site: string}) {
     await this.orbiterReady();
 
     await this.constellation.bds!.modifierÉlémentDeTableauParClef({
       idBd: this.modDbAddress!,
       clefTableau: TRUSTED_SITES_TABLE_KEY,
       empreinteÉlément: siteHash,
-      vals: site,
+      vals: JSON.parse(btoa(site)),
     });
   }
 

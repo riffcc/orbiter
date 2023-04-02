@@ -13,19 +13,9 @@
       <v-card-title>{{ newSite ? 'New release' : 'Edit release' }}</v-card-title>
       <v-card-text>
         <v-text-field
-          v-model="siteName"
+          v-model="siteInfo"
           variant="outlined"
           label="Site name"
-        ></v-text-field>
-        <v-text-field
-          v-model="modDbAddress"
-          variant="outlined"
-          label="Site moderation DB address"
-        ></v-text-field>
-        <v-text-field
-          v-model="swarmId"
-          variant="outlined"
-          label="Site swarm ID"
         ></v-text-field>
       </v-card-text>
       <v-card-actions>
@@ -44,15 +34,10 @@
 </template>
 
 <script setup lang="ts">
-import {computed, inject, ref, watchEffect} from 'vue';
+import {computed, inject, ref} from 'vue';
 
 import type {TrustedSite} from '/@/plugins/orbiter/types';
 import type Orbiter from '/@/plugins/orbiter/orbiter';
-import {
-  TRUSTED_SITES_MOD_DB_COL,
-  TRUSTED_SITES_NAME_COL,
-  TRUSTED_SITES_SWARM_COL,
-} from '/@/plugins/orbiter/consts';
 import type {élémentDonnées} from '@constl/ipa/dist/src/valid';
 
 const orbiter = inject<Orbiter>('orbiter')!;
@@ -66,30 +51,22 @@ const saving = ref(false);
 const newSite = computed(() => !props.site);
 
 const readyToSave = computed(() => {
-  return !!(siteName.value && modDbAddress.value && swarmId.value);
+  return !!(siteInfo.value);
 });
 
-const siteName = ref<string>();
-const modDbAddress = ref<string>();
-const swarmId = ref<string>();
+const siteInfo = ref<string>();
 
 const save = async () => {
   if (!readyToSave.value) return;
 
   saving.value = true;
 
-  const siteInfo: TrustedSite = {
-    [TRUSTED_SITES_MOD_DB_COL]: modDbAddress.value!,
-    [TRUSTED_SITES_NAME_COL]: siteName.value!,
-    [TRUSTED_SITES_SWARM_COL]: swarmId.value!,
-  };
-
   if (newSite.value) {
-    await orbiter.trustSite(siteInfo);
+    await orbiter.trustSite(siteInfo.value!);
   } else {
     await orbiter.editTrustedSite({
       siteHash: props.site!.empreinte,
-      site: siteInfo,
+      site: siteInfo.value!,
     });
   }
 
@@ -100,14 +77,8 @@ const save = async () => {
 const clearDialog = () => {
   dialog.value = false;
 
-  siteName.value = undefined;
-  modDbAddress.value = undefined;
-  swarmId.value = undefined;
+  siteInfo.value = undefined;
 
   saving.value = false;
 };
-
-watchEffect(() => (siteName.value = props.site?.données.siteName));
-watchEffect(() => (modDbAddress.value = props.site?.données.siteModDbAddress));
-watchEffect(() => (swarmId.value = props.site?.données.siteSwarmId));
 </script>
