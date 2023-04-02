@@ -13,7 +13,6 @@
     <v-card>
       <v-card-title>
         Settings
-
         <v-btn icon>
           <v-icon @click="dialog = false">mdi-close</v-icon>
         </v-btn>

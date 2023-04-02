@@ -1,7 +1,16 @@
 <template>
   <div>
     <h2>Riff.CC Connections</h2>
-    <v-divider />
+    <v-divider
+      v-if="RiffConnections"
+      class="my-2"
+    />
+    <v-progress-linear
+      v-else
+      class="my-2"
+      indeterminate
+      :height="1"
+    />
     <v-list>
       <v-list-item v-if="RiffConnections && !RiffConnections.length">
         <v-list-item-title>You seem to be alone...</v-list-item-title>
@@ -18,8 +27,18 @@
         </v-list-item-subtitle>
       </v-list-item>
     </v-list>
-    <v-divider class="my-2" />
+
     <h2>IPFS Connections</h2>
+    <v-divider
+      v-if="IPFSConnections"
+      class="my-2"
+    />
+    <v-progress-linear
+      v-else
+      class="my-2"
+      indeterminate
+      :height="1"
+    />
     <v-list>
       <v-list-item v-if="IPFSConnections && !IPFSConnections.length">
         <v-list-item-title>No IPFS connections either...</v-list-item-title>
