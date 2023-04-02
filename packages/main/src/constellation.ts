@@ -9,4 +9,7 @@ export const gestionnaireFenêtres = new GestionnaireFenêtres({
   enDéveloppement,
   importationIPA,
   importationServeur,
+  opts: {
+    protocoles: ['Riff.CC'],
+  },
 });
