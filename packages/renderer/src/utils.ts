@@ -1,3 +1,11 @@
+import type {
+  schémaFonctionOublier,
+  schémaRetourFonctionRechercheParN,
+  schémaRetourFonctionRechercheParProfondeur,
+} from '@constl/ipa/dist/src/utils/types';
+import EventEmitter, {once} from 'events';
+import {onMounted, onUnmounted} from 'vue';
+
 export function downloadFile(filename: string, content: string | Uint8Array) {
   const element = document.createElement('a');
 
@@ -32,3 +40,39 @@ export async function copyText(text: string | undefined) {
   if (!text) return;
   await navigator.clipboard.writeText(text);
 }
+
+export const registerListener = <
+  T extends
+    | schémaFonctionOublier
+    | schémaRetourFonctionRechercheParProfondeur
+    | schémaRetourFonctionRechercheParN,
+>(
+  promesseÉcoute?: Promise<T>,
+): Promise<T | undefined> => {
+  let fForget: schémaFonctionOublier | undefined = undefined;
+
+  const events = new EventEmitter();
+  let result: T | undefined;
+  const returnPromise = new Promise<T | undefined>(resolve => {
+    once(events, 'ready').then(() => {
+      resolve(result);
+    });
+  });
+
+  onMounted(async () => {
+    result = await promesseÉcoute;
+    if (result instanceof Function) {
+      fForget = result;
+    } else {
+      fForget = result?.fOublier;
+    }
+    events.emit('ready');
+  });
+  onUnmounted(async () => {
+    if (fForget) await fForget();
+  });
+
+  return returnPromise;
+};
+
+export const RIFFCC_PROTOCOL = 'Riff.CC';
