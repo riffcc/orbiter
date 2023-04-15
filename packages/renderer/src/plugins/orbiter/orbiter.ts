@@ -70,7 +70,7 @@ export default class Orbiter {
     this.constellation = constellation;
   }
 
-  checkVariableIdsComplete(ids: possiblyIncompleteVariableIds) {
+  checkVariableIdsComplete(ids: possiblyIncompleteVariableIds): ids is VariableIds {
     return variableIdKeys.every(k => Object.keys(ids).includes(k) && ids[k]);
   }
 
@@ -381,8 +381,9 @@ export default class Orbiter {
   }: {
     f: (releases?: réseau.élémentDeMembre<Release>[]) => void;
   }): Promise<offFunction> {
+    console.log('onReleasesChange', 0);
     await this.orbiterReady();
-
+    console.log('onReleasesChange', 1);
     type SiteInfo = {
       blockedCids?: string[];
       entries?: élémentDeMembre<Release>[];
@@ -421,6 +422,7 @@ export default class Orbiter {
         s => !sitesList.some(x => x.siteName === s),
       );
 
+      console.log({sitesList});
       for (const site of newSites) {
         const {siteName} = site;
         siteInfos[siteName] = {};
@@ -452,8 +454,9 @@ export default class Orbiter {
       await fFinal();
       lock.release();
     };
-
+    console.log('onReleasesChange', 2);
     const forgetTrustedSites = await this.onTrustedSitesChange({f: fFollowTrustedSites});
+    console.log('onReleasesChange', 3);
     const fForget = async () => {
       cancelled = true;
       await forgetTrustedSites();
@@ -461,6 +464,7 @@ export default class Orbiter {
         Object.values(siteInfos).map(s => (s.fForget ? s.fForget() : Promise.resolve())),
       );
     };
+    console.log('onReleasesChange', -1);
     return fForget;
   }
 
@@ -471,18 +475,21 @@ export default class Orbiter {
     f: (releases?: réseau.élémentDeMembre<Release>[]) => void;
     swarmId?: string;
   }): Promise<offFunction> {
+    console.log('ici');
     await this.orbiterReady();
-
+    console.log('là');
     const info: {
       blockedCids?: string[];
       entries?: élémentDeMembre<Release>[];
     } = {};
 
     const fFinal = async () => {
-      if (info.blockedCids && info.entries) {
+      console.log({info});
+      if (info.entries) {
+        const myAccountId = await this.getAccountId();
         // Filter out blocked cids
         const finalEntries = info.entries.filter(
-          e => !info.blockedCids!.includes(e.élément.données.file.cid),
+          e => !(info.blockedCids || []).includes(e.élément.données.file.cid) || e.idBdCompte === myAccountId,
         );
         await f(finalEntries);
       }
@@ -490,6 +497,7 @@ export default class Orbiter {
 
     const forgetBlockedCids = await this.onBlockedReleasesChange({
       f: async blockedCids => {
+        console.log({blockedCids});
         if (blockedCids) info.blockedCids = blockedCids.map(x => x.cid);
         await fFinal();
       },
@@ -500,6 +508,7 @@ export default class Orbiter {
         idNuéeUnique: swarmId || this.orbiterSwarmId!,
         clef: RELEASES_DB_TABLE_KEY,
         f: async entries => {
+          console.log({idNuéeUnique: swarmId || this.orbiterSwarmId!,clef: RELEASES_DB_TABLE_KEY, entries});
           info.entries = entries;
           await fFinal();
         },
