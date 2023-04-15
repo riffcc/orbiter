@@ -1,6 +1,6 @@
 import type {App} from 'vue';
 import OrbiterApp from './orbiter';
-import type {possiblyIncompleteVariableIds, VariableIds} from './types';
+import type {possiblyIncompleteVariableIds} from './types';
 
 export default {
   install: (app: App) => {
@@ -19,7 +19,7 @@ export default {
   },
 };
 
-const getVariableIds = (): VariableIds => {
+const getVariableIds = (): possiblyIncompleteVariableIds => {
   const {
     VITE_TRUSTED_SITES_MOD_DB_VAR_ID,
     VITE_TRUSTED_SITES_SWARM_VAR_ID,

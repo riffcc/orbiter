@@ -26,9 +26,7 @@ export const variableIdKeys = [
 
 export type VariableIds = Record<typeof variableIdKeys[number], string>;
 
-export type possiblyIncompleteVariableIds = {
-  [key in keyof VariableIds]: VariableIds[key];
-};
+export type possiblyIncompleteVariableIds =  Partial<VariableIds>;
 
 export type Release = {
   [RELEASES_NAME_COLUMN]: string;
