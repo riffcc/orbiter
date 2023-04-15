@@ -55,7 +55,11 @@ let forgetReleases: (() => void) | undefined = undefined;
 
 onMounted(async () => {
   forgetAccountExists = await orbiter.onAccountExists({f: a => (accountInitialised.value = a)});
+});
+onMounted(async () => {
   forgetAccount = await orbiter.onAccountChange({f: a => (account.value = a)});
+});
+onMounted(async () => {
   forgetReleases = await orbiter.onReleasesChange({f: rs => (releases.value = rs)});
 });
 
