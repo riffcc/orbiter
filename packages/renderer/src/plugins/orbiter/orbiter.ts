@@ -144,23 +144,23 @@ export default class Orbiter {
         catégorie: 'chaîne',
       }));
 
-    // Now we can specify the format for individual release dbs
-    // Todo: for consistency, should this be set here or in setModDb()?
-    const releasesDbFormat = this.getReleasesDbFormat({
-      releasesFileVar,
-      releasesTypeVar,
-      releasesThumbnailVar,
-      releasesAuthorVar,
-      releasesContentNameVar,
-      releasesMetadataVar,
-    });
-
     // Swarm ID for site
     let orbiterSwarmId: string;
     if (this.orbiterSwarmId) {
       orbiterSwarmId = this.orbiterSwarmId;
     } else {
       orbiterSwarmId = await this.constellation.nuées!.créerNuée({});
+      // Now we can specify the format for individual release dbs
+      // Todo: for consistency, should this be set here or in setModDb()?
+      const releasesDbFormat = this.getReleasesDbFormat({
+        releasesFileVar,
+        releasesTypeVar,
+        releasesThumbnailVar,
+        releasesAuthorVar,
+        releasesContentNameVar,
+        releasesMetadataVar,
+        orbiterSwarmId,
+      });
       for (const table of releasesDbFormat.tableaux) {
         const tableKey = table.clef;
         const idTableau = await this.constellation.nuées!.ajouterTableauNuée({
@@ -238,6 +238,7 @@ export default class Orbiter {
     releasesAuthorVar,
     releasesContentNameVar,
     releasesMetadataVar,
+    orbiterSwarmId,
   }: {
     releasesFileVar: string;
     releasesTypeVar: string;
@@ -245,9 +246,11 @@ export default class Orbiter {
     releasesAuthorVar: string;
     releasesContentNameVar: string;
     releasesMetadataVar: string;
+    orbiterSwarmId: string;
   }): bds.schémaSpécificationBd {
     return {
       licence: 'ODbl-1_0',
+      nuées: [orbiterSwarmId],
       tableaux: [
         {
           cols: [
@@ -369,7 +372,7 @@ export default class Orbiter {
 
   async onIsModChange({f}: {f: (isMod: boolean) => void}): Promise<offFunction> {
     await this.orbiterReady();
-
+    console.log('this.modDbAddress', this.modDbAddress);
     return await this.constellation.suivrePermissionÉcrire({
       id: this.modDbAddress!,
       f,
@@ -578,7 +581,7 @@ export default class Orbiter {
     }
 
     await this.constellation.bds!.ajouterÉlémentÀTableauUnique({
-      schémaBd: this.getReleasesDbFormat(this.variableIds!),
+      schémaBd: this.getReleasesDbFormat({...this.variableIds!, orbiterSwarmId: this.orbiterSwarmId!}),
       idNuéeUnique: this.orbiterSwarmId!,
       clefTableau: RELEASES_DB_TABLE_KEY,
       vals,
@@ -589,7 +592,7 @@ export default class Orbiter {
     await this.orbiterReady();
 
     await this.constellation.bds!.effacerÉlémentDeTableauUnique({
-      schémaBd: this.getReleasesDbFormat(this.variableIds!),
+      schémaBd: this.getReleasesDbFormat({...this.variableIds!, orbiterSwarmId: this.orbiterSwarmId!}),
       idNuéeUnique: this.orbiterSwarmId!,
       clefTableau: RELEASES_DB_TABLE_KEY,
       empreinte: releaseHash,
@@ -607,7 +610,7 @@ export default class Orbiter {
 
     return await this.constellation.bds!.modifierÉlémentDeTableauUnique({
       vals: release,
-      schémaBd: this.getReleasesDbFormat(this.variableIds!),
+      schémaBd: this.getReleasesDbFormat({...this.variableIds!, orbiterSwarmId: this.orbiterSwarmId!}),
       idNuéeUnique: this.orbiterSwarmId!,
       clefTableau: RELEASES_DB_TABLE_KEY,
       empreintePrécédente: releaseHash,
