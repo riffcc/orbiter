@@ -4,15 +4,10 @@
     :active="myRelease"
   >
     <template #activator="{props}">
-      <v-list-item v-bind="props">
-        <template #prepend>
-          <img
-            v-if="thumbnailURL"
-            :src="thumbnailURL"
-            width="30"
-          />
-          <v-icon v-else>mdi-file</v-icon>
-        </template>
+      <v-list-item
+        v-bind="props"
+        :prepend-avatar="thumbnailURL"
+      >
         <v-list-item-title>
           {{ info.élément.données.contentName }}
         </v-list-item-title>
