@@ -4,7 +4,7 @@ import {Lock} from 'semaphore-async-await';
 
 import type ClientConstellation from '@constl/ipa';
 import type {bds, réseau, valid} from '@constl/ipa';
-import type {élémentsBd} from '@constl/ipa/dist/src/utils';
+import type {schémaFonctionOublier, élémentsBd} from '@constl/ipa/dist/src/utils';
 import type {élémentDeMembre} from '@constl/ipa/dist/src/reseau';
 
 import {
@@ -427,24 +427,27 @@ export default class Orbiter {
 
       console.log({sitesList});
       for (const site of newSites) {
+        const fsForgetSite: schémaFonctionOublier[] = [];
+        
         const {siteName} = site;
         siteInfos[siteName] = {};
-        const forgetSiteBlockedCids = await this.onBlockedReleasesChange({
+        this.onBlockedReleasesChange({
           f: async cids => {
             siteInfos[siteName].blockedCids = cids?.map(c => c.cid);
             await fFinal();
           },
           modDbAddress: site.siteModDbAddress,
-        });
-        const forgetSiteReleases = await this.onSiteReleasesChange({
+        }).then(fForget => fsForgetSite.push(fForget));
+        this.onSiteReleasesChange({
           f: async entries => {
+            console.log({entries});
             siteInfos[siteName].entries = entries;
             await fFinal();
           },
           swarmId: site.siteSwarmId,
-        });
+        }).then(fForget => fsForgetSite.push(fForget));
         siteInfos[siteName].fForget = async () => {
-          await Promise.all([forgetSiteBlockedCids(), forgetSiteReleases()]);
+          await Promise.all(fsForgetSite.map(f=>f()));
         };
         await fFinal();
       }
@@ -458,11 +461,16 @@ export default class Orbiter {
       lock.release();
     };
     console.log('onReleasesChange', 2);
-    const forgetTrustedSites = await this.onTrustedSitesChange({f: fFollowTrustedSites});
+    // Need to call once manually to get the user's own entries to show even if user is offline or
+    // the site's master databases are unreachable.
+    await fFollowTrustedSites();
+
+    let forgetTrustedSites: schémaFonctionOublier;
+    this.onTrustedSitesChange({f: fFollowTrustedSites}).then(fForget => forgetTrustedSites = fForget);
     console.log('onReleasesChange', 3);
     const fForget = async () => {
       cancelled = true;
-      await forgetTrustedSites();
+      if (forgetTrustedSites) await forgetTrustedSites();
       await Promise.all(
         Object.values(siteInfos).map(s => (s.fForget ? s.fForget() : Promise.resolve())),
       );
@@ -492,35 +500,42 @@ export default class Orbiter {
         const myAccountId = await this.getAccountId();
         // Filter out blocked cids
         const finalEntries = info.entries.filter(
-          e => !(info.blockedCids || []).includes(e.élément.données.file.cid) || e.idBdCompte === myAccountId,
+          e =>
+            !(info.blockedCids || []).includes(e.élément.données.file.cid) ||
+            e.idBdCompte === myAccountId,
         );
         await f(finalEntries);
       }
     };
 
-    const forgetBlockedCids = await this.onBlockedReleasesChange({
+    let forgetBlockedCids: schémaFonctionOublier;
+    this.onBlockedReleasesChange({
       f: async blockedCids => {
         console.log({blockedCids});
         if (blockedCids) info.blockedCids = blockedCids.map(x => x.cid);
         await fFinal();
       },
-    });
+    }).then(fForget => forgetBlockedCids = fForget);
 
     const {fOublier: fForgetEntries} =
-      await this.constellation.réseau!.suivreÉlémentsDeTableauxUniques<Release>({
-        idNuéeUnique: swarmId || this.orbiterSwarmId!,
-        clef: RELEASES_DB_TABLE_KEY,
+      await this.constellation.nuées!.suivreDonnéesTableauNuée<Release>({
+        idNuée: swarmId || this.orbiterSwarmId!,
+        clefTableau: RELEASES_DB_TABLE_KEY,
         f: async entries => {
-          console.log({idNuéeUnique: swarmId || this.orbiterSwarmId!,clef: RELEASES_DB_TABLE_KEY, entries});
+          console.log({
+            idNuéeUnique: swarmId || this.orbiterSwarmId!,
+            clef: RELEASES_DB_TABLE_KEY,
+            entries,
+          });
           info.entries = entries;
           await fFinal();
         },
-        nBds: 100,
+        nRésultatsDésirés: 1000,
       });
 
     const fForget = async () => {
       await fForgetEntries();
-      await forgetBlockedCids();
+      if (forgetBlockedCids) await forgetBlockedCids();
     };
 
     return fForget;
@@ -581,7 +596,10 @@ export default class Orbiter {
     }
 
     await this.constellation.bds!.ajouterÉlémentÀTableauUnique({
-      schémaBd: this.getReleasesDbFormat({...this.variableIds!, orbiterSwarmId: this.orbiterSwarmId!}),
+      schémaBd: this.getReleasesDbFormat({
+        ...this.variableIds!,
+        orbiterSwarmId: this.orbiterSwarmId!,
+      }),
       idNuéeUnique: this.orbiterSwarmId!,
       clefTableau: RELEASES_DB_TABLE_KEY,
       vals,
@@ -592,7 +610,10 @@ export default class Orbiter {
     await this.orbiterReady();
 
     await this.constellation.bds!.effacerÉlémentDeTableauUnique({
-      schémaBd: this.getReleasesDbFormat({...this.variableIds!, orbiterSwarmId: this.orbiterSwarmId!}),
+      schémaBd: this.getReleasesDbFormat({
+        ...this.variableIds!,
+        orbiterSwarmId: this.orbiterSwarmId!,
+      }),
       idNuéeUnique: this.orbiterSwarmId!,
       clefTableau: RELEASES_DB_TABLE_KEY,
       empreinte: releaseHash,
@@ -610,7 +631,10 @@ export default class Orbiter {
 
     return await this.constellation.bds!.modifierÉlémentDeTableauUnique({
       vals: release,
-      schémaBd: this.getReleasesDbFormat({...this.variableIds!, orbiterSwarmId: this.orbiterSwarmId!}),
+      schémaBd: this.getReleasesDbFormat({
+        ...this.variableIds!,
+        orbiterSwarmId: this.orbiterSwarmId!,
+      }),
       idNuéeUnique: this.orbiterSwarmId!,
       clefTableau: RELEASES_DB_TABLE_KEY,
       empreintePrécédente: releaseHash,
