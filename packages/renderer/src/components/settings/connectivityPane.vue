@@ -78,7 +78,8 @@ registerListener(
 const RiffConnections = ref<statutMembre[]>();
 registerListener(
   orbiter?.constellation.réseau?.suivreConnexionsMembres({
-    f: x => (RiffConnections.value = x.filter(c => c.infoMembre.protocoles.includes(RIFFCC_PROTOCOL))),
+    f: x =>
+      (RiffConnections.value = x.filter(c => c.infoMembre.protocoles.includes(RIFFCC_PROTOCOL))),
   }),
 );
 </script>

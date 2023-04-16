@@ -51,7 +51,7 @@ const saving = ref(false);
 const newSite = computed(() => !props.site);
 
 const readyToSave = computed(() => {
-  return !!(siteInfo.value);
+  return !!siteInfo.value;
 });
 
 const siteInfo = ref<string>();
