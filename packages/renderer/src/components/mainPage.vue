@@ -19,7 +19,7 @@
     v-if="!!releases && releases.length"
     class="text-start"
   >
-    <release
+    <ReleaseItem
       v-for="r in releases"
       :key="r.élément.données.file.cid"
       :info="r"
@@ -37,8 +37,8 @@
 import type Orbiter from '/@/plugins/orbiter/orbiter';
 import type {Release as ReleaseInfo} from '/@/plugins/orbiter/types';
 
-import Release from '/@/components/releaseItem.vue';
-import ReleaseDialog from '/@/components/releaseDialog.vue';
+import ReleaseItem from '/@/components/releases/releaseItem.vue';
+import ReleaseDialog from '/@/components/releases/releaseDialog.vue';
 
 import {ref, inject, onMounted, onUnmounted} from 'vue';
 import type {élémentDeMembre} from '@constl/ipa/dist/src/reseau';

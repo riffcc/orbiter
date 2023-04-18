@@ -13,12 +13,20 @@ yarn
 * Run the application in development mode (with hot reloading)
 
 ```
-yarn dev
+yarn watch:web
 ```
 
 * Visit the application in your browser, generate a moderation database, copy the parameters the application gives you, and copy them to `./.env.local`
 
 * Stop and re-run the application to apply the new moderation database.
+
+## Development
+
+To auto-populate the site in dev mode with fake data (useful for testing the UI):
+
+```
+yarn watch:web:stub
+```
 
 ### Note for linux:
 The following packages probably need to be installed:

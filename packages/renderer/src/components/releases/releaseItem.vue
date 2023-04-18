@@ -69,7 +69,7 @@ import type {Release} from '/@/plugins/orbiter/types';
 
 import type {élémentDeMembre} from '@constl/ipa/dist/src/reseau';
 import UserChip from '/@/components/userChip.vue';
-import ReleaseDialog from '/@/components/releaseDialog.vue';
+import ReleaseDialog from '/@/components/releases/releaseDialog.vue';
 import {downloadFile} from '/@/utils';
 
 export interface ReleaseProps {

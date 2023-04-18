@@ -1,6 +1,7 @@
 import type {App} from 'vue';
 import OrbiterApp from './orbiter';
 import type {possiblyIncompleteVariableIds} from './types';
+import {loadStubData} from './dev/index.js';
 
 export default {
   install: (app: App) => {
@@ -14,6 +15,10 @@ export default {
       variableIds,
     });
     app.config.globalProperties.$orbiter = orbiterApp;
+
+    if (import.meta.env.VITE_STUB_DATA) {
+      loadStubData(orbiterApp);
+    }
 
     app.provide('orbiter', orbiterApp);
   },

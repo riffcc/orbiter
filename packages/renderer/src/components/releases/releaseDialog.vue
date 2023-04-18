@@ -12,7 +12,7 @@
     </template>
     <v-card>
       <v-card-title>{{ newRelease ? 'New release' : 'Edit release' }}</v-card-title>
-      <v-card-text>
+      <v-card-text style="overflow-y: auto;">
         <v-file-input
           v-model="file"
           variant="outlined"

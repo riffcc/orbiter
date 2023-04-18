@@ -40,6 +40,12 @@ dependencies:
   events:
     specifier: ^3.3.0
     version: 3.3.0
+  hls.js:
+    specifier: ^1.4.0
+    version: 1.4.0
+  hlsjs-ipfs-loader:
+    specifier: ^0.3.1
+    version: 0.3.1
   image-file-resize:
     specifier: ^1.0.5
     version: 1.0.5
@@ -5871,7 +5877,6 @@ packages:
   /extsprintf@1.4.1:
     resolution: {integrity: sha512-Wrk35e8ydCKDj/ArClo1VrPVmN8zph5V4AtHwIuHhvMXsKf73UT3BOD+azBIW+3wOJ4FhEH7zyaJCFvChjYvMA==}
     engines: {'0': node >=0.6.0}
-    dev: true
     optional: true
 
   /fast-deep-equal@3.1.3:
@@ -6555,6 +6560,14 @@ packages:
   /hexoid@1.0.0:
     resolution: {integrity: sha512-QFLV0taWQOZtvIRIAdBChesmogZrtuXvVWsFHZTk2SU+anspqZ2vMnoLg7IE1+Uk16N19APic1BuF8bC8c2m5g==}
     engines: {node: '>=8'}
+    dev: false
+
+  /hls.js@1.4.0:
+    resolution: {integrity: sha512-VEjg7Rx5FlE9TB3MIn0HPgq3J+vR7EoQnjaqMCk/ISEaCOSZlAFh4g867f1QkSxZiq9kHeUZo+iH16X7VS3jKA==}
+    dev: false
+
+  /hlsjs-ipfs-loader@0.3.1:
+    resolution: {integrity: sha512-vSbvsJBtu96wKTkoIr3RZv/wRigA5juZ76WTpj1cszsgH2ld2lvQRGL0y9iEkOE2n2ZFyXblg7pS/rqwmNWYGw==}
     dev: false
 
   /hmac-drbg@1.0.1:
@@ -8235,7 +8248,7 @@ packages:
     dependencies:
       universalify: 2.0.0
     optionalDependencies:
-      graceful-fs: 4.2.10
+      graceful-fs: 4.2.11
 
   /jsonify@0.0.1:
     resolution: {integrity: sha512-2/Ki0GcmuqSrgFyelQq9M05y7PS0mEwuIzrf3f1fPqkVDVRvZrPZtVSMHxdgo8Aq0sxAOb/cr2aqqA3LeWHVPg==}
@@ -11553,7 +11566,7 @@ packages:
     dependencies:
       assert-plus: 1.0.0
       core-util-is: 1.0.2
-      extsprintf: 1.3.0
+      extsprintf: 1.4.1
     dev: false
     optional: true
 
