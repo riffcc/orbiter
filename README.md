@@ -4,24 +4,27 @@
 A proof-of-concept version of Riff.CC, implemented using OrbitDB, Constellation, IPFS and other tools. Funding provided via [OpenCollective](https://opencollective.com/riffcc).
 
 ## Getting started
-Orbiter will work on any standard Linux distribution where standard utilities like a webserver and Node.JS are available.
-
-Our instructions cover Ubuntu and Debian (latest stable LTS versions), ask us (or submit a PR) if you want any others to be added.
+Orbiter will work on any standard Linux distribution where standard utilities like a webserver and Node.JS are available, but our instructions specifically cover the latest LTS releases of Ubuntu and Debian only. Ask us (or submit a PR) if you want any others to be added.
 
 ### Installation - Debian and Ubuntu
-* Install packages you will need
+* Install the necessary dependencies by running the following command as root:
 ```
-$ apt install libgtk-3-0 && apt install libgbm1 && apt-get install libasound2 && apt-get install libatk-1.0.so.0
+# apt install libgtk-3-0 libgbm1 libasound2 libatk1.0-0 git
 ```
 
-* Install Node.JS - we suggest using the NodeSource installation guide - https://github.com/nodesource/distributions#installation-instructions - setting $NODE_MAJOR to 18 for now.
+* Install Node.JS - we suggest using the NodeSource installation guide (https://github.com/nodesource/distributions#installation-instructions), with $NODE_MAJOR set to 20.
 
-* Install Yarn once Node.JS is installed
+* Install Yarn once Node.JS is installed:
 ```
 npm install -g yarn
 ```
 
-* Install dependencies:
+* Clone Orbiter's GitHub repository:
+```
+git clone https://github.com/riffcc/orbiter.git
+```
+
+* Set up yarn and its dependencies in Orbiter's directory:
 ```
 cd orbiter
 yarn
