@@ -11,14 +11,26 @@
     </template>
     <v-card>
       <v-card-item>
-        <v-card-title>
-          {{ info.élément.données.contentName }}
+        <v-card-title class="d-flex">
+          {{ release.élément.données.contentName }}
+          <v-spacer />
+          <v-btn
+            icon="mdi-close"
+            @click="dialog = false"
+          />
         </v-card-title>
+        <v-divider />
       </v-card-item>
-      <audio-viewer 
-        v-if="info.élément.données.type === 'audio'" 
-        :file="info.élément.données.file"
-      />
+      <v-card-text>
+        <audio-viewer
+          v-if="release.élément.données.type === 'audio'"
+          :file="release.élément.données.file"
+        />
+        <video-viewer
+          v-else-if="release.élément.données.type === 'movie'"
+          :file="release.élément.données.file"
+        />
+      </v-card-text>
     </v-card>
   </v-dialog>
 </template>
@@ -28,11 +40,11 @@ import type {Release} from '/@/plugins/orbiter/types';
 
 import type {élémentDeMembre} from '@constl/ipa/dist/src/reseau';
 import AudioViewer from './audioViewer.vue';
+import VideoViewer from './videoViewer.vue';
 
 export interface ReleaseProps {
-  info: élémentDeMembre<Release>;
+  release: élémentDeMembre<Release>;
 }
-
 
 defineProps<ReleaseProps>();
 
@@ -40,5 +52,4 @@ defineProps<ReleaseProps>();
 
 // Navigation
 const dialog = ref(false);
-
 </script>

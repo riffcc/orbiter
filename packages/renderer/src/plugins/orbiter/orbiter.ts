@@ -2,9 +2,8 @@ import {EventEmitter, once} from 'events';
 
 import {Lock} from 'semaphore-async-await';
 
-import type ClientConstellation from '@constl/ipa';
-import type {bds, réseau, valid} from '@constl/ipa';
-import type {schémaFonctionOublier, élémentsBd} from '@constl/ipa/dist/src/utils';
+import type {ClientConstellation, bds, réseau, types} from '@constl/ipa';
+import {uneFois} from '@constl/utils-ipa';
 import type {élémentDeMembre} from '@constl/ipa/dist/src/reseau';
 
 import {
@@ -12,7 +11,7 @@ import {
   BLOCKED_RELEASE_CID_COL,
   RELEASES_AUTHOR_COLUMN,
   RELEASES_FILE_COLUMN,
-  RELEASES_DB_TABLE_KEY,
+  RELEASES_DB_TABLE_KEY as RELEASES_TABLE_KEY,
   TRUSTED_SITES_TABLE_KEY,
   TRUSTED_SITES_MOD_DB_COL,
   TRUSTED_SITES_NAME_COL,
@@ -21,16 +20,17 @@ import {
   RELEASES_THUMBNAIL_COLUMN,
   RELEASES_TYPE_COLUMN,
   TRUSTED_SITES_SWARM_COL,
-} from './consts';
+} from './consts.js';
 import type {
   BlockedCid,
+  Collection,
   Release,
   TrustedSite,
   VariableIds,
   possiblyIncompleteVariableIds,
-} from './types';
-import {variableIdKeys} from './types';
-import type {élémentDonnées} from '@constl/ipa/dist/src/valid';
+} from './types.js';
+import {variableIdKeys} from './types.js';
+import type {tableaux} from '@constl/ipa';
 
 type offFunction = () => Promise<void>;
 
@@ -82,39 +82,39 @@ export default class Orbiter {
     // Variables for moderation database
     const trustedSitesModDbVariableId =
       this.initialVariableIds.trustedSitesModDbVariableId ||
-      (await this.constellation.variables!.créerVariable({catégorie: 'chaîne'}));
+      (await this.constellation.variables.créerVariable({catégorie: 'chaîneNonTraductible'}));
     const trustedSitesSwarmVariableId =
       this.initialVariableIds.trustedSitesSwarmVariableId ||
-      (await this.constellation.variables!.créerVariable({catégorie: 'chaîne'}));
+      (await this.constellation.variables.créerVariable({catégorie: 'chaîneNonTraductible'}));
     const trustedSitesNameVariableId =
       this.initialVariableIds.trustedSitesNameVariableId ||
-      (await this.constellation.variables!.créerVariable({catégorie: 'chaîne'}));
+      (await this.constellation.variables.créerVariable({catégorie: 'chaîneNonTraductible'}));
     const blockedCidsVariableId =
       this.initialVariableIds.blockedCidsVariableId ||
-      (await this.constellation.variables!.créerVariable({
-        catégorie: 'chaîne',
+      (await this.constellation.variables.créerVariable({
+        catégorie: 'chaîneNonTraductible',
       }));
 
     // Variables for individual releases databases
     const releasesFileVar =
       this.initialVariableIds.releasesFileVar ||
-      (await this.constellation.variables!.créerVariable({
+      (await this.constellation.variables.créerVariable({
         catégorie: 'fichier',
       }));
     const releasesThumbnailVar =
       this.initialVariableIds.releasesThumbnailVar ||
-      (await this.constellation.variables!.créerVariable({
+      (await this.constellation.variables.créerVariable({
         catégorie: 'fichier',
       }));
     const releasesAuthorVar =
       this.initialVariableIds.releasesAuthorVar ||
-      (await this.constellation.variables!.créerVariable({
-        catégorie: 'chaîne',
+      (await this.constellation.variables.créerVariable({
+        catégorie: 'chaîneNonTraductible',
       }));
     const releasesMetadataVar =
       this.initialVariableIds.releasesMetadataVar ||
-      (await this.constellation.variables!.créerVariable({
-        catégorie: 'chaîne',
+      (await this.constellation.variables.créerVariable({
+        catégorie: 'chaîneNonTraductible',
       }));
 
     // The release type variable is a bit more complicated, because we need to specify
@@ -123,11 +123,11 @@ export default class Orbiter {
     if (this.initialVariableIds.releasesTypeVar) {
       releasesTypeVar = this.initialVariableIds.releasesTypeVar;
     } else {
-      releasesTypeVar = await this.constellation.variables!.créerVariable({
-        catégorie: 'catégorique',
+      releasesTypeVar = await this.constellation.variables.créerVariable({
+        catégorie: 'chaîne',
       });
       // Specify allowed categories
-      await this.constellation.variables!.ajouterRègleVariable({
+      await this.constellation.variables.ajouterRègleVariable({
         idVariable: releasesTypeVar,
         règle: {
           typeRègle: 'valeurCatégorique',
@@ -140,8 +140,8 @@ export default class Orbiter {
     }
     const releasesContentNameVar =
       this.initialVariableIds.releasesContentNameVar ||
-      (await this.constellation.variables!.créerVariable({
-        catégorie: 'chaîne',
+      (await this.constellation.variables.créerVariable({
+        catégorie: 'chaîneNonTraductible',
       }));
 
     // Swarm ID for site
@@ -149,7 +149,7 @@ export default class Orbiter {
     if (this.orbiterSwarmId) {
       orbiterSwarmId = this.orbiterSwarmId;
     } else {
-      orbiterSwarmId = await this.constellation.nuées!.créerNuée({});
+      orbiterSwarmId = await this.constellation.nuées.créerNuée({});
       // Now we can specify the format for individual release dbs
       // Todo: for consistency, should this be set here or in setModDb()?
       const releasesDbFormat = this.getReleasesDbFormat({
@@ -163,12 +163,12 @@ export default class Orbiter {
       });
       for (const table of releasesDbFormat.tableaux) {
         const tableKey = table.clef;
-        const idTableau = await this.constellation.nuées!.ajouterTableauNuée({
+        const idTableau = await this.constellation.nuées.ajouterTableauNuée({
           idNuée: orbiterSwarmId,
           clefTableau: tableKey,
         });
         for (const col of table.cols) {
-          await this.constellation.nuées!.ajouterColonneTableauNuée({
+          await this.constellation.nuées.ajouterColonneTableauNuée({
             idTableau,
             idVariable: col.idVariable,
             idColonne: col.idColonne,
@@ -177,7 +177,7 @@ export default class Orbiter {
       }
     }
 
-    const modDbId = await this.constellation.bds!.créerBdDeSchéma({
+    const modDbId = await this.constellation.bds.créerBdDeSchéma({
       schéma: {
         licence: 'ODbl-1_0',
         tableaux: [
@@ -279,7 +279,7 @@ export default class Orbiter {
               idColonne: RELEASES_METADATA_COLUMN,
             },
           ],
-          clef: RELEASES_DB_TABLE_KEY,
+          clef: RELEASES_TABLE_KEY,
         },
       ],
     };
@@ -335,22 +335,29 @@ export default class Orbiter {
     await this.siteConfigured();
   }
 
-  async onAccountExists({
-    f,
-    accountId,
-  }: {
-    f: (exists: boolean) => void;
-    accountId?: string;
-  }): Promise<offFunction> {
-    // We'll consider that an account "exists" if there is a human-readable name associated with it.
-    return await this.onNameChange({
-      f: names => f(Object.keys(names).length > 0),
-      accountId,
+  async initAccount({names}: {names: {[lang: string]: string}}): Promise<void> {
+    for (const [name, language] of Object.values(names)) {
+      await this.changeName({name, language});
+    }
+    await this.constellation.sauvegarderAuStockageLocal({
+      clef: 'accountStatus',
+      val: 'initialised',
     });
+    this.events.emit('accountStatus', 'initialised');
+  }
+
+  async onAccountExists({f}: {f: (exists: boolean) => void}): Promise<offFunction> {
+    const finalF = (status: string) => {
+      f(status === 'initialised');
+    };
+    this.events.on('accountStatus', finalF);
+    return async () => {
+      this.events.off('accountStatus', finalF);
+    };
   }
 
   async onAccountChange({f}: {f: (account?: string) => void}): Promise<offFunction> {
-    return await this.constellation.suivreIdBdCompte({f});
+    return await this.constellation.suivreIdCompte({f});
   }
 
   async getAccountId(): Promise<string> {
@@ -364,10 +371,33 @@ export default class Orbiter {
     f: (name: {[language: string]: string}) => void;
     accountId?: string;
   }): Promise<offFunction> {
-    return await this.constellation.profil!.suivreNoms({
+    return await this.constellation.profil.suivreNoms({
       f,
       idCompte: accountId || (await this.getAccountId()),
     });
+  }
+
+  async onContactInfoChange({
+    f,
+    accountId,
+  }: {
+    f: types.schémaFonctionSuivi<{type: string; contact: string}[]>;
+    accountId?: string;
+  }): Promise<types.schémaFonctionOublier> {
+    return await this.constellation.profil.suivreContacts({
+      f,
+      idCompte: accountId,
+    });
+  }
+
+  async onProfilePhotoChange({
+    f,
+    accountId,
+  }: {
+    f: types.schémaFonctionSuivi<Uint8Array | null>;
+    accountId?: string;
+  }): Promise<types.schémaFonctionOublier> {
+    return await this.constellation.profil.suivreImage({f, idCompte: accountId});
   }
 
   async onIsModChange({f}: {f: (isMod: boolean) => void}): Promise<offFunction> {
@@ -406,7 +436,7 @@ export default class Orbiter {
       await f(releases);
     };
 
-    const fFollowTrustedSites = async (sites?: valid.élémentDonnées<TrustedSite>[]) => {
+    const fFollowTrustedSites = async (sites?: tableaux.élémentDonnées<TrustedSite>[]) => {
       const sitesList = (sites || []).map(s => s.données);
       sitesList.push({
         [TRUSTED_SITES_MOD_DB_COL]: this.modDbAddress!,
@@ -423,8 +453,8 @@ export default class Orbiter {
       );
 
       for (const site of newSites) {
-        const fsForgetSite: schémaFonctionOublier[] = [];
-        
+        const fsForgetSite: types.schémaFonctionOublier[] = [];
+
         const {siteName} = site;
         siteInfos[siteName] = {};
         this.onBlockedReleasesChange({
@@ -442,7 +472,7 @@ export default class Orbiter {
           swarmId: site.siteSwarmId,
         }).then(fForget => fsForgetSite.push(fForget));
         siteInfos[siteName].fForget = async () => {
-          await Promise.all(fsForgetSite.map(f=>f()));
+          await Promise.all(fsForgetSite.map(f => f()));
         };
         await fFinal();
       }
@@ -460,8 +490,10 @@ export default class Orbiter {
     // the site's master databases are unreachable.
     await fFollowTrustedSites();
 
-    let forgetTrustedSites: schémaFonctionOublier;
-    this.onTrustedSitesChange({f: fFollowTrustedSites}).then(fForget => forgetTrustedSites = fForget);
+    let forgetTrustedSites: types.schémaFonctionOublier;
+    this.onTrustedSitesChange({f: fFollowTrustedSites}).then(
+      fForget => (forgetTrustedSites = fForget),
+    );
 
     const fForget = async () => {
       cancelled = true;
@@ -491,34 +523,35 @@ export default class Orbiter {
     const fFinal = async () => {
       if (info.entries) {
         const myAccountId = await this.getAccountId();
+
         // Filter out blocked cids
         const finalEntries = info.entries.filter(
           e =>
             !(info.blockedCids || []).includes(e.élément.données.file.cid) ||
-            e.idBdCompte === myAccountId,
+            e.idCompte === myAccountId,
         );
         await f(finalEntries);
       }
     };
 
-    let forgetBlockedCids: schémaFonctionOublier;
+    let forgetBlockedCids: types.schémaFonctionOublier;
     this.onBlockedReleasesChange({
       f: async blockedCids => {
         if (blockedCids) info.blockedCids = blockedCids.map(x => x.cid);
         await fFinal();
       },
-    }).then(fForget => forgetBlockedCids = fForget);
+    }).then(fForget => (forgetBlockedCids = fForget));
 
     const {fOublier: fForgetEntries} =
-      await this.constellation.nuées!.suivreDonnéesTableauNuée<Release>({
+      await this.constellation.nuées.suivreDonnéesTableauNuée<Release>({
         idNuée: swarmId || this.orbiterSwarmId!,
-        clefTableau: RELEASES_DB_TABLE_KEY,
+        clefTableau: RELEASES_TABLE_KEY,
         f: async entries => {
-
           info.entries = entries;
           await fFinal();
         },
         nRésultatsDésirés: 1000,
+        clefsSelonVariables: false,
       });
 
     const fForget = async () => {
@@ -538,7 +571,7 @@ export default class Orbiter {
   }): Promise<offFunction> {
     await this.orbiterReady();
 
-    return await this.constellation.bds!.suivreDonnéesDeTableauParClef<BlockedCid>({
+    return await this.constellation.bds.suivreDonnéesDeTableauParClef<BlockedCid>({
       idBd: modDbAddress || this.modDbAddress!,
       clefTableau: BLOCKED_RELEASES_TABLE_KEY,
       f: async releases => {
@@ -557,11 +590,11 @@ export default class Orbiter {
   async onTrustedSitesChange({
     f,
   }: {
-    f: (sites?: élémentDonnées<TrustedSite>[]) => void;
+    f: (sites?: tableaux.élémentDonnées<TrustedSite>[]) => void;
   }): Promise<offFunction> {
     await this.orbiterReady();
 
-    return await this.constellation.bds!.suivreDonnéesDeTableauParClef<TrustedSite>({
+    return await this.constellation.bds.suivreDonnéesDeTableauParClef<TrustedSite>({
       idBd: this.modDbAddress!,
       clefTableau: TRUSTED_SITES_TABLE_KEY,
       f,
@@ -571,10 +604,11 @@ export default class Orbiter {
   async addRelease(r: Release) {
     await this.orbiterReady();
 
-    const vals: {[key: string]: élémentsBd} = {
+    const vals: Release = {
       [RELEASES_FILE_COLUMN]: r.file,
       [RELEASES_AUTHOR_COLUMN]: r.author,
       [RELEASES_NAME_COLUMN]: r.contentName,
+      [RELEASES_TYPE_COLUMN]: r.type,
     };
     if (r.metadata) {
       vals[RELEASES_METADATA_COLUMN] = r.metadata;
@@ -583,13 +617,13 @@ export default class Orbiter {
       vals[RELEASES_THUMBNAIL_COLUMN] = r.thumbnail;
     }
 
-    await this.constellation.bds!.ajouterÉlémentÀTableauUnique({
+    await this.constellation.bds.ajouterÉlémentÀTableauUnique({
       schémaBd: this.getReleasesDbFormat({
         ...this.variableIds!,
         orbiterSwarmId: this.orbiterSwarmId!,
       }),
       idNuéeUnique: this.orbiterSwarmId!,
-      clefTableau: RELEASES_DB_TABLE_KEY,
+      clefTableau: RELEASES_TABLE_KEY,
       vals,
     });
   }
@@ -597,13 +631,13 @@ export default class Orbiter {
   async removeRelease(releaseHash: string) {
     await this.orbiterReady();
 
-    await this.constellation.bds!.effacerÉlémentDeTableauUnique({
+    await this.constellation.bds.effacerÉlémentDeTableauUnique({
       schémaBd: this.getReleasesDbFormat({
         ...this.variableIds!,
         orbiterSwarmId: this.orbiterSwarmId!,
       }),
       idNuéeUnique: this.orbiterSwarmId!,
-      clefTableau: RELEASES_DB_TABLE_KEY,
+      clefTableau: RELEASES_TABLE_KEY,
       empreinte: releaseHash,
     });
   }
@@ -612,19 +646,19 @@ export default class Orbiter {
     release,
     releaseHash,
   }: {
-    release: Release;
+    release: Partial<Release>;
     releaseHash: string;
   }): Promise<string> {
     await this.orbiterReady();
 
-    return await this.constellation.bds!.modifierÉlémentDeTableauUnique({
+    return await this.constellation.bds.modifierÉlémentDeTableauUnique({
       vals: release,
       schémaBd: this.getReleasesDbFormat({
         ...this.variableIds!,
         orbiterSwarmId: this.orbiterSwarmId!,
       }),
       idNuéeUnique: this.orbiterSwarmId!,
-      clefTableau: RELEASES_DB_TABLE_KEY,
+      clefTableau: RELEASES_TABLE_KEY,
       empreintePrécédente: releaseHash,
     });
   }
@@ -632,7 +666,7 @@ export default class Orbiter {
   async blockRelease(cid: string) {
     await this.orbiterReady();
 
-    await this.constellation.bds!.ajouterÉlémentÀTableauParClef({
+    await this.constellation.bds.ajouterÉlémentÀTableauParClef({
       idBd: this.modDbAddress!,
       clefTableau: BLOCKED_RELEASES_TABLE_KEY,
       vals: {[BLOCKED_RELEASE_CID_COL]: cid},
@@ -642,18 +676,77 @@ export default class Orbiter {
   async unblockRelease(releaseHash: string) {
     await this.orbiterReady();
 
-    await this.constellation.bds!.effacerÉlémentDeTableauParClef({
+    await this.constellation.bds.effacerÉlémentDeTableauParClef({
       idBd: this.modDbAddress!,
       clefTableau: BLOCKED_RELEASES_TABLE_KEY,
       empreinteÉlément: releaseHash,
     });
   }
 
+  async addCollection({collection}: {collection: Collection}): Promise<string> {
+    return await this.constellation.bds.ajouterÉlémentÀTableauUnique({
+      schémaBd,
+      idNuéeUnique,
+      clefTableau,
+      vals: collection,
+    });
+  }
+
+  async removeCollection({collectionHash}: {collectionHash: string}): Promise<void> {
+    await this.constellation.bds.effacerÉlémentDeTableauUnique({
+      schémaBd,
+      idNuéeUnique,
+      clefTableau,
+      empreinte: collectionHash,
+    });
+  }
+
+  async editCollection({
+    collection,
+    collectionHash,
+  }: {
+    collection: Partial<Collection>;
+    collectionHash: string;
+  }): Promise<void> {
+    await this.constellation.bds.modifierÉlémentDeTableauUnique({
+      schémaBd,
+      idNuéeUnique,
+      clefTableau,
+      empreintePrécédente: collectionHash,
+      vals: collection,
+    });
+  }
+
+  async addReleaseToCollection({
+    releaseId,
+    collectionHash,
+  }: {
+    releaseId: string;
+    collectionHash: string;
+  }): Promise<string> {
+    const releases = await uneFois(
+      async (fSuivi: types.schémaFonctionSuivi<string[]>): Promise<types.schémaFonctionOublier> => {
+        return await this.onCollectionsChange({
+          f: (collections: Collection[]) => fSuivi(collections.find(c => c)),
+        });
+      },
+    );
+    return await this.constellation.bds.modifierÉlémentDeTableauUnique({
+      vals: {[COLLECTIONS_RELEASES_COLUMN]: [...releases, releaseId]},
+      schémaBd,
+      idNuéeUnique,
+      clefTableau,
+      empreintePrécédente: collectionHash,
+    });
+  }
+
+  async removeReleaseFromCollection(): Promise<void> {}
+
   async trustSite(site: string) {
     const decodedSite = JSON.parse(btoa(site));
     await this.orbiterReady();
 
-    await this.constellation.bds!.ajouterÉlémentÀTableauParClef<TrustedSite>({
+    await this.constellation.bds.ajouterÉlémentÀTableauParClef<TrustedSite>({
       idBd: this.modDbAddress!,
       clefTableau: TRUSTED_SITES_TABLE_KEY,
       vals: decodedSite,
@@ -663,7 +756,7 @@ export default class Orbiter {
   async editTrustedSite({siteHash, site}: {siteHash: string; site: string}) {
     await this.orbiterReady();
 
-    await this.constellation.bds!.modifierÉlémentDeTableauParClef({
+    await this.constellation.bds.modifierÉlémentDeTableauParClef({
       idBd: this.modDbAddress!,
       clefTableau: TRUSTED_SITES_TABLE_KEY,
       empreinteÉlément: siteHash,
@@ -673,7 +766,7 @@ export default class Orbiter {
 
   async untrustSite(siteHash: string) {
     await this.orbiterReady();
-    await this.constellation.bds!.effacerÉlémentDeTableauParClef({
+    await this.constellation.bds.effacerÉlémentDeTableauParClef({
       idBd: this.modDbAddress!,
       clefTableau: TRUSTED_SITES_TABLE_KEY,
       empreinteÉlément: siteHash,
@@ -681,9 +774,18 @@ export default class Orbiter {
   }
 
   async changeName({name, language}: {name?: string; language: string}): Promise<void> {
-    if (name) await this.constellation.profil!.sauvegarderNom({langue: language, nom: name});
-    else await this.constellation.profil!.effacerNom({langue: language});
+    if (name) await this.constellation.profil.sauvegarderNom({langue: language, nom: name});
+    else await this.constellation.profil.effacerNom({langue: language});
   }
+
+  async changeProfilePhoto({image}: {image?: Uint8Array}): Promise<void> {
+    if (image) return await this.constellation.profil?.sauvegarderImage({image});
+    else return await this.constellation.profil?.effacerImage();
+  }
+
+  async addContactInfo(): Promise<void> {}
+
+  async removeContactInfo(): Promise<void> {}
 
   async deleteAccount(): Promise<void> {
     throw new Error('Not implemented');

@@ -1,8 +1,5 @@
 <template>
-  <ReleaseDialog
-    :release="info"
-    :active="myRelease"
-  >
+  <ReleaseViewer :release="info">
     <template #activator="{props}">
       <v-list-item
         v-bind="props"
@@ -59,7 +56,7 @@
         </template>
       </v-list-item>
     </template>
-  </ReleaseDialog>
+  </ReleaseViewer>
 </template>
 
 <script setup lang="ts">
@@ -69,7 +66,7 @@ import type {Release} from '/@/plugins/orbiter/types';
 
 import type {élémentDeMembre} from '@constl/ipa/dist/src/reseau';
 import UserChip from '/@/components/userChip.vue';
-import ReleaseDialog from '/@/components/releases/releaseDialog.vue';
+import ReleaseViewer from './releaseViewer.vue';
 import {downloadFile} from '/@/utils';
 
 export interface ReleaseProps {

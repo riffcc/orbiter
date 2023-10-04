@@ -1,53 +1,36 @@
 <template>
   <v-card>
     <v-card-text>
-      <video
-        ref="video"
+      <audio
+        id="player"
         controls
         autoplay
-      ></video>
-      <div ref="status"></div>
+      >
+        <source
+          :src="audioSource"
+          type="audio/mp3"
+        />
+      </audio>
+      {{ audioSource }}
     </v-card-text>
   </v-card>
 </template>
 <script setup lang="ts">
 import {inject, ref, onMounted} from 'vue';
 import type Orbiter from '/@/plugins/orbiter/orbiter';
-import Hls from 'hls.js';
-import HlsjsIpfsLoader from 'hlsjs-ipfs-loader';
+// import Plyr from 'plyr';
 
-const props = defineProps<{file: { cid: string; ext: string; }}>();
+const props = defineProps<{file: {cid: string; ext: string}}>();
 
 const orbiter: Orbiter = inject('orbiter')!;
 
-const video = ref<HTMLMediaElement|null>(null);
-const status = ref<Element|null>(null);
+const audioSource = ref<string>();
 
-// Inspired by: https://discuss.ipfs.tech/t/using-ipfs-to-stream-audio-video-in-the-browser/4908
-// ...and especially https://github.com/ipfs-examples/js-ipfs-examples/blob/master/examples/browser-video-streaming/src/index.js
-
-onMounted(()=>{
-    Hls.DefaultConfig.loader = HlsjsIpfsLoader;
-    Hls.DefaultConfig.debug = false;
-    if (Hls.isSupported()) {
-        const hls = new Hls();
-        // @ts-expect-error ipfs extention config for hls is not included in hls types
-        hls.config.ipfs = orbiter.constellation.sfip;
-        // @ts-expect-error ipfs extention config for hls is not included in hls types
-        hls.config.ipfsHash = props.file.cid;
-        
-        hls.loadSource('master.m3u8');
-        
-        if (!video.value) throw new Error("Video element not found. You really shouldn't ever be encountering this error message. If somehow you do, please complain.");
-
-        hls.attachMedia(video.value);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            const node = document.createTextNode('Video ready...');
-            status.value?.appendChild(node);
-
-            video.value?.play();
-        });
-    }
+onMounted(async () => {
+  const audioData = await orbiter.constellation.obtFichierSFIP({
+    id: props.file.cid,
+  });
+  console.log(audioData);
+  if (audioData) audioSource.value = URL.createObjectURL(new Blob([audioData.buffer]));
 });
-
 </script>

@@ -3,7 +3,7 @@
     class="mx-2"
     label
   >
-    Uploaded by: {{ displayName }}
+    <slot>Uploaded by:</slot> {{ displayName }}
   </v-chip>
 </template>
 

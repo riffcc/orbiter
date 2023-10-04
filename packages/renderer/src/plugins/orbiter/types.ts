@@ -24,7 +24,7 @@ export const variableIdKeys = [
   'releasesTypeVar',
 ] as const;
 
-export type VariableIds = Record<typeof variableIdKeys[number], string>;
+export type VariableIds = Record<(typeof variableIdKeys)[number], string>;
 
 export type possiblyIncompleteVariableIds = Partial<VariableIds>;
 
@@ -35,6 +35,14 @@ export type Release = {
   [RELEASES_THUMBNAIL_COLUMN]?: {cid: string; ext: string};
   [RELEASES_METADATA_COLUMN]?: string;
   [RELEASES_TYPE_COLUMN]: string;
+};
+
+export type Collection = {
+  [COLLECTIONS_NAME_COLUMN]: string;
+  [COLLECTIONS_AUTHOR_COLUMN]?: string;
+  [COLLECITONS_THUMBNAIL_COLUMN]?: string;
+  [COLLECTIONS_METADATA_COLUMN]?: string;
+  [COLLECTIONS_TYPE_COLUMN]: string;
 };
 
 export type TrustedSite = {

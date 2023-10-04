@@ -4,7 +4,7 @@
     v-if="accountInitialised"
     class="mb-4 text-start"
   >
-    <ReleaseDialog>
+    <NewReleaseDialog>
       <template #activator="{props}">
         <v-list-item v-bind="props">
           <template #prepend>
@@ -13,7 +13,7 @@
           <v-list-item-title>Add new release</v-list-item-title>
         </v-list-item>
       </template>
-    </ReleaseDialog>
+    </NewReleaseDialog>
   </v-list>
   <v-list
     v-if="!!releases && releases.length"
@@ -38,7 +38,7 @@ import type Orbiter from '/@/plugins/orbiter/orbiter';
 import type {Release as ReleaseInfo} from '/@/plugins/orbiter/types';
 
 import ReleaseItem from '/@/components/releases/releaseItem.vue';
-import ReleaseDialog from '/@/components/releases/releaseDialog.vue';
+import NewReleaseDialog from '/@/components/releases/newReleaseDialog.vue';
 
 import {ref, inject, onMounted, onUnmounted} from 'vue';
 import type {élémentDeMembre} from '@constl/ipa/dist/src/reseau';

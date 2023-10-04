@@ -1,8 +1,4 @@
-import type {
-  schémaFonctionOublier,
-  schémaRetourFonctionRechercheParN,
-  schémaRetourFonctionRechercheParProfondeur,
-} from '@constl/ipa/dist/src/utils/types';
+import type {types} from '@constl/ipa';
 import EventEmitter, {once} from 'events';
 import {onMounted, onUnmounted} from 'vue';
 
@@ -41,15 +37,19 @@ export async function copyText(text: string | undefined) {
   await navigator.clipboard.writeText(text);
 }
 
+/**
+ * A helper function to register an async Orbiter listener and to deregister it automatically when the component is unmounted.
+ * @param listenerPromise The Orbiter listener promise
+ */
 export const registerListener = <
   T extends
-    | schémaFonctionOublier
-    | schémaRetourFonctionRechercheParProfondeur
-    | schémaRetourFonctionRechercheParN,
+    | types.schémaFonctionOublier
+    | types.schémaRetourFonctionRechercheParProfondeur
+    | types.schémaRetourFonctionRechercheParN,
 >(
-  promesseÉcoute?: Promise<T>,
+  listenerPromise?: Promise<T>,
 ): Promise<T | undefined> => {
-  let fForget: schémaFonctionOublier | undefined = undefined;
+  let fForget: types.schémaFonctionOublier | undefined = undefined;
 
   const events = new EventEmitter();
   let result: T | undefined;
@@ -60,7 +60,7 @@ export const registerListener = <
   });
 
   onMounted(async () => {
-    result = await promesseÉcoute;
+    result = await listenerPromise;
     if (result instanceof Function) {
       fForget = result;
     } else {
