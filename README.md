@@ -35,7 +35,7 @@ NODE_MAJOR=20
 echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 ```
 
-3. Run Update and Install
+3. Run apt update and install the Node.JS package
 
 ```sh
 sudo apt-get update
