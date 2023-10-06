@@ -1,7 +1,7 @@
 [![Contributors](https://img.shields.io/opencollective/all/riffcc?style=flat-square)](https://opencollective.com/riffcc)
 
 # Riff.CC "Orbiter"
-Welcome! Orbiter is a proof-of-concept version of Riff.CC, implemented using OrbitDB, Constellation, IPFS and other tools. This repository contains instructions on how to set up and install a Riff.CC instance through Orbiter, as well as the necessary code to do so. For more information about Orbiter as well as the Riff.CC project itself, see the project's main page.
+Welcome! Orbiter is a proof-of-concept version of Riff.CC, implemented using OrbitDB, Constellation, IPFS and other tools. It is one of the two current platforms for hosting Riff.CC instances, the other being [CeramicRiff](https://github.com/riffcc/ceramic-riff-web). This repository contains instructions on how to set up and install a Riff.CC instance through Orbiter, as well as the necessary code to do so. For more information about Orbiter as well as the Riff.CC project itself, see the project's main page.
 
 Funding provided via [OpenCollective](https://opencollective.com/riffcc).
 
@@ -114,7 +114,6 @@ See [Configuration Reference](https://vitejs.dev/config/).
 
 ## Credits
 Authored by [@julienmalard](https://github.com/julienmalard), [@Zorlin](https://github.com/Zorlin), and the Riff.CC Project.
-
 
 ## Sponsors
 Thank you to our sponsors, who have generously provided funding for the development of the Riff.CC Project:
