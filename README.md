@@ -17,7 +17,7 @@ Before installing Orbiter, you must install the following dependencies by runnin
 Additionally, Orbiter utilizes **Node.JS** and **pnpm** to set up and install the platform, and as such it's required to install them as well. It is possible to use **yarn** instead of pnpm, but it's not recommended as it requires much more memory. Nevertheless, instructions for both will be provided.
 
 #### **Base: Node.JS**
-Required whether you use pnpm or yarn. We suggest using the NodeSource installation guide (https://github.com/nodesource/distributions#installation-instructions), with $NODE_MAJOR set to 20:
+Required whether you use pnpm or yarn. We suggest using the [NodeSource installation guide](https://github.com/nodesource/distributions#installation-instructions), with $NODE_MAJOR set to 20:
 
 1. Download and import the Nodesource GPG key
 
