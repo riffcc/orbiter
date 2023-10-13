@@ -3,7 +3,7 @@ import {EventEmitter, once} from 'events';
 import {Lock} from 'semaphore-async-await';
 
 import type {ClientConstellation, bds, réseau, types} from '@constl/ipa';
-import {uneFois} from '@constl/utils-ipa';
+import {uneFois, suivreBdDeFonction} from '@constl/utils-ipa';
 import type {élémentDeMembre} from '@constl/ipa/dist/src/reseau';
 
 import {
@@ -31,12 +31,12 @@ import type {
 } from './types.js';
 import {variableIdKeys} from './types.js';
 import type {tableaux} from '@constl/ipa';
+import { schémaSpécificationBd } from '@constl/ipa/dist/src/bds';
 
-type offFunction = () => Promise<void>;
+type forgetFunction = () => Promise<void>;
 
 export default class Orbiter {
-  modDbAddress?: string;
-  orbiterSwarmId?: string;
+  siteId?: string;
 
   initialVariableIds: possiblyIncompleteVariableIds;
   variableIds?: VariableIds;
@@ -47,20 +47,17 @@ export default class Orbiter {
   contentTypes = ['tvShow', 'movie', 'audiobook', 'game', 'book', 'music', 'video', 'other'];
 
   constructor({
-    modDbAddress,
-    orbiterSwarmId,
+    siteId,
     variableIds,
     constellation,
   }: {
-    modDbAddress?: string;
-    orbiterSwarmId?: string;
+    siteId?: string;
     variableIds: possiblyIncompleteVariableIds;
     constellation: ClientConstellation;
   }) {
     this.events = new EventEmitter();
 
-    this.modDbAddress = modDbAddress;
-    this.orbiterSwarmId = orbiterSwarmId;
+    this.siteId = siteId;
     this.initialVariableIds = variableIds;
 
     if (this.checkVariableIdsComplete(variableIds)) {
@@ -70,19 +67,12 @@ export default class Orbiter {
     this.constellation = constellation;
   }
 
-  checkVariableIdsComplete(ids: possiblyIncompleteVariableIds): ids is VariableIds {
-    return variableIdKeys.every(k => Object.keys(ids).includes(k) && ids[k]);
-  }
-
-  async generateModDb(): Promise<{
+  async setUpSite(): Promise<{
     modDbId: string;
     orbiterSwarmId: string;
     variableIds: VariableIds;
   }> {
     // Variables for moderation database
-    const trustedSitesModDbVariableId =
-      this.initialVariableIds.trustedSitesModDbVariableId ||
-      (await this.constellation.variables.créerVariable({catégorie: 'chaîneNonTraductible'}));
     const trustedSitesSwarmVariableId =
       this.initialVariableIds.trustedSitesSwarmVariableId ||
       (await this.constellation.variables.créerVariable({catégorie: 'chaîneNonTraductible'}));
@@ -124,7 +114,7 @@ export default class Orbiter {
       releasesTypeVar = this.initialVariableIds.releasesTypeVar;
     } else {
       releasesTypeVar = await this.constellation.variables.créerVariable({
-        catégorie: 'chaîne',
+        catégorie: 'chaîneNonTraductible',
       });
       // Specify allowed categories
       await this.constellation.variables.ajouterRègleVariable({
@@ -177,7 +167,7 @@ export default class Orbiter {
       }
     }
 
-    const modDbId = await this.constellation.bds.créerBdDeSchéma({
+    const modDb = await this.constellation.bds.créerBdDeSchéma({
       schéma: {
         licence: 'ODbl-1_0',
         tableaux: [
@@ -224,11 +214,180 @@ export default class Orbiter {
       releasesTypeVar,
     };
 
+    const siteId = await this.constellation.créerBdIndépendante({
+      type: "keyvalue"
+    });
+
+    await this.constellation.orbite.appliquerFonctionBdOrbite({
+      idBd: siteId,
+      f: "put",
+      args: ['modDb', modDbId],
+    });
+    await this.constellation.orbite.appliquerFonctionBdOrbite({
+      idBd: siteId,
+      f: "put",
+      args: ['releasesSwarm', releaseSwarmId],
+    });
+    await this.constellation.orbite.appliquerFonctionBdOrbite({
+      idBd: siteId,
+      f: "put",
+      args: ['collectionsSwarm', collectionsSwarmId],
+    });
+
     return {
-      modDbId,
-      orbiterSwarmId,
+      siteId,
       variableIds,
     };
+  }
+
+  async followSiteReleasesSwarm({
+    f,
+    siteId,
+  }: {
+    f: (x: string) => void;
+    siteId?: string;
+  }): Promise<forgetFunction> {
+    // Use this site's id if none is given
+    if (!siteId) ({siteId} = await this.siteConfigured());
+
+    return await this.constellation.bds.suivreMétadonnéesBd({
+      idBd: siteId,
+      f: x => {
+        const swarmId = x['releasesSwarm'];
+        if (typeof swarmId === 'string') f(swarmId);
+      },
+    });
+  }
+
+  async followSiteCollectionsSwarm({
+    f,
+    siteId,
+  }: {
+    f: (x: string) => void;
+    siteId?: string;
+  }): Promise<forgetFunction> {
+    // Use this site's id if none is given
+    if (!siteId) ({siteId} = await this.siteConfigured());
+
+    return await this.constellation.bds.suivreMétadonnéesBd({
+      idBd: siteId,
+      f: x => {
+        const swarmId = x['collectionsSwarm'];
+        if (typeof swarmId === 'string') f(swarmId);
+      },
+    });
+  }
+
+  async followTrustedSites({
+    f,
+  }: {
+    f: (sites?: tableaux.élémentDonnées<TrustedSite>[]) => void;
+  }): Promise<forgetFunction> {
+    
+
+
+    return await suivreBdDeFonction({
+      fRacine: async ({fSuivreRacine}: {
+        fSuivreRacine: (nouvelIdBdCible?: string | undefined) => Promise<void>;
+      }): Promise<forgetFunction> => {
+        return
+      },
+      f,
+      fSuivre: async (modDbId: string) => {
+        return this.constellation.bds.suivreDonnéesDeTableauParClef<TrustedSite>({
+          idBd: modDbId,
+          clefTableau: TRUSTED_SITES_TABLE_KEY,
+          f,
+        });
+      }
+    });
+  }
+
+  async followReleases({
+    f,
+    siteId,
+  }: {
+    f;
+    siteId?: string;
+  }):  Promise<types.schémaRetourFonctionRechercheParProfondeur> {
+    return await suivreBdDeFonction({
+      fRacine: async ({fSuivreRacine}: { fSuivreRacine: (nouvelIdBdCible?: string) => Promise<void>; }): Promise<forgetFunction> => {
+        return await this.followSiteReleasesSwarm({
+          f: fSuivreRacine,
+          siteId
+        });
+      },
+      f,
+      fSuivre: async ({id, fSuivreBd}: {
+        id: string;
+        fSuivreBd: schémaFonctionSuivi<T | undefined>;
+      }): Promise<forgetFunction> => {
+        return await this.constellation.nuées.suivreDonnéesTableauNuée({
+          idNuée: releasesSwarmId,
+          clefTableau,
+          f: fSuivreBd,
+          nRésultatsDésirés,
+    
+        })
+      }
+    })
+    
+  }
+
+  async orbiterReady(): Promise<{
+    releasesSwarmId: string;
+    releasesDbSchema: schémaSpécificationBd;
+  }> {
+    await this.siteConfigured();
+
+    const releasesDbSchema = this.getReleasesDbFormat({
+      ...variableIds,
+      orbiterSwarmId: releasesSwarmId,
+    })
+    return {
+
+    }
+  }
+
+  async addRelease(release: Release): Promise<void> {
+    const { releasesSwarmId, releasesDbSchema } = await this.orbiterReady();
+
+    const vals: Release = {
+      [RELEASES_FILE_COLUMN]: release.file,
+      [RELEASES_AUTHOR_COLUMN]: release.author,
+      [RELEASES_NAME_COLUMN]: release.contentName,
+      [RELEASES_TYPE_COLUMN]: release.type,
+    };
+    if (release.metadata) {
+      vals[RELEASES_METADATA_COLUMN] = release.metadata;
+    }
+    if (release.thumbnail) {
+      vals[RELEASES_THUMBNAIL_COLUMN] = release.thumbnail;
+    }
+
+    await this.constellation.bds.ajouterÉlémentÀTableauUnique({
+      schémaBd: releasesDbSchema,
+      idNuéeUnique: releasesSwarmId,
+      clefTableau: RELEASES_TABLE_KEY,
+      vals,
+    });
+  }
+
+  async addCollection(collection: Collection): Promise<void> {
+
+    await this.constellation.bds.ajouterÉlémentÀTableauUnique({
+      schémaBd: collectionsDbSchema,
+      idNuéeUnique: collectionsSwarmId,
+      clefTableau: COLLECTIONS_TABLE_KEY,
+      vals,
+    });
+  }
+
+
+  // Todo: refactor below
+
+  checkVariableIdsComplete(ids: possiblyIncompleteVariableIds): ids is VariableIds {
+    return variableIdKeys.every(k => Object.keys(ids).includes(k) && ids[k]);
   }
 
   getReleasesDbFormat({
@@ -285,33 +444,12 @@ export default class Orbiter {
     };
   }
 
-  setModDb({
-    modDbId,
-    orbiterSwarmId,
-    variableIds,
-  }: {
-    modDbId: string;
-    orbiterSwarmId: string;
-    variableIds: VariableIds;
-  }) {
-    if (this.modDbAddress)
-      throw new Error('Cannot change moderation DB address after Orbiter initialisation. Sorry.');
-
-    this.modDbAddress = modDbId;
-    this.orbiterSwarmId = orbiterSwarmId;
-    this.variableIds = variableIds;
-    this.events.emit('site configured');
-  }
-
-  async siteConfigured(): Promise<void> {
-    if (
-      this.modDbAddress &&
-      this.orbiterSwarmId &&
-      this.variableIds &&
-      this.checkVariableIdsComplete(this.variableIds)
-    )
-      return;
-    await once(this.events, 'site configured');
+  async siteConfigured(): Promise<{
+    siteId: string;
+  }> {
+    if (this.siteId && this.variableIds && this.checkVariableIdsComplete(this.variableIds))
+      return {siteId: this.siteId};
+    return await once(this.events, 'site configured');
   }
 
   async isSiteConfigured({f}: {f: (x: boolean) => void}): Promise<offFunction> {
@@ -587,46 +725,7 @@ export default class Orbiter {
     });
   }
 
-  async onTrustedSitesChange({
-    f,
-  }: {
-    f: (sites?: tableaux.élémentDonnées<TrustedSite>[]) => void;
-  }): Promise<offFunction> {
-    await this.orbiterReady();
 
-    return await this.constellation.bds.suivreDonnéesDeTableauParClef<TrustedSite>({
-      idBd: this.modDbAddress!,
-      clefTableau: TRUSTED_SITES_TABLE_KEY,
-      f,
-    });
-  }
-
-  async addRelease(r: Release) {
-    await this.orbiterReady();
-
-    const vals: Release = {
-      [RELEASES_FILE_COLUMN]: r.file,
-      [RELEASES_AUTHOR_COLUMN]: r.author,
-      [RELEASES_NAME_COLUMN]: r.contentName,
-      [RELEASES_TYPE_COLUMN]: r.type,
-    };
-    if (r.metadata) {
-      vals[RELEASES_METADATA_COLUMN] = r.metadata;
-    }
-    if (r.thumbnail) {
-      vals[RELEASES_THUMBNAIL_COLUMN] = r.thumbnail;
-    }
-
-    await this.constellation.bds.ajouterÉlémentÀTableauUnique({
-      schémaBd: this.getReleasesDbFormat({
-        ...this.variableIds!,
-        orbiterSwarmId: this.orbiterSwarmId!,
-      }),
-      idNuéeUnique: this.orbiterSwarmId!,
-      clefTableau: RELEASES_TABLE_KEY,
-      vals,
-    });
-  }
 
   async removeRelease(releaseHash: string) {
     await this.orbiterReady();

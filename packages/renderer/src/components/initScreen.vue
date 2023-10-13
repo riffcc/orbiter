@@ -99,10 +99,14 @@ import {ref, inject, onMounted, onUnmounted} from 'vue';
 import initiateModDBs from '/@/components/initiateModDBs.vue';
 import initiateAccount from '/@/components/initiateAccount.vue';
 
-const orbiter: Orbiter = inject('orbiter')!;
+const orbiter = inject<Orbiter>('orbiter');
 
 const orbiterReady = ref<boolean>(false);
-orbiter.orbiterReady().then(() => (orbiterReady.value = true));
+onMounted(async () => {
+  if (!orbiter) throw new Error('Orbiter not initialised.');
+  await orbiter.orbiterReady();
+  orbiterReady.value = true;
+});
 
 const accountExists = ref<boolean>();
 

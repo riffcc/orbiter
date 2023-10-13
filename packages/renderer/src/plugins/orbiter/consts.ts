@@ -2,8 +2,7 @@ export const BLOCKED_RELEASES_TABLE_KEY = 'blocked cids';
 export const BLOCKED_RELEASE_CID_COL = 'cid';
 
 export const TRUSTED_SITES_TABLE_KEY = 'trustedSites';
-export const TRUSTED_SITES_MOD_DB_COL = 'siteModDbAddress';
-export const TRUSTED_SITES_SWARM_COL = 'siteSwarmId';
+export const TRUSTED_SITES_SITE_ID_COL = 'siteId';
 export const TRUSTED_SITES_NAME_COL = 'siteName';
 
 export const RELEASES_FILE_COLUMN = 'file';

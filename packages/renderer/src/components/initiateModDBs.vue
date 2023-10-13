@@ -164,11 +164,6 @@ const acceptNewModDb = async () => {
   ) {
     throw new Error('Mod DB and variables not generated.');
   }
-  orbiter.setModDb({
-    modDbId: generatedModDbAddress.value,
-    orbiterSwarmId: generatedOrbiterSwarmId.value,
-    variableIds: generatedVariableIds.value,
-  });
 };
 
 let forgetSiteConfigured: (() => void) | undefined = undefined;

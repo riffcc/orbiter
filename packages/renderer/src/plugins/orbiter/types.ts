@@ -8,6 +8,7 @@ import type {
   RELEASES_TYPE_COLUMN,
   TRUSTED_SITES_MOD_DB_COL,
   TRUSTED_SITES_NAME_COL,
+  TRUSTED_SITES_SITE_ID_COL,
   TRUSTED_SITES_SWARM_COL,
 } from './consts';
 
@@ -22,6 +23,10 @@ export const variableIdKeys = [
   'releasesContentNameVar',
   'releasesMetadataVar',
   'releasesTypeVar',
+  'collectionsNameVar',
+  'collectionsAuthorVar',
+  'collectionsThumbnailVar',
+  'collectionsMetadataVar',
 ] as const;
 
 export type VariableIds = Record<(typeof variableIdKeys)[number], string>;
@@ -46,8 +51,7 @@ export type Collection = {
 };
 
 export type TrustedSite = {
-  [TRUSTED_SITES_MOD_DB_COL]: string;
-  [TRUSTED_SITES_SWARM_COL]: string;
+  [TRUSTED_SITES_SITE_ID_COL]: string;
   [TRUSTED_SITES_NAME_COL]: string;
 };
 
