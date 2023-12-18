@@ -21,7 +21,7 @@
   >
     <ReleaseItem
       v-for="r in releases"
-      :key="r.élément.données.file.cid"
+      :key="r.élément.données.file"
       :info="r"
     />
   </v-list>
@@ -49,18 +49,20 @@ const accountInitialised = ref<boolean | undefined>(undefined);
 const account = ref<string>();
 const releases = ref<élémentDeMembre<ReleaseInfo>[]>();
 
-let forgetAccountExists: (() => void) | undefined = undefined;
-let forgetAccount: (() => void) | undefined = undefined;
-let forgetReleases: (() => void) | undefined = undefined;
+let forgetAccountExists: (() => Promise<void>) | undefined = undefined;
+let forgetAccount: (() => Promise<void>) | undefined = undefined;
+let forgetReleases: (() => Promise<void>) | undefined = undefined;
 
 onMounted(async () => {
-  forgetAccountExists = await orbiter.onAccountExists({f: a => (accountInitialised.value = a)});
+  forgetAccountExists = await orbiter.listenForAccountExists({
+    f: a => (accountInitialised.value = a),
+  });
 });
 onMounted(async () => {
-  forgetAccount = await orbiter.onAccountChange({f: a => (account.value = a)});
+  forgetAccount = await orbiter.listenForAccountId({f: a => (account.value = a)});
 });
 onMounted(async () => {
-  forgetReleases = await orbiter.onReleasesChange({f: rs => (releases.value = rs)});
+  forgetReleases = await orbiter.listenForReleases({f: rs => (releases.value = rs)});
 });
 
 onUnmounted(async () => {

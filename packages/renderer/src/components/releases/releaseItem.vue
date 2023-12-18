@@ -1,8 +1,8 @@
 <template>
   <ReleaseViewer :release="info">
-    <template #activator="{props}">
+    <template #activator="{props: activatorProps}">
       <v-list-item
-        v-bind="props"
+        v-bind="activatorProps"
         :prepend-avatar="thumbnailURL"
       >
         <v-list-item-title>
@@ -12,13 +12,13 @@
           {{ info.élément.données.metadata }}
         </v-list-item-subtitle>
         <div class="my-2">
-          <UserChip :account-id="info.idBdCompte" />
+          <UserChip :account-id="info.idCompte" />
           <v-chip
             class="mx-2"
             label
             @click.stop
           >
-            CID: {{ info.élément.données.file.cid }}
+            CID: {{ info.élément.données.file }}
           </v-chip>
           <v-chip
             class="mx-2"
@@ -60,27 +60,29 @@
 </template>
 
 <script setup lang="ts">
-import {computed, inject, onMounted, onUnmounted, ref, watchEffect} from 'vue';
+import type {réseau} from '@constl/ipa';
+
 import type Orbiter from '/@/plugins/orbiter/orbiter';
 import type {Release} from '/@/plugins/orbiter/types';
 
-import type {élémentDeMembre} from '@constl/ipa/dist/src/reseau';
+import {computed, inject, onMounted, onUnmounted, ref, watchEffect} from 'vue';
+
 import UserChip from '/@/components/userChip.vue';
 import ReleaseViewer from './releaseViewer.vue';
 import {downloadFile} from '/@/utils';
 
 export interface ReleaseProps {
-  info: élémentDeMembre<Release>;
+  info: réseau.élémentDeMembre<Release>;
 }
 
-const orbiter: Orbiter = inject('orbiter')!;
+const orbiter = inject<Orbiter>('orbiter');
 
 const props = defineProps<ReleaseProps>();
 
 const myAccountId = ref<string>();
 
 const myRelease = computed(() => {
-  return props.info.idBdCompte === myAccountId.value;
+  return props.info.idCompte === myAccountId.value;
 });
 
 const thumbnailURL = ref<string>();
@@ -88,13 +90,13 @@ watchEffect(async () => {
   const {thumbnail} = props.info.élément.données;
 
   if (thumbnail) {
-    const image = await orbiter.constellation!.obtFichierSFIP({
-      id: thumbnail.cid,
+    const image = await orbiter?.constellation.obtFichierSFIP({
+      id: thumbnail,
       max: 1500 * 1000, // 1.5 MB,
     });
     if (image) {
       thumbnailURL.value = URL.createObjectURL(
-        new Blob([image.buffer], {type: `image/${thumbnail.ext}`}),
+        new Blob([image.buffer], {type: `image/${thumbnail.split('.')[1]}`}),
       );
     } else {
       thumbnailURL.value = undefined;
@@ -105,30 +107,29 @@ watchEffect(async () => {
 });
 
 async function removeRelease() {
-  await orbiter.removeRelease(props.info.élément.empreinte);
+  await orbiter?.removeRelease(props.info.élément.id);
 }
 
 async function downloadRelease() {
   const {file, contentName} = props.info.élément.données;
 
-  const releaseFile = await orbiter.constellation!.obtFichierSFIP({
-    id: file.cid,
+  const releaseFile = await orbiter?.constellation.obtFichierSFIP({
+    id: file,
   });
-  const filename = `${contentName}.${file.ext}`;
 
   if (releaseFile) {
-    downloadFile(filename, releaseFile);
+    downloadFile(contentName, releaseFile);
   }
 }
 
 async function blockRelease() {
-  await orbiter.blockRelease(props.info.élément.données.file.cid);
+  await orbiter?.blockRelease({cid: props.info.élément.données.file});
 }
 
 let forgetAccountId: (() => Promise<void>) | undefined = undefined;
 
 onMounted(async () => {
-  forgetAccountId = await orbiter.onAccountChange({f: a => (myAccountId.value = a)});
+  forgetAccountId = await orbiter?.listenForAccountId({f: a => (myAccountId.value = a)});
 });
 
 onUnmounted(async () => {

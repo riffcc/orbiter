@@ -35,7 +35,7 @@ const orbiter = inject<Orbiter>('orbiter');
 
 // User avatar
 const accountId = ref<string>();
-registerListener(orbiter?.onAccountChange({f: id => (accountId.value = id)}));
+registerListener(orbiter?.listenForAccountId({f: id => (accountId.value = id)}));
 
 const userAvatar = useUserProfilePhoto(accountId);
 </script>

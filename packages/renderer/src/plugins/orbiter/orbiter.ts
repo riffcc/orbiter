@@ -1,63 +1,106 @@
-import {EventEmitter, once} from 'events';
+import {TypedEmitter} from 'tiny-typed-emitter';
 
 import {Lock} from 'semaphore-async-await';
 
-import type {ClientConstellation, bds, réseau, types} from '@constl/ipa';
-import {uneFois, suivreBdDeFonction} from '@constl/utils-ipa';
-import type {élémentDeMembre} from '@constl/ipa/dist/src/reseau';
+import type {ClientConstellation, bds, tableaux, types} from '@constl/ipa';
+import {uneFois, suivreBdDeFonction, ignorerNonDéfinis} from '@constl/utils-ipa';
+
+import type {JSONSchemaType} from 'ajv';
 
 import {
   BLOCKED_RELEASES_TABLE_KEY,
   BLOCKED_RELEASE_CID_COL,
   RELEASES_AUTHOR_COLUMN,
   RELEASES_FILE_COLUMN,
-  RELEASES_DB_TABLE_KEY as RELEASES_TABLE_KEY,
+  RELEASES_DB_TABLE_KEY,
   TRUSTED_SITES_TABLE_KEY,
-  TRUSTED_SITES_MOD_DB_COL,
   TRUSTED_SITES_NAME_COL,
   RELEASES_NAME_COLUMN,
   RELEASES_METADATA_COLUMN,
   RELEASES_THUMBNAIL_COLUMN,
   RELEASES_TYPE_COLUMN,
-  TRUSTED_SITES_SWARM_COL,
+  COLLECTIONS_DB_TABLE_KEY,
+  TRUSTED_SITES_SITE_ID_COL,
+  COLLECTIONS_NAME_COLUMN,
+  COLLECTIONS_TYPE_COLUMN,
+  COLLECTIONS_RELEASES_COLUMN,
+  COLLECTIONS_AUTHOR_COLUMN,
+  COLLECTIONS_METADATA_COLUMN,
+  COLLECTIONS_THUMBNAIL_COLUMN,
 } from './consts.js';
 import type {
   BlockedCid,
   Collection,
+  CollectionWithId,
   Release,
+  ReleaseWithId,
   TrustedSite,
   VariableIds,
   possiblyIncompleteVariableIds,
 } from './types.js';
 import {variableIdKeys} from './types.js';
-import type {tableaux} from '@constl/ipa';
-import { schémaSpécificationBd } from '@constl/ipa/dist/src/bds';
+import {removeUndefined} from './utils.js';
 
 type forgetFunction = () => Promise<void>;
 
+interface OrbiterEvents {
+  'site configured': (args: {siteId: string; variableIds: VariableIds}) => void;
+  'account status': (status: string) => void;
+}
+
+type RootDbSchema = {
+  swarmId: string;
+  modDb: string;
+};
+const ROOT_DB_JSON_SCHEMA: JSONSchemaType<Partial<RootDbSchema>> = {
+  type: 'object',
+  properties: {
+    modDb: {type: 'string', nullable: true},
+    swarmId: {type: 'string', nullable: true},
+  },
+  required: [],
+};
+
+const OrbiterSiteDbSchema: JSONSchemaType<{modDb: string; swarmId: string}> = {
+  type: 'object',
+  properties: {
+    modDb: {
+      type: 'string',
+    },
+    swarmId: {
+      type: 'string',
+    },
+  },
+  required: ['modDb', 'swarmId'],
+};
+
 export default class Orbiter {
   siteId?: string;
+  swarmId?: string;
 
   initialVariableIds: possiblyIncompleteVariableIds;
   variableIds?: VariableIds;
 
   constellation: ClientConstellation;
-  events: EventEmitter;
+  events: TypedEmitter<OrbiterEvents>;
 
   contentTypes = ['tvShow', 'movie', 'audiobook', 'game', 'book', 'music', 'video', 'other'];
 
   constructor({
     siteId,
+    swarmId,
     variableIds,
     constellation,
   }: {
     siteId?: string;
+    swarmId?: string;
     variableIds: possiblyIncompleteVariableIds;
     constellation: ClientConstellation;
   }) {
-    this.events = new EventEmitter();
+    this.events = new TypedEmitter<OrbiterEvents>();
 
     this.siteId = siteId;
+    this.swarmId = swarmId;
     this.initialVariableIds = variableIds;
 
     if (this.checkVariableIdsComplete(variableIds)) {
@@ -67,14 +110,15 @@ export default class Orbiter {
     this.constellation = constellation;
   }
 
+  // Site setup functions
+
   async setUpSite(): Promise<{
-    modDbId: string;
-    orbiterSwarmId: string;
+    siteId: string;
     variableIds: VariableIds;
   }> {
     // Variables for moderation database
-    const trustedSitesSwarmVariableId =
-      this.initialVariableIds.trustedSitesSwarmVariableId ||
+    const trustedSitesSiteIdVariableId =
+      this.initialVariableIds.trustedSitesSiteIdVariableId ||
       (await this.constellation.variables.créerVariable({catégorie: 'chaîneNonTraductible'}));
     const trustedSitesNameVariableId =
       this.initialVariableIds.trustedSitesNameVariableId ||
@@ -85,7 +129,7 @@ export default class Orbiter {
         catégorie: 'chaîneNonTraductible',
       }));
 
-    // Variables for individual releases databases
+    // Variables for releases table
     const releasesFileVar =
       this.initialVariableIds.releasesFileVar ||
       (await this.constellation.variables.créerVariable({
@@ -103,6 +147,11 @@ export default class Orbiter {
       }));
     const releasesMetadataVar =
       this.initialVariableIds.releasesMetadataVar ||
+      (await this.constellation.variables.créerVariable({
+        catégorie: 'chaîneNonTraductible',
+      }));
+    const releasesContentNameVar =
+      this.initialVariableIds.releasesContentNameVar ||
       (await this.constellation.variables.créerVariable({
         catégorie: 'chaîneNonTraductible',
       }));
@@ -128,33 +177,81 @@ export default class Orbiter {
         },
       });
     }
-    const releasesContentNameVar =
-      this.initialVariableIds.releasesContentNameVar ||
+
+    // Variables for collections table
+    const collectionsNameVar =
+      this.initialVariableIds.collectionsNameVar ||
       (await this.constellation.variables.créerVariable({
         catégorie: 'chaîneNonTraductible',
       }));
+    const collectionsAuthorVar =
+      this.initialVariableIds.collectionsAuthorVar ||
+      (await this.constellation.variables.créerVariable({
+        catégorie: 'chaîneNonTraductible',
+      }));
+    const collectionsMetadataVar =
+      this.initialVariableIds.collectionsMetadataVar ||
+      (await this.constellation.variables.créerVariable({
+        catégorie: 'chaîneNonTraductible',
+      }));
+    const collectionsReleasesVar =
+      this.initialVariableIds.collectionsReleasesVar ||
+      (await this.constellation.variables.créerVariable({
+        catégorie: 'chaîneNonTraductible',
+      }));
+    const collectionsThumbnailVar =
+      this.initialVariableIds.collectionsThumbnailVar ||
+      (await this.constellation.variables.créerVariable({
+        catégorie: 'fichier',
+      }));
+
+    // Same thing for collections type variable.
+    let collectionsTypeVar: string;
+    if (this.initialVariableIds.collectionsTypeVar) {
+      collectionsTypeVar = this.initialVariableIds.collectionsTypeVar;
+    } else {
+      collectionsTypeVar = await this.constellation.variables.créerVariable({
+        catégorie: 'chaîneNonTraductible',
+      });
+      // Specify allowed categories
+      await this.constellation.variables.ajouterRègleVariable({
+        idVariable: collectionsTypeVar,
+        règle: {
+          typeRègle: 'valeurCatégorique',
+          détails: {
+            type: 'fixe',
+            options: this.contentTypes,
+          },
+        },
+      });
+    }
 
     // Swarm ID for site
-    let orbiterSwarmId: string;
-    if (this.orbiterSwarmId) {
-      orbiterSwarmId = this.orbiterSwarmId;
+    let swarmId: string;
+    if (this.swarmId) {
+      swarmId = this.swarmId;
     } else {
-      orbiterSwarmId = await this.constellation.nuées.créerNuée({});
-      // Now we can specify the format for individual release dbs
-      // Todo: for consistency, should this be set here or in setModDb()?
-      const releasesDbFormat = this.getReleasesDbFormat({
+      swarmId = await this.constellation.nuées.créerNuée({});
+      // Now we can specify the format for individual release dbs and collections
+      const releasesDbFormat = this.getSwarmDbSchema({
         releasesFileVar,
         releasesTypeVar,
         releasesThumbnailVar,
         releasesAuthorVar,
         releasesContentNameVar,
         releasesMetadataVar,
-        orbiterSwarmId,
+        collectionsAuthorVar,
+        collectionsMetadataVar,
+        collectionsNameVar,
+        collectionsReleasesVar,
+        collectionsThumbnailVar,
+        collectionsTypeVar,
+        orbiterSwarmId: swarmId,
       });
       for (const table of releasesDbFormat.tableaux) {
         const tableKey = table.clef;
         const idTableau = await this.constellation.nuées.ajouterTableauNuée({
-          idNuée: orbiterSwarmId,
+          idNuée: swarmId,
           clefTableau: tableKey,
         });
         for (const col of table.cols) {
@@ -167,19 +264,15 @@ export default class Orbiter {
       }
     }
 
-    const modDb = await this.constellation.bds.créerBdDeSchéma({
+    const modDbId = await this.constellation.bds.créerBdDeSchéma({
       schéma: {
         licence: 'ODbl-1_0',
         tableaux: [
           {
             cols: [
               {
-                idVariable: trustedSitesModDbVariableId,
-                idColonne: TRUSTED_SITES_MOD_DB_COL,
-              },
-              {
-                idVariable: trustedSitesSwarmVariableId,
-                idColonne: TRUSTED_SITES_SWARM_COL,
+                idVariable: trustedSitesSiteIdVariableId,
+                idColonne: TRUSTED_SITES_SITE_ID_COL,
               },
               {
                 idVariable: trustedSitesNameVariableId,
@@ -202,36 +295,46 @@ export default class Orbiter {
     });
 
     const variableIds: VariableIds = {
-      trustedSitesModDbVariableId,
-      trustedSitesSwarmVariableId,
+      // Federation stuff
+      trustedSitesSiteIdVariableId,
       trustedSitesNameVariableId,
       blockedCidsVariableId,
+
+      // releases
       releasesFileVar,
       releasesAuthorVar,
       releasesContentNameVar,
       releasesThumbnailVar,
       releasesMetadataVar,
       releasesTypeVar,
+
+      // collections
+      collectionsAuthorVar,
+      collectionsMetadataVar,
+      collectionsNameVar,
+      collectionsThumbnailVar,
+      collectionsReleasesVar,
+      collectionsTypeVar,
     };
 
     const siteId = await this.constellation.créerBdIndépendante({
-      type: "keyvalue"
+      type: 'keyvalue',
     });
 
     await this.constellation.orbite.appliquerFonctionBdOrbite({
       idBd: siteId,
-      f: "put",
+      fonction: 'put',
       args: ['modDb', modDbId],
     });
     await this.constellation.orbite.appliquerFonctionBdOrbite({
       idBd: siteId,
-      f: "put",
-      args: ['releasesSwarm', releaseSwarmId],
+      fonction: 'put',
+      args: ['swarmId', swarmId],
     });
-    await this.constellation.orbite.appliquerFonctionBdOrbite({
-      idBd: siteId,
-      f: "put",
-      args: ['collectionsSwarm', collectionsSwarmId],
+
+    this.events.emit('site configured', {
+      siteId,
+      variableIds,
     });
 
     return {
@@ -240,163 +343,23 @@ export default class Orbiter {
     };
   }
 
-  async followSiteReleasesSwarm({
-    f,
-    siteId,
-  }: {
-    f: (x: string) => void;
-    siteId?: string;
-  }): Promise<forgetFunction> {
-    // Use this site's id if none is given
-    if (!siteId) ({siteId} = await this.siteConfigured());
-
-    return await this.constellation.bds.suivreMétadonnéesBd({
-      idBd: siteId,
-      f: x => {
-        const swarmId = x['releasesSwarm'];
-        if (typeof swarmId === 'string') f(swarmId);
-      },
-    });
+  checkVariableIdsComplete(ids?: possiblyIncompleteVariableIds): ids is VariableIds {
+    return !!ids && variableIdKeys.every(k => Object.keys(ids).includes(k) && ids[k]);
   }
 
-  async followSiteCollectionsSwarm({
-    f,
-    siteId,
-  }: {
-    f: (x: string) => void;
-    siteId?: string;
-  }): Promise<forgetFunction> {
-    // Use this site's id if none is given
-    if (!siteId) ({siteId} = await this.siteConfigured());
-
-    return await this.constellation.bds.suivreMétadonnéesBd({
-      idBd: siteId,
-      f: x => {
-        const swarmId = x['collectionsSwarm'];
-        if (typeof swarmId === 'string') f(swarmId);
-      },
-    });
-  }
-
-  async followTrustedSites({
-    f,
-  }: {
-    f: (sites?: tableaux.élémentDonnées<TrustedSite>[]) => void;
-  }): Promise<forgetFunction> {
-    
-
-
-    return await suivreBdDeFonction({
-      fRacine: async ({fSuivreRacine}: {
-        fSuivreRacine: (nouvelIdBdCible?: string | undefined) => Promise<void>;
-      }): Promise<forgetFunction> => {
-        return
-      },
-      f,
-      fSuivre: async (modDbId: string) => {
-        return this.constellation.bds.suivreDonnéesDeTableauParClef<TrustedSite>({
-          idBd: modDbId,
-          clefTableau: TRUSTED_SITES_TABLE_KEY,
-          f,
-        });
-      }
-    });
-  }
-
-  async followReleases({
-    f,
-    siteId,
-  }: {
-    f;
-    siteId?: string;
-  }):  Promise<types.schémaRetourFonctionRechercheParProfondeur> {
-    return await suivreBdDeFonction({
-      fRacine: async ({fSuivreRacine}: { fSuivreRacine: (nouvelIdBdCible?: string) => Promise<void>; }): Promise<forgetFunction> => {
-        return await this.followSiteReleasesSwarm({
-          f: fSuivreRacine,
-          siteId
-        });
-      },
-      f,
-      fSuivre: async ({id, fSuivreBd}: {
-        id: string;
-        fSuivreBd: schémaFonctionSuivi<T | undefined>;
-      }): Promise<forgetFunction> => {
-        return await this.constellation.nuées.suivreDonnéesTableauNuée({
-          idNuée: releasesSwarmId,
-          clefTableau,
-          f: fSuivreBd,
-          nRésultatsDésirés,
-    
-        })
-      }
-    })
-    
-  }
-
-  async orbiterReady(): Promise<{
-    releasesSwarmId: string;
-    releasesDbSchema: schémaSpécificationBd;
-  }> {
-    await this.siteConfigured();
-
-    const releasesDbSchema = this.getReleasesDbFormat({
-      ...variableIds,
-      orbiterSwarmId: releasesSwarmId,
-    })
-    return {
-
-    }
-  }
-
-  async addRelease(release: Release): Promise<void> {
-    const { releasesSwarmId, releasesDbSchema } = await this.orbiterReady();
-
-    const vals: Release = {
-      [RELEASES_FILE_COLUMN]: release.file,
-      [RELEASES_AUTHOR_COLUMN]: release.author,
-      [RELEASES_NAME_COLUMN]: release.contentName,
-      [RELEASES_TYPE_COLUMN]: release.type,
-    };
-    if (release.metadata) {
-      vals[RELEASES_METADATA_COLUMN] = release.metadata;
-    }
-    if (release.thumbnail) {
-      vals[RELEASES_THUMBNAIL_COLUMN] = release.thumbnail;
-    }
-
-    await this.constellation.bds.ajouterÉlémentÀTableauUnique({
-      schémaBd: releasesDbSchema,
-      idNuéeUnique: releasesSwarmId,
-      clefTableau: RELEASES_TABLE_KEY,
-      vals,
-    });
-  }
-
-  async addCollection(collection: Collection): Promise<void> {
-
-    await this.constellation.bds.ajouterÉlémentÀTableauUnique({
-      schémaBd: collectionsDbSchema,
-      idNuéeUnique: collectionsSwarmId,
-      clefTableau: COLLECTIONS_TABLE_KEY,
-      vals,
-    });
-  }
-
-
-  // Todo: refactor below
-
-  checkVariableIdsComplete(ids: possiblyIncompleteVariableIds): ids is VariableIds {
-    return variableIdKeys.every(k => Object.keys(ids).includes(k) && ids[k]);
-  }
-
-  getReleasesDbFormat({
+  getSwarmDbSchema({
     releasesFileVar,
     releasesTypeVar,
     releasesThumbnailVar,
     releasesAuthorVar,
     releasesContentNameVar,
     releasesMetadataVar,
+    collectionsNameVar,
+    collectionsTypeVar,
+    collectionsReleasesVar,
+    collectionsAuthorVar,
+    collectionsMetadataVar,
+    collectionsThumbnailVar,
     orbiterSwarmId,
   }: {
     releasesFileVar: string;
@@ -405,6 +368,12 @@ export default class Orbiter {
     releasesAuthorVar: string;
     releasesContentNameVar: string;
     releasesMetadataVar: string;
+    collectionsNameVar: string;
+    collectionsTypeVar: string;
+    collectionsReleasesVar: string;
+    collectionsAuthorVar: string;
+    collectionsMetadataVar: string;
+    collectionsThumbnailVar: string;
     orbiterSwarmId: string;
   }): bds.schémaSpécificationBd {
     return {
@@ -438,28 +407,44 @@ export default class Orbiter {
               idColonne: RELEASES_METADATA_COLUMN,
             },
           ],
-          clef: RELEASES_TABLE_KEY,
+          clef: RELEASES_DB_TABLE_KEY,
+        },
+        {
+          cols: [
+            {
+              idVariable: collectionsNameVar,
+              idColonne: COLLECTIONS_NAME_COLUMN,
+            },
+            {
+              idVariable: collectionsTypeVar,
+              idColonne: COLLECTIONS_TYPE_COLUMN,
+            },
+            {
+              idVariable: collectionsReleasesVar,
+              idColonne: COLLECTIONS_RELEASES_COLUMN,
+            },
+            {
+              idVariable: collectionsAuthorVar,
+              idColonne: COLLECTIONS_AUTHOR_COLUMN,
+            },
+            {
+              idVariable: collectionsMetadataVar,
+              idColonne: COLLECTIONS_METADATA_COLUMN,
+            },
+            {
+              idVariable: collectionsThumbnailVar,
+              idColonne: COLLECTIONS_THUMBNAIL_COLUMN,
+            },
+          ],
+          clef: COLLECTIONS_DB_TABLE_KEY,
         },
       ],
     };
   }
 
-  async siteConfigured(): Promise<{
-    siteId: string;
-  }> {
-    if (this.siteId && this.variableIds && this.checkVariableIdsComplete(this.variableIds))
-      return {siteId: this.siteId};
-    return await once(this.events, 'site configured');
-  }
-
-  async isSiteConfigured({f}: {f: (x: boolean) => void}): Promise<offFunction> {
+  async listenForSiteConfigured({f}: {f: (x: boolean) => void}): Promise<forgetFunction> {
     const configured = () => {
-      return !!(
-        this.modDbAddress &&
-        this.orbiterSwarmId &&
-        this.variableIds &&
-        this.checkVariableIdsComplete(this.variableIds)
-      );
+      return !!(this.siteId && this.checkVariableIdsComplete(this.variableIds));
     };
     f(configured());
     const fFinal = () => f(configured());
@@ -469,94 +454,290 @@ export default class Orbiter {
     };
   }
 
-  async orbiterReady(): Promise<void> {
-    await this.siteConfigured();
-  }
-
-  async initAccount({names}: {names: {[lang: string]: string}}): Promise<void> {
-    for (const [name, language] of Object.values(names)) {
-      await this.changeName({name, language});
+  async siteConfigured(): Promise<{siteId: string; variableIds: VariableIds}> {
+    if (this.siteId && this.checkVariableIdsComplete(this.variableIds)) {
+      return {siteId: this.siteId, variableIds: this.variableIds};
     }
-    await this.constellation.sauvegarderAuStockageLocal({
-      clef: 'accountStatus',
-      val: 'initialised',
+    return new Promise(resolve => {
+      this.events.once('site configured', resolve);
     });
-    this.events.emit('accountStatus', 'initialised');
   }
 
-  async onAccountExists({f}: {f: (exists: boolean) => void}): Promise<offFunction> {
-    const finalF = (status: string) => {
-      f(status === 'initialised');
+  async orbiterConfig(): Promise<{
+    modDbId: string;
+    swarmId: string;
+    swarmSchema: bds.schémaSpécificationBd;
+  }> {
+    const {siteId, variableIds} = await this.siteConfigured();
+
+    const modDbId = (await uneFois(
+      async (fSuivi: types.schémaFonctionSuivi<string | undefined>) => {
+        return await this.constellation.suivreBd({
+          id: siteId,
+          type: 'keyvalue',
+          f: async x => fSuivi(await x.get('modDb')),
+          schéma: OrbiterSiteDbSchema,
+        });
+      },
+    )) as string;
+
+    const swarmId = (await uneFois(
+      async (fSuivi: types.schémaFonctionSuivi<string | undefined>) => {
+        return await this.constellation.suivreBd({
+          id: siteId,
+          type: 'keyvalue',
+          f: async x => fSuivi(await x.get('swarmId')),
+          schéma: OrbiterSiteDbSchema,
+        });
+      },
+      x => typeof x === 'string',
+    )) as string;
+
+    const swarmSchema = this.getSwarmDbSchema({
+      ...variableIds,
+      orbiterSwarmId: swarmId,
+    });
+
+    return {
+      modDbId,
+      swarmId,
+      swarmSchema,
     };
-    this.events.on('accountStatus', finalF);
-    return async () => {
-      this.events.off('accountStatus', finalF);
-    };
   }
 
-  async onAccountChange({f}: {f: (account?: string) => void}): Promise<offFunction> {
-    return await this.constellation.suivreIdCompte({f});
-  }
-
-  async getAccountId(): Promise<string> {
-    return await this.constellation.obtIdCompte();
-  }
-
-  async onNameChange({
+  async followSiteSwarmId({
     f,
-    accountId,
+    siteId,
   }: {
-    f: (name: {[language: string]: string}) => void;
-    accountId?: string;
-  }): Promise<offFunction> {
-    return await this.constellation.profil.suivreNoms({
-      f,
-      idCompte: accountId || (await this.getAccountId()),
+    f: (x: string) => void;
+    siteId?: string;
+  }): Promise<forgetFunction> {
+    // Use this site's id if none is given
+    if (!siteId) ({siteId} = await this.siteConfigured());
+
+    return await this.constellation.suivreBdDic({
+      id: siteId,
+      schéma: ROOT_DB_JSON_SCHEMA,
+      f: x => {
+        const swarmId = x['swarmId'];
+        if (typeof swarmId === 'string') f(swarmId);
+      },
     });
   }
 
-  async onContactInfoChange({
+  async followSiteModDbId({
     f,
-    accountId,
+    siteId,
   }: {
-    f: types.schémaFonctionSuivi<{type: string; contact: string}[]>;
-    accountId?: string;
+    f: (x: string) => void;
+    siteId?: string;
+  }): Promise<forgetFunction> {
+    // Use this site's id if none is given
+    if (!siteId) ({siteId} = await this.siteConfigured());
+
+    return await this.constellation.suivreBdDic({
+      id: siteId,
+      schéma: ROOT_DB_JSON_SCHEMA,
+      f: x => {
+        const swarmId = x['modDb'];
+        if (typeof swarmId === 'string') f(swarmId);
+      },
+    });
+  }
+
+  // Accessing network data
+
+  async followTrustedSites({
+    f,
+  }: {
+    f: (sites?: tableaux.élémentDonnées<TrustedSite>[]) => void;
+  }): Promise<forgetFunction> {
+    const {siteId} = await this.siteConfigured();
+
+    return await suivreBdDeFonction({
+      fRacine: async ({
+        fSuivreRacine,
+      }: {
+        fSuivreRacine: (nouvelIdBdCible?: string | undefined) => Promise<void>;
+      }): Promise<forgetFunction> => {
+        return await this.constellation.suivreBd({
+          id: siteId,
+          f: async x => await fSuivreRacine(await x.get('modDb')),
+          type: 'keyvalue',
+          schéma: OrbiterSiteDbSchema,
+        });
+      },
+      f,
+      fSuivre: async ({
+        id,
+        fSuivreBd,
+      }: {
+        id: string;
+        fSuivreBd: types.schémaFonctionSuivi<tableaux.élémentDonnées<TrustedSite>[] | undefined>;
+      }) => {
+        return this.constellation.bds.suivreDonnéesDeTableauParClef<TrustedSite>({
+          idBd: id,
+          clefTableau: TRUSTED_SITES_TABLE_KEY,
+          f: fSuivreBd,
+        });
+      },
+    });
+  }
+
+  async listenForSiteBlockedReleases({
+    f,
+    siteId,
+  }: {
+    f: (releases?: BlockedCid[]) => void;
+    siteId?: string;
+  }): Promise<forgetFunction> {
+    return await suivreBdDeFonction({
+      fRacine: async ({
+        fSuivreRacine,
+      }: {
+        fSuivreRacine: (nouvelIdBdCible?: string) => Promise<void>;
+      }): Promise<forgetFunction> => {
+        return await this.followSiteModDbId({
+          f: fSuivreRacine,
+          siteId,
+        });
+      },
+      f: ignorerNonDéfinis(f),
+      fSuivre: async ({
+        id,
+        fSuivreBd,
+      }: {
+        id: string;
+        fSuivreBd: types.schémaFonctionSuivi<BlockedCid[] | undefined>;
+      }): Promise<forgetFunction> => {
+        return await this.constellation.bds.suivreDonnéesDeTableauParClef<BlockedCid>({
+          idBd: id,
+          clefTableau: BLOCKED_RELEASES_TABLE_KEY,
+          f: async blocked => {
+            if (blocked)
+              await fSuivreBd(
+                blocked.map(b => {
+                  return {
+                    cid: b.données[BLOCKED_RELEASE_CID_COL],
+                    id: b.id,
+                  };
+                }),
+              );
+          },
+        });
+      },
+    });
+  }
+
+  async listenForSiteReleases({
+    f,
+    siteId,
+    desiredNResults = 1000,
+  }: {
+    f: types.schémaFonctionSuivi<{release: ReleaseWithId; contributor: string}[]>;
+    siteId?: string;
+    desiredNResults?: number;
   }): Promise<types.schémaFonctionOublier> {
-    return await this.constellation.profil.suivreContacts({
-      f,
-      idCompte: accountId,
+    return await suivreBdDeFonction({
+      fRacine: async ({
+        fSuivreRacine,
+      }: {
+        fSuivreRacine: (nouvelIdBdCible?: string) => Promise<void>;
+      }): Promise<forgetFunction> => {
+        return await this.followSiteSwarmId({
+          f: fSuivreRacine,
+          siteId,
+        });
+      },
+      f: ignorerNonDéfinis(f),
+      fSuivre: async ({
+        id,
+        fSuivreBd,
+      }: {
+        id: string;
+        fSuivreBd: types.schémaFonctionSuivi<{release: ReleaseWithId; contributor: string}[]>;
+      }): Promise<forgetFunction> => {
+        const {fOublier} = await this.constellation.nuées.suivreDonnéesTableauNuée<Release>({
+          idNuée: id,
+          clefTableau: RELEASES_DB_TABLE_KEY,
+          f: releases =>
+            fSuivreBd(
+              releases.map(r => ({
+                release: {
+                  release: r.élément.données,
+                  id: r.élément.id,
+                },
+                contributor: r.idCompte,
+              })),
+            ),
+          nRésultatsDésirés: desiredNResults,
+          clefsSelonVariables: false,
+        });
+        return fOublier;
+      },
     });
   }
 
-  async onProfilePhotoChange({
+  async listenForSiteCollections({
     f,
-    accountId,
+    siteId,
+    desiredNResults = 1000,
   }: {
-    f: types.schémaFonctionSuivi<Uint8Array | null>;
-    accountId?: string;
+    f: types.schémaFonctionSuivi<{collection: CollectionWithId; contributor: string}[]>;
+    siteId?: string;
+    desiredNResults?: number;
   }): Promise<types.schémaFonctionOublier> {
-    return await this.constellation.profil.suivreImage({f, idCompte: accountId});
-  }
-
-  async onIsModChange({f}: {f: (isMod: boolean) => void}): Promise<offFunction> {
-    await this.orbiterReady();
-    return await this.constellation.suivrePermissionÉcrire({
-      id: this.modDbAddress!,
-      f,
+    return await suivreBdDeFonction({
+      fRacine: async ({
+        fSuivreRacine,
+      }: {
+        fSuivreRacine: (nouvelIdBdCible?: string) => Promise<void>;
+      }): Promise<forgetFunction> => {
+        return await this.followSiteSwarmId({
+          f: fSuivreRacine,
+          siteId,
+        });
+      },
+      f: ignorerNonDéfinis(f),
+      fSuivre: async ({
+        id,
+        fSuivreBd,
+      }: {
+        id: string;
+        fSuivreBd: types.schémaFonctionSuivi<{collection: CollectionWithId; contributor: string}[]>;
+      }): Promise<forgetFunction> => {
+        const {fOublier} = await this.constellation.nuées.suivreDonnéesTableauNuée<Collection>({
+          idNuée: id,
+          clefTableau: COLLECTIONS_DB_TABLE_KEY,
+          f: collections =>
+            fSuivreBd(
+              collections.map(c => ({
+                collection: {
+                  collection: c.élément.données,
+                  id: c.élément.id,
+                },
+                contributor: c.idCompte,
+              })),
+            ),
+          nRésultatsDésirés: desiredNResults,
+          clefsSelonVariables: false,
+        });
+        return fOublier;
+      },
     });
   }
 
-  async onReleasesChange({
+  async listenForReleases({
     f,
   }: {
-    f: (releases?: réseau.élémentDeMembre<Release>[]) => void;
-  }): Promise<offFunction> {
-    await this.orbiterReady();
+    f: types.schémaFonctionSuivi<{release: ReleaseWithId; contributor: string; site: string}[]>;
+  }): Promise<types.schémaFonctionOublier> {
+    const {siteId} = await this.siteConfigured();
 
     type SiteInfo = {
       blockedCids?: string[];
-      entries?: élémentDeMembre<Release>[];
-      fForget?: offFunction;
+      entries?: {release: ReleaseWithId; contributor: string}[];
+      fForget?: forgetFunction;
     };
     const siteInfos: {[site: string]: SiteInfo} = {};
 
@@ -567,18 +748,17 @@ export default class Orbiter {
       const blockedCids = Object.values(siteInfos)
         .map(s => s.blockedCids || [])
         .flat();
-      const releases = Object.values(siteInfos)
-        .map(s => s.entries || [])
+      const releases = Object.entries(siteInfos)
+        .map(s => (s[1].entries || []).map(r => ({...r, site: s[0]})))
         .flat()
-        .filter(r => !blockedCids.includes(r.élément.données.file.cid));
+        .filter(r => !blockedCids.includes(r.release.release.file));
       await f(releases);
     };
 
     const fFollowTrustedSites = async (sites?: tableaux.élémentDonnées<TrustedSite>[]) => {
       const sitesList = (sites || []).map(s => s.données);
       sitesList.push({
-        [TRUSTED_SITES_MOD_DB_COL]: this.modDbAddress!,
-        [TRUSTED_SITES_SWARM_COL]: this.orbiterSwarmId!,
+        [TRUSTED_SITES_SITE_ID_COL]: siteId,
         [TRUSTED_SITES_NAME_COL]: 'Me !',
       });
 
@@ -595,20 +775,22 @@ export default class Orbiter {
 
         const {siteName} = site;
         siteInfos[siteName] = {};
-        this.onBlockedReleasesChange({
+        this.listenForSiteBlockedReleases({
           f: async cids => {
             siteInfos[siteName].blockedCids = cids?.map(c => c.cid);
             await fFinal();
           },
-          modDbAddress: site.siteModDbAddress,
+          siteId: site.siteId,
         }).then(fForget => fsForgetSite.push(fForget));
-        this.onSiteReleasesChange({
+
+        this.listenForSiteReleases({
           f: async entries => {
             siteInfos[siteName].entries = entries;
             await fFinal();
           },
-          swarmId: site.siteSwarmId,
-        }).then(fForget => fsForgetSite.push(fForget));
+          siteId: site.siteId,
+        }).then(fOublier => fsForgetSite.push(fOublier));
+
         siteInfos[siteName].fForget = async () => {
           await Promise.all(fsForgetSite.map(f => f()));
         };
@@ -629,7 +811,7 @@ export default class Orbiter {
     await fFollowTrustedSites();
 
     let forgetTrustedSites: types.schémaFonctionOublier;
-    this.onTrustedSitesChange({f: fFollowTrustedSites}).then(
+    this.followTrustedSites({f: fFollowTrustedSites}).then(
       fForget => (forgetTrustedSites = fForget),
     );
 
@@ -644,232 +826,232 @@ export default class Orbiter {
     return fForget;
   }
 
-  async onSiteReleasesChange({
+  async listenForCollections({
     f,
-    swarmId,
   }: {
-    f: (releases?: réseau.élémentDeMembre<Release>[]) => void;
-    swarmId?: string;
-  }): Promise<offFunction> {
-    await this.orbiterReady();
+    f: types.schémaFonctionSuivi<
+      {collection: CollectionWithId; contributor: string; site: string}[]
+    >;
+  }): Promise<types.schémaFonctionOublier> {
+    const {siteId} = await this.siteConfigured();
 
-    const info: {
-      blockedCids?: string[];
-      entries?: élémentDeMembre<Release>[];
-    } = {};
+    type SiteInfo = {
+      entries?: {collection: CollectionWithId; contributor: string}[];
+      fForget?: forgetFunction;
+    };
+    const siteInfos: {[site: string]: SiteInfo} = {};
+
+    let cancelled = false;
+    const lock = new Lock();
 
     const fFinal = async () => {
-      if (info.entries) {
-        const myAccountId = await this.getAccountId();
-
-        // Filter out blocked cids
-        const finalEntries = info.entries.filter(
-          e =>
-            !(info.blockedCids || []).includes(e.élément.données.file.cid) ||
-            e.idCompte === myAccountId,
-        );
-        await f(finalEntries);
-      }
+      const collections = Object.entries(siteInfos)
+        .map(s => (s[1].entries || []).map(r => ({...r, site: s[0]})))
+        .flat();
+      await f(collections);
     };
 
-    let forgetBlockedCids: types.schémaFonctionOublier;
-    this.onBlockedReleasesChange({
-      f: async blockedCids => {
-        if (blockedCids) info.blockedCids = blockedCids.map(x => x.cid);
-        await fFinal();
-      },
-    }).then(fForget => (forgetBlockedCids = fForget));
-
-    const {fOublier: fForgetEntries} =
-      await this.constellation.nuées.suivreDonnéesTableauNuée<Release>({
-        idNuée: swarmId || this.orbiterSwarmId!,
-        clefTableau: RELEASES_TABLE_KEY,
-        f: async entries => {
-          info.entries = entries;
-          await fFinal();
-        },
-        nRésultatsDésirés: 1000,
-        clefsSelonVariables: false,
+    const fFollowTrustedSites = async (sites?: tableaux.élémentDonnées<TrustedSite>[]) => {
+      const sitesList = (sites || []).map(s => s.données);
+      sitesList.push({
+        [TRUSTED_SITES_SITE_ID_COL]: siteId,
+        [TRUSTED_SITES_NAME_COL]: 'Me !',
       });
 
+      await lock.acquire();
+      if (cancelled) return;
+
+      const newSites = sitesList.filter(s => !Object.keys(siteInfos).includes(s.siteName));
+      const obsoleteSites = Object.keys(siteInfos).filter(
+        s => !sitesList.some(x => x.siteName === s),
+      );
+
+      for (const site of newSites) {
+        const fsForgetSite: types.schémaFonctionOublier[] = [];
+
+        const {siteName} = site;
+        siteInfos[siteName] = {};
+
+        this.listenForSiteCollections({
+          f: async entries => {
+            siteInfos[siteName].entries = entries;
+            await fFinal();
+          },
+          siteId: site.siteId,
+        }).then(fOublier => fsForgetSite.push(fOublier));
+
+        siteInfos[siteName].fForget = async () => {
+          await Promise.all(fsForgetSite.map(f => f()));
+        };
+        await fFinal();
+      }
+      for (const site of obsoleteSites) {
+        const {fForget} = siteInfos[site];
+        if (fForget) await fForget();
+        delete siteInfos[site];
+      }
+
+      await fFinal();
+      lock.release();
+    };
+
+    // Need to call once manually to get the user's own entries to show even if user is offline or
+    // the site's master databases are unreachable.
+    await fFollowTrustedSites();
+
+    let forgetTrustedSites: types.schémaFonctionOublier;
+    this.followTrustedSites({f: fFollowTrustedSites}).then(
+      fForget => (forgetTrustedSites = fForget),
+    );
+
     const fForget = async () => {
-      await fForgetEntries();
-      if (forgetBlockedCids) await forgetBlockedCids();
+      cancelled = true;
+      if (forgetTrustedSites) await forgetTrustedSites();
+      await Promise.all(
+        Object.values(siteInfos).map(s => (s.fForget ? s.fForget() : Promise.resolve())),
+      );
     };
 
     return fForget;
   }
 
-  async onBlockedReleasesChange({
-    f,
-    modDbAddress,
-  }: {
-    f: (releases?: {cid: string; hash: string}[]) => void;
-    modDbAddress?: string;
-  }): Promise<offFunction> {
-    await this.orbiterReady();
+  // User functionalities - adding and editing content
 
-    return await this.constellation.bds.suivreDonnéesDeTableauParClef<BlockedCid>({
-      idBd: modDbAddress || this.modDbAddress!,
-      clefTableau: BLOCKED_RELEASES_TABLE_KEY,
-      f: async releases => {
-        await f(
-          releases.map(r => {
-            return {
-              cid: r.données[BLOCKED_RELEASE_CID_COL],
-              hash: r.empreinte,
-            };
-          }),
-        );
-      },
+  async addRelease(release: Release): Promise<void> {
+    const {swarmId, swarmSchema} = await this.orbiterConfig();
+
+    await this.constellation.bds.ajouterÉlémentÀTableauUnique({
+      schémaBd: swarmSchema,
+      idNuéeUnique: swarmId,
+      clefTableau: RELEASES_DB_TABLE_KEY,
+      vals: removeUndefined(release),
     });
   }
 
-
-
-  async removeRelease(releaseHash: string) {
-    await this.orbiterReady();
+  async removeRelease(releaseId: string) {
+    const {swarmId, swarmSchema} = await this.orbiterConfig();
 
     await this.constellation.bds.effacerÉlémentDeTableauUnique({
-      schémaBd: this.getReleasesDbFormat({
-        ...this.variableIds!,
-        orbiterSwarmId: this.orbiterSwarmId!,
-      }),
-      idNuéeUnique: this.orbiterSwarmId!,
-      clefTableau: RELEASES_TABLE_KEY,
-      empreinte: releaseHash,
+      schémaBd: swarmSchema,
+      idNuéeUnique: swarmId,
+      clefTableau: RELEASES_DB_TABLE_KEY,
+      idÉlément: releaseId,
     });
   }
 
   async editRelease({
     release,
-    releaseHash,
+    releaseId,
   }: {
     release: Partial<Release>;
-    releaseHash: string;
-  }): Promise<string> {
-    await this.orbiterReady();
+    releaseId: string;
+  }): Promise<void> {
+    const {swarmId, swarmSchema} = await this.orbiterConfig();
 
     return await this.constellation.bds.modifierÉlémentDeTableauUnique({
       vals: release,
-      schémaBd: this.getReleasesDbFormat({
-        ...this.variableIds!,
-        orbiterSwarmId: this.orbiterSwarmId!,
-      }),
-      idNuéeUnique: this.orbiterSwarmId!,
-      clefTableau: RELEASES_TABLE_KEY,
-      empreintePrécédente: releaseHash,
+      schémaBd: swarmSchema,
+      idNuéeUnique: swarmId,
+      clefTableau: RELEASES_DB_TABLE_KEY,
+      idÉlément: releaseId,
     });
   }
 
-  async blockRelease(cid: string) {
-    await this.orbiterReady();
+  async addCollection(collection: Collection): Promise<void> {
+    const {swarmId, swarmSchema} = await this.orbiterConfig();
 
-    await this.constellation.bds.ajouterÉlémentÀTableauParClef({
-      idBd: this.modDbAddress!,
-      clefTableau: BLOCKED_RELEASES_TABLE_KEY,
-      vals: {[BLOCKED_RELEASE_CID_COL]: cid},
+    await this.constellation.bds.ajouterÉlémentÀTableauUnique({
+      schémaBd: swarmSchema,
+      idNuéeUnique: swarmId,
+      clefTableau: COLLECTIONS_DB_TABLE_KEY,
+      vals: removeUndefined(collection),
     });
   }
 
-  async unblockRelease(releaseHash: string) {
-    await this.orbiterReady();
+  async removeCollection(collectionId: string) {
+    const {swarmId, swarmSchema} = await this.orbiterConfig();
 
-    await this.constellation.bds.effacerÉlémentDeTableauParClef({
-      idBd: this.modDbAddress!,
-      clefTableau: BLOCKED_RELEASES_TABLE_KEY,
-      empreinteÉlément: releaseHash,
-    });
-  }
-
-  async addCollection({collection}: {collection: Collection}): Promise<string> {
-    return await this.constellation.bds.ajouterÉlémentÀTableauUnique({
-      schémaBd,
-      idNuéeUnique,
-      clefTableau,
-      vals: collection,
-    });
-  }
-
-  async removeCollection({collectionHash}: {collectionHash: string}): Promise<void> {
     await this.constellation.bds.effacerÉlémentDeTableauUnique({
-      schémaBd,
-      idNuéeUnique,
-      clefTableau,
-      empreinte: collectionHash,
+      schémaBd: swarmSchema,
+      idNuéeUnique: swarmId,
+      clefTableau: COLLECTIONS_DB_TABLE_KEY,
+      idÉlément: collectionId,
     });
   }
 
   async editCollection({
     collection,
-    collectionHash,
+    collectionId,
   }: {
     collection: Partial<Collection>;
-    collectionHash: string;
+    collectionId: string;
   }): Promise<void> {
-    await this.constellation.bds.modifierÉlémentDeTableauUnique({
-      schémaBd,
-      idNuéeUnique,
-      clefTableau,
-      empreintePrécédente: collectionHash,
+    const {swarmId, swarmSchema} = await this.orbiterConfig();
+
+    return await this.constellation.bds.modifierÉlémentDeTableauUnique({
       vals: collection,
+      schémaBd: swarmSchema,
+      idNuéeUnique: swarmId,
+      clefTableau: COLLECTIONS_DB_TABLE_KEY,
+      idÉlément: collectionId,
     });
+  }
+
+  async getCollectionReleasesSetId({collectionId}: {collectionId: string}): Promise<string> {
+    const collections = await uneFois(
+      async (
+        fSuivi: types.schémaFonctionSuivi<CollectionWithId[]>,
+      ): Promise<types.schémaFonctionOublier> => {
+        return await this.listenForCollections({
+          f: async collections => fSuivi(collections.map(c => c.collection)),
+        });
+      },
+    );
+    const collection = collections.find(c => c.id === collectionId);
+    if (!collection) throw new Error('Collection not found.');
+    return collection.collection[COLLECTIONS_RELEASES_COLUMN];
   }
 
   async addReleaseToCollection({
     releaseId,
-    collectionHash,
+    collectionId,
   }: {
     releaseId: string;
-    collectionHash: string;
-  }): Promise<string> {
-    const releases = await uneFois(
-      async (fSuivi: types.schémaFonctionSuivi<string[]>): Promise<types.schémaFonctionOublier> => {
-        return await this.onCollectionsChange({
-          f: (collections: Collection[]) => fSuivi(collections.find(c => c)),
-        });
-      },
-    );
-    return await this.constellation.bds.modifierÉlémentDeTableauUnique({
-      vals: {[COLLECTIONS_RELEASES_COLUMN]: [...releases, releaseId]},
-      schémaBd,
-      idNuéeUnique,
-      clefTableau,
-      empreintePrécédente: collectionHash,
+    collectionId: string;
+  }): Promise<void> {
+    const collectionReleases = await this.getCollectionReleasesSetId({collectionId});
+    await this.constellation.orbite.appliquerFonctionBdOrbite({
+      idBd: collectionReleases,
+      fonction: 'add',
+      args: [releaseId],
     });
   }
 
-  async removeReleaseFromCollection(): Promise<void> {}
-
-  async trustSite(site: string) {
-    const decodedSite = JSON.parse(btoa(site));
-    await this.orbiterReady();
-
-    await this.constellation.bds.ajouterÉlémentÀTableauParClef<TrustedSite>({
-      idBd: this.modDbAddress!,
-      clefTableau: TRUSTED_SITES_TABLE_KEY,
-      vals: decodedSite,
+  async removeReleaseFromCollection({
+    releaseId,
+    collectionId,
+  }: {
+    releaseId: string;
+    collectionId: string;
+  }): Promise<void> {
+    const collectionReleases = await this.getCollectionReleasesSetId({collectionId});
+    await this.constellation.orbite.appliquerFonctionBdOrbite({
+      idBd: collectionReleases,
+      fonction: 'remove',
+      args: [releaseId],
     });
   }
 
-  async editTrustedSite({siteHash, site}: {siteHash: string; site: string}) {
-    await this.orbiterReady();
-
-    await this.constellation.bds.modifierÉlémentDeTableauParClef({
-      idBd: this.modDbAddress!,
-      clefTableau: TRUSTED_SITES_TABLE_KEY,
-      empreinteÉlément: siteHash,
-      vals: JSON.parse(btoa(site)),
+  // User profile functions
+  async initAccount({names}: {names: {[lang: string]: string}}): Promise<void> {
+    for (const [name, language] of Object.values(names)) {
+      await this.changeName({name, language});
+    }
+    await this.constellation.sauvegarderAuStockageLocal({
+      clef: 'accountStatus',
+      val: 'initialised',
     });
-  }
-
-  async untrustSite(siteHash: string) {
-    await this.orbiterReady();
-    await this.constellation.bds.effacerÉlémentDeTableauParClef({
-      idBd: this.modDbAddress!,
-      clefTableau: TRUSTED_SITES_TABLE_KEY,
-      empreinteÉlément: siteHash,
-    });
+    this.events.emit('account status', 'initialised');
   }
 
   async changeName({name, language}: {name?: string; language: string}): Promise<void> {
@@ -877,17 +1059,222 @@ export default class Orbiter {
     else await this.constellation.profil.effacerNom({langue: language});
   }
 
-  async changeProfilePhoto({image}: {image?: Uint8Array}): Promise<void> {
+  async changeProfilePhoto({image}: {image?: {content: Uint8Array; path: string}}): Promise<void> {
     if (image) return await this.constellation.profil?.sauvegarderImage({image});
     else return await this.constellation.profil?.effacerImage();
   }
 
-  async addContactInfo(): Promise<void> {}
+  async addContactInfo({type, contact}: {type: string; contact: string}): Promise<void> {
+    return await this.constellation.profil.sauvegarderContact({type, contact});
+  }
 
-  async removeContactInfo(): Promise<void> {}
+  async removeContactInfo({type, contact}: {type: string; contact?: string}): Promise<void> {
+    return await this.constellation.profil.effacerContact({type, contact});
+  }
 
   async deleteAccount(): Promise<void> {
-    throw new Error('Not implemented');
-    // await this.constellation.effacerCompte()
+    return await this.constellation.fermerCompte();
+  }
+
+  async listenForAccountId({f}: {f: (account?: string) => void}): Promise<forgetFunction> {
+    return await this.constellation.suivreIdCompte({f});
+  }
+
+  async listenForAccountExists({f}: {f: (exists: boolean) => void}): Promise<forgetFunction> {
+    const finalF = (status?: string | null) => {
+      f(status === 'initialised');
+    };
+    const status = await this.constellation.obtDeStockageLocal({
+      clef: 'accountStatus',
+    });
+    finalF(status);
+
+    this.events.on('account status', finalF);
+    return async () => {
+      this.events.off('account status', finalF);
+    };
+  }
+
+  async listenForNameChange({
+    f,
+    accountId,
+  }: {
+    f: (name: {[language: string]: string}) => void;
+    accountId?: string;
+  }): Promise<forgetFunction> {
+    return await this.constellation.profil.suivreNoms({
+      f,
+      idCompte: accountId,
+    });
+  }
+
+  async listenForContactInfoChange({
+    f,
+    accountId,
+  }: {
+    f: types.schémaFonctionSuivi<{type: string; contact: string}[]>;
+    accountId?: string;
+  }): Promise<types.schémaFonctionOublier> {
+    return await this.constellation.profil.suivreContacts({
+      f,
+      idCompte: accountId,
+    });
+  }
+
+  async listenForProfilePhotoChange({
+    f,
+    accountId,
+  }: {
+    f: types.schémaFonctionSuivi<Uint8Array | null>;
+    accountId?: string;
+  }): Promise<types.schémaFonctionOublier> {
+    return await this.constellation.profil.suivreImage({f, idCompte: accountId});
+  }
+
+  // Site moderator functions. Moderators can moderate content and exclude/invite other useres.
+  // Admins can do all that and also invite other admins and moderators.
+
+  async listenToIsModerator({
+    f,
+    userId,
+  }: {
+    f: (isMod: 'ADMIN' | 'MODERATOR' | undefined) => void;
+    userId?: string;
+  }): Promise<forgetFunction> {
+    // User current user if none is specified.
+    userId = userId || (await this.constellation.obtIdCompte());
+    const {siteId} = await this.siteConfigured();
+
+    const resolveModType = (x?: 'MODÉRATEUR' | 'MEMBRE'): 'ADMIN' | 'MODERATOR' | undefined => {
+      return x === 'MODÉRATEUR' ? 'ADMIN' : x === 'MEMBRE' ? 'MODERATOR' : undefined;
+    };
+
+    return await this.constellation.suivreAccèsBd({
+      id: siteId,
+      f: x => f(resolveModType(x.find(y => y.idCompte === userId)?.rôle)),
+    });
+  }
+
+  async inviteModerator({userId, admin = false}: {userId: string; admin?: boolean}): Promise<void> {
+    // Invitations are not revocable ! They can, however, be upgraded (moderator => admin), though not downgraded.
+
+    const {siteId} = await this.siteConfigured();
+    const {modDbId, swarmId} = await this.orbiterConfig();
+
+    await this.constellation.nuées.inviterAuteur({
+      idNuée: swarmId,
+      idCompteAuteur: userId,
+      rôle: admin ? 'MODÉRATEUR' : 'MEMBRE',
+    });
+    await this.constellation.bds.inviterAuteur({
+      idBd: modDbId,
+      idCompteAuteur: userId,
+      rôle: admin ? 'MODÉRATEUR' : 'MEMBRE',
+    });
+    if (admin) {
+      await this.constellation.donnerAccès({idBd: siteId, identité: userId, rôle: 'MODÉRATEUR'});
+    }
+  }
+
+  async blockRelease({cid}: {cid: string}): Promise<string> {
+    const {modDbId} = await this.orbiterConfig();
+
+    return (
+      await this.constellation.bds.ajouterÉlémentÀTableauParClef({
+        idBd: modDbId,
+        clefTableau: BLOCKED_RELEASES_TABLE_KEY,
+        vals: {[BLOCKED_RELEASE_CID_COL]: cid},
+      })
+    )[0];
+  }
+
+  async unblockRelease({id}: {id: string}): Promise<void> {
+    const {modDbId} = await this.orbiterConfig();
+
+    await this.constellation.bds.effacerÉlémentDeTableauParClef({
+      idBd: modDbId,
+      clefTableau: BLOCKED_RELEASES_TABLE_KEY,
+      idÉlément: id,
+    });
+  }
+
+  async makeSitePrivate(): Promise<void> {
+    const {swarmId} = await this.orbiterConfig();
+
+    // Both releases and collections swarms share the same swarm and authorisation rules, so changing one will update both
+    const authId = await this.constellation.nuées.obtGestionnaireAutorisationsDeNuée({
+      idNuée: swarmId,
+    });
+    await this.constellation.nuées.changerPhisolophieAutorisation({
+      idAutorisation: authId,
+      philosophie: 'CJPI',
+    });
+  }
+
+  async makeSitePublic(): Promise<void> {
+    const {swarmId} = await this.orbiterConfig();
+
+    // Both releases and collections swarms share the same swarm and authorisation rules, so changing one will update both
+    const authId = await this.constellation.nuées.obtGestionnaireAutorisationsDeNuée({
+      idNuée: swarmId,
+    });
+    await this.constellation.nuées.changerPhisolophieAutorisation({
+      idAutorisation: authId,
+      philosophie: 'IJPC',
+    });
+  }
+
+  async inviteUser({userId}: {userId: string}): Promise<void> {
+    const {swarmId} = await this.orbiterConfig();
+
+    // Both releases and collections swarms share the same swarm and authorisation rules, so changing one will update both
+    await this.constellation.nuées.accepterMembreNuée({
+      idNuée: swarmId,
+      idCompte: userId,
+    });
+  }
+
+  async blockUser({userId}: {userId: string}): Promise<void> {
+    const {swarmId} = await this.orbiterConfig();
+
+    // Both releases and collections swarms share the same swarm and authorisation rules, so changing one will update both
+    await this.constellation.nuées.exclureMembreDeNuée({
+      idNuée: swarmId,
+      idCompte: userId,
+    });
+  }
+
+  async trustSite({siteId, siteName}: {siteName: string; siteId: string}): Promise<string> {
+    const {modDbId} = await this.orbiterConfig();
+
+    const elementIds = await this.constellation.bds.ajouterÉlémentÀTableauParClef<TrustedSite>({
+      idBd: modDbId,
+      clefTableau: TRUSTED_SITES_TABLE_KEY,
+      vals: {
+        [TRUSTED_SITES_SITE_ID_COL]: siteId,
+        [TRUSTED_SITES_NAME_COL]: siteName,
+      },
+    });
+    return elementIds[0];
+  }
+
+  async editTrustedSite({elementId, site}: {elementId: string; site: Partial<TrustedSite>}) {
+    const {modDbId} = await this.orbiterConfig();
+
+    await this.constellation.bds.modifierÉlémentDeTableauParClef({
+      idBd: modDbId,
+      clefTableau: TRUSTED_SITES_TABLE_KEY,
+      idÉlément: elementId,
+      vals: site,
+    });
+  }
+
+  async untrustSite({elementId}: {elementId: string}) {
+    const {modDbId} = await this.orbiterConfig();
+    await this.constellation.bds.effacerÉlémentDeTableauParClef({
+      idBd: modDbId,
+      clefTableau: TRUSTED_SITES_TABLE_KEY,
+      idÉlément: elementId,
+    });
   }
 }

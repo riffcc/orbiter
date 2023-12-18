@@ -26,7 +26,7 @@ const displayName = computed(() => {
 let forgetNames: (() => Promise<void>) | undefined = undefined;
 
 onMounted(async () => {
-  forgetNames = await orbiter.onNameChange({
+  forgetNames = await orbiter.listenForNameChange({
     f: x => (names.value = x),
     accountId: props.accountId,
   });

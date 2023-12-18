@@ -82,10 +82,8 @@ const generateDb = async () => {
 };
 
 const envFileText = computed(() => {
-  const trustedSitesModDbVar =
-    'VITE_TRUSTED_SITES_MOD_DB_VAR_ID=' + generatedVariableIds.value?.trustedSitesModDbVariableId;
   const trustedSitesSwarmVar =
-    'VITE_TRUSTED_SITES_SWARM_VAR_ID=' + generatedVariableIds.value?.trustedSitesSwarmVariableId;
+    'VITE_TRUSTED_SITES_SITE_ID_VAR_ID=' + generatedVariableIds.value?.trustedSitesSiteIdVariableId;
   const trustedSitesNameVar =
     'VITE_TRUSTED_SITES_NAME_VAR_ID=' + generatedVariableIds.value?.trustedSitesNameVariableId;
   const blockedCidsVar =
