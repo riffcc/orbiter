@@ -246,7 +246,7 @@ export default class Orbiter {
         collectionsReleasesVar,
         collectionsThumbnailVar,
         collectionsTypeVar,
-        orbiterSwarmId: swarmId,
+        swarmId: swarmId,
       });
       for (const table of releasesDbFormat.tableaux) {
         const tableKey = table.clef;
@@ -360,7 +360,7 @@ export default class Orbiter {
     collectionsAuthorVar,
     collectionsMetadataVar,
     collectionsThumbnailVar,
-    orbiterSwarmId,
+    swarmId,
   }: {
     releasesFileVar: string;
     releasesTypeVar: string;
@@ -374,11 +374,11 @@ export default class Orbiter {
     collectionsAuthorVar: string;
     collectionsMetadataVar: string;
     collectionsThumbnailVar: string;
-    orbiterSwarmId: string;
+    swarmId: string;
   }): bds.schémaSpécificationBd {
     return {
       licence: 'ODbl-1_0',
-      nuées: [orbiterSwarmId],
+      nuées: [swarmId],
       tableaux: [
         {
           cols: [
@@ -495,7 +495,7 @@ export default class Orbiter {
 
     const swarmSchema = this.getSwarmDbSchema({
       ...variableIds,
-      orbiterSwarmId: swarmId,
+      swarmId: swarmId,
     });
 
     return {
@@ -546,7 +546,6 @@ export default class Orbiter {
   }
 
   // Accessing network data
-
   async followTrustedSites({
     f,
   }: {
@@ -588,7 +587,7 @@ export default class Orbiter {
     f,
     siteId,
   }: {
-    f: (releases?: BlockedCid[]) => void;
+    f: (releases?: {cid: string, id: string}[]) => void;
     siteId?: string;
   }): Promise<forgetFunction> {
     return await suivreBdDeFonction({
@@ -608,7 +607,7 @@ export default class Orbiter {
         fSuivreBd,
       }: {
         id: string;
-        fSuivreBd: types.schémaFonctionSuivi<BlockedCid[] | undefined>;
+        fSuivreBd: types.schémaFonctionSuivi<{cid: string, id: string}[] | undefined>;
       }): Promise<forgetFunction> => {
         return await this.constellation.bds.suivreDonnéesDeTableauParClef<BlockedCid>({
           idBd: id,

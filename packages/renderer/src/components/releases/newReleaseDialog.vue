@@ -290,7 +290,7 @@ const optimise = async () => {
     case 'none':
       optimisedContent.value = {
         content,
-        ext: file.value?.[0].name.split('.').pop(),
+        ext: file.value?.[0].name.split('.').pop() as string,
       };
       break;
     default:
@@ -393,23 +393,16 @@ const save = async () => {
 
   saving.value = true;
 
-  const fileEntry: {cid: string; ext: string} = {
-    cid: await orbiter.constellation.ajouterÀSFIP({
-      fichier: contentValue.content,
-    }),
-    ext: contentValue.ext,
-  };
+  const fileEntry = await orbiter?.constellation.ajouterÀSFIP({
+    fichier: contentValue,
+  });
 
   const thumbnailEntry = thumbnail.value?.length
-    ? {
-        cid: await orbiter.constellation.ajouterÀSFIP({
-          fichier: thumbnail.value[0],
-        }),
-        ext: thumbnail.value[0].name.split('.').pop()!,
-      }
-    : undefined;
+    ? await orbiter?.constellation.ajouterÀSFIP({
+          fichier: {content: thumbnail.value[0]},
+        }) : undefined;
 
-  await orbiter.addRelease({
+  await orbiter?.addRelease({
     [RELEASES_FILE_COLUMN]: fileEntry,
     [RELEASES_TYPE_COLUMN]: releaseTypeValue,
     [RELEASES_THUMBNAIL_COLUMN]: thumbnailEntry,

@@ -104,7 +104,7 @@ const orbiter = inject<Orbiter>('orbiter');
 const orbiterReady = ref<boolean>(false);
 onMounted(async () => {
   if (!orbiter) throw new Error('Orbiter not initialised.');
-  await orbiter.orbiterReady();
+  await orbiter?.siteConfigured();
   orbiterReady.value = true;
 });
 
@@ -112,7 +112,7 @@ const accountExists = ref<boolean>();
 
 let forgetAccountExists: (() => void) | undefined = undefined;
 onMounted(async () => {
-  forgetAccountExists = await orbiter.onAccountExists({f: a => (accountExists.value = a)});
+  forgetAccountExists = await orbiter?.listenForAccountExists({f: a => (accountExists.value = a)});
 });
 
 onUnmounted(async () => {

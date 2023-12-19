@@ -3,19 +3,19 @@
     v-model="dialog"
     max-width="800"
   >
-    <template #activator="{props}">
+    <template #activator="{props: activatorProps}">
       <slot
         name="activator"
-        v-bind="{props}"
+        v-bind="{props: activatorProps}"
       ></slot>
     </template>
     <v-card>
-      <v-card-title>{{ newSite ? 'New release' : 'Edit release' }}</v-card-title>
+      <v-card-title>{{ newSite ? 'Add trusted site' : 'Edit trusted site' }}</v-card-title>
       <v-card-text>
         <v-text-field
           v-model="siteInfo"
           variant="outlined"
-          label="Site name"
+          label="Site info"
         ></v-text-field>
       </v-card-text>
       <v-card-actions>
@@ -38,11 +38,12 @@ import {computed, inject, ref} from 'vue';
 
 import type {TrustedSite} from '/@/plugins/orbiter/types';
 import type Orbiter from '/@/plugins/orbiter/orbiter';
-import type {élémentDonnées} from '@constl/ipa/dist/src/valid';
+import type {tableaux} from '@constl/ipa';
+import { watchEffect } from 'vue';
 
-const orbiter = inject<Orbiter>('orbiter')!;
+const orbiter = inject<Orbiter>('orbiter');
 
-const props = defineProps<{site?: élémentDonnées<TrustedSite>}>();
+const props = defineProps<{site?: tableaux.élémentDonnées<TrustedSite>}>();
 
 const dialog = ref(false);
 const saving = ref(false);
@@ -51,22 +52,41 @@ const saving = ref(false);
 const newSite = computed(() => !props.site);
 
 const readyToSave = computed(() => {
-  return !!siteInfo.value;
+  if (siteId.value && siteName.value) {
+    return {siteId: siteId.value, siteName: siteName.value};
+  }
+  return undefined;
 });
 
 const siteInfo = ref<string>();
+const siteId = ref<string>();
+const siteName = ref<string>();
+
+watchEffect(()=>{
+  if (siteInfo.value){
+    const info = JSON.parse(atob(siteInfo.value)) as TrustedSite;
+    siteId.value = info.siteId;
+    siteName.value = info.siteName;
+  }
+});
 
 const save = async () => {
-  if (!readyToSave.value) return;
+  const info = readyToSave.value;
+  if (!info) return;
 
   saving.value = true;
 
+  const {siteId: siteIdValue, siteName: siteNameValue} = info;
+
   if (newSite.value) {
-    await orbiter.trustSite(siteInfo.value!);
+    await orbiter?.trustSite({
+      siteId: siteIdValue, 
+      siteName: siteNameValue,
+    });
   } else {
-    await orbiter.editTrustedSite({
-      siteHash: props.site!.empreinte,
-      site: siteInfo.value!,
+    await orbiter?.editTrustedSite({
+      elementId: props.site!.id,
+      site: {siteId: siteIdValue, siteName: siteNameValue},
     });
   }
 

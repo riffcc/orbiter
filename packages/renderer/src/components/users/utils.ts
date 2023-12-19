@@ -27,7 +27,7 @@ export const useUserProfilePhoto = (
   watchEffect(async () => {
     if (forgetPhoto) await forgetPhoto();
     forgetPhoto = await registerListener(
-      orbiter.onProfilePhotoChange({
+      orbiter?.listenForProfilePhotoChange({
         f: x => (profilePic.value = x),
         accountId: accountId
           ? typeof accountId === 'string'

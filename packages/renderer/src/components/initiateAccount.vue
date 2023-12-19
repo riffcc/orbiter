@@ -57,7 +57,7 @@ import type Orbiter from '/@/plugins/orbiter/orbiter';
 import {ref, inject, computed} from 'vue';
 import {Nuchabäl} from 'nuchabal';
 
-const orbiter: Orbiter = inject('orbiter')!;
+const orbiter = inject<Orbiter>('orbiter');
 const nuchabäl = new Nuchabäl({});
 
 const dialog = ref<boolean>(false);
@@ -73,6 +73,6 @@ const saveName = async () => {
     typeof userNameLanguage.value === 'string'
       ? userNameLanguage.value
       : userNameLanguage.value['value'];
-  await orbiter.changeName({name: userName.value, language: code});
+  await orbiter?.changeName({name: userName.value, language: code});
 };
 </script>

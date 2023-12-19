@@ -1,31 +1,31 @@
 <template>
-  <ReleaseViewer :release="info">
+  <ReleaseViewer :release="release">
     <template #activator="{props: activatorProps}">
       <v-list-item
         v-bind="activatorProps"
         :prepend-avatar="thumbnailURL"
       >
         <v-list-item-title>
-          {{ info.élément.données.contentName }}
+          {{ release.release.contentName }}
         </v-list-item-title>
         <v-list-item-subtitle>
-          {{ info.élément.données.metadata }}
+          {{ release.release.metadata }}
         </v-list-item-subtitle>
         <div class="my-2">
-          <UserChip :account-id="info.idCompte" />
+          <UserChip :account-id="contributor" />
           <v-chip
             class="mx-2"
             label
             @click.stop
           >
-            CID: {{ info.élément.données.file }}
+            CID: {{ release.release.file }}
           </v-chip>
           <v-chip
             class="mx-2"
             label
             @click.stop
           >
-            Author: {{ info.élément.données.author || 'Anonymous' }}
+            Author: {{ release.release.author || 'Anonymous' }}
           </v-chip>
         </div>
 
@@ -60,10 +60,8 @@
 </template>
 
 <script setup lang="ts">
-import type {réseau} from '@constl/ipa';
-
 import type Orbiter from '/@/plugins/orbiter/orbiter';
-import type {Release} from '/@/plugins/orbiter/types';
+import type {ReleaseWithId} from '/@/plugins/orbiter/types';
 
 import {computed, inject, onMounted, onUnmounted, ref, watchEffect} from 'vue';
 
@@ -71,23 +69,20 @@ import UserChip from '/@/components/userChip.vue';
 import ReleaseViewer from './releaseViewer.vue';
 import {downloadFile} from '/@/utils';
 
-export interface ReleaseProps {
-  info: réseau.élémentDeMembre<Release>;
-}
 
 const orbiter = inject<Orbiter>('orbiter');
 
-const props = defineProps<ReleaseProps>();
+const props = defineProps<{ release: ReleaseWithId; contributor: string; site: string; }>();
 
 const myAccountId = ref<string>();
 
 const myRelease = computed(() => {
-  return props.info.idCompte === myAccountId.value;
+  return props.contributor === myAccountId.value;
 });
 
 const thumbnailURL = ref<string>();
 watchEffect(async () => {
-  const {thumbnail} = props.info.élément.données;
+  const {thumbnail} = props.release.release;
 
   if (thumbnail) {
     const image = await orbiter?.constellation.obtFichierSFIP({
@@ -107,11 +102,11 @@ watchEffect(async () => {
 });
 
 async function removeRelease() {
-  await orbiter?.removeRelease(props.info.élément.id);
+  await orbiter?.removeRelease(props.release.id);
 }
 
 async function downloadRelease() {
-  const {file, contentName} = props.info.élément.données;
+  const {file, contentName} = props.release.release;
 
   const releaseFile = await orbiter?.constellation.obtFichierSFIP({
     id: file,
@@ -123,7 +118,7 @@ async function downloadRelease() {
 }
 
 async function blockRelease() {
-  await orbiter?.blockRelease({cid: props.info.élément.données.file});
+  await orbiter?.blockRelease({cid: props.release.release.file});
 }
 
 let forgetAccountId: (() => Promise<void>) | undefined = undefined;

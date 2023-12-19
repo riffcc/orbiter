@@ -17,13 +17,13 @@
       </v-list-item>
       <v-list-item
         v-for="con in RiffConnections"
-        :key="con.infoMembre.idBdCompte"
+        :key="con.infoMembre.idCompte"
       >
         <v-list-item-title>
-          {{ con.infoMembre.idBdCompte }}
+          {{ con.infoMembre.idCompte }}
         </v-list-item-title>
         <v-list-item-subtitle>
-          {{ con.infoMembre.idBdCompte }}
+          {{ con.infoMembre.idCompte }}
         </v-list-item-subtitle>
       </v-list-item>
     </v-list>
@@ -61,7 +61,7 @@
 import {inject, ref} from 'vue';
 import {registerListener, RIFFCC_PROTOCOL} from '/@/utils';
 import type Orbiter from '/@/plugins/orbiter/orbiter';
-import type {statutMembre} from '@constl/ipa/dist/src/reseau';
+import type {réseau} from '@constl/ipa';
 
 const orbiter = inject<Orbiter>('orbiter');
 
@@ -75,7 +75,7 @@ registerListener(
   orbiter?.constellation.réseau?.suivreConnexionsPostesSFIP({f: x => (IPFSConnections.value = x)}),
 );
 
-const RiffConnections = ref<statutMembre[]>();
+const RiffConnections = ref<réseau.statutMembre[]>();
 registerListener(
   orbiter?.constellation.réseau?.suivreConnexionsMembres({
     f: x =>

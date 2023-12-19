@@ -17,7 +17,7 @@
     <v-list>
       <TrustedSiteListItem
         v-for="site in trustedSites"
-        :key="site.empreinte"
+        :key="site.id"
         :site="site"
       />
     </v-list>
@@ -41,13 +41,13 @@
       </v-list-item>
       <v-list-item
         v-for="b in blockedCIDs"
-        :key="b.hash"
+        :key="b.id"
       >
         <v-list-item-title>{{ b.cid }}</v-list-item-title>
         <template #append>
           <v-btn
             text
-            @click="() => unblockRelease(b.hash)"
+            @click="() => unblockRelease(b.id)"
           >
             Unblock
           </v-btn>
@@ -62,32 +62,32 @@ import {inject, ref, onMounted, onUnmounted} from 'vue';
 
 import type Orbiter from '/@/plugins/orbiter/orbiter';
 import type {TrustedSite} from '/@/plugins/orbiter/types';
-import type {élémentDonnées} from '@constl/ipa/dist/src/valid';
+import type {tableaux} from '@constl/ipa';
 
 import TrustSiteDialog from './trustedSites/trustSiteDialog.vue';
 import TrustedSiteListItem from './trustedSites/trustedSite.vue';
 
-const orbiter: Orbiter = inject('orbiter')!;
+const orbiter = inject<Orbiter>('orbiter');
 
-const blockedCIDs = ref<{cid: string; hash: string}[]>();
+const blockedCIDs = ref<{cid: string; id: string}[]>();
 const toBlock = ref<string>();
 
-const trustedSites = ref<élémentDonnées<TrustedSite>[]>();
+const trustedSites = ref<tableaux.élémentDonnées<TrustedSite>[]>();
 
 const blockRelease = async (cid: string) => {
-  await orbiter.blockRelease(cid);
+  await orbiter?.blockRelease({cid});
   toBlock.value = undefined;
 };
-const unblockRelease = async (cid: string) => {
-  await orbiter.unblockRelease(cid);
+const unblockRelease = async (id: string) => {
+  await orbiter?.unblockRelease({id});
 };
 
-let forgetBlockedCIDs: (() => void) | undefined = undefined;
-let forgetTrustedSites: (() => void) | undefined = undefined;
+let forgetBlockedCIDs: (() => Promise<void>) | undefined = undefined;
+let forgetTrustedSites: (() => Promise<void>) | undefined = undefined;
 
 onMounted(async () => {
-  forgetBlockedCIDs = await orbiter.onBlockedReleasesChange({f: x => (blockedCIDs.value = x)});
-  forgetTrustedSites = await orbiter.onTrustedSitesChange({f: x => (trustedSites.value = x)});
+  forgetBlockedCIDs = await orbiter?.listenForSiteBlockedReleases({f: x => (blockedCIDs.value = x)});
+  forgetTrustedSites = await orbiter?.followTrustedSites({f: x => (trustedSites.value = x)});
 });
 
 onUnmounted(async () => {

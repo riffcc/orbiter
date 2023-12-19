@@ -20,15 +20,15 @@ import {inject, ref, onMounted} from 'vue';
 import type Orbiter from '/@/plugins/orbiter/orbiter';
 // import Plyr from 'plyr';
 
-const props = defineProps<{file: {cid: string; ext: string}}>();
+const props = defineProps<{file: string}>();
 
-const orbiter: Orbiter = inject('orbiter')!;
+const orbiter = inject<Orbiter>('orbiter');
 
 const audioSource = ref<string>();
 
 onMounted(async () => {
-  const audioData = await orbiter.constellation.obtFichierSFIP({
-    id: props.file.cid,
+  const audioData = await orbiter?.constellation.obtFichierSFIP({
+    id: props.file,
   });
   console.log(audioData);
   if (audioData) audioSource.value = URL.createObjectURL(new Blob([audioData.buffer]));

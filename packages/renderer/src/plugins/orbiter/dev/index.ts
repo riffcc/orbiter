@@ -27,22 +27,21 @@ export const loadStubData = async (app: Orbiter) => {
 
   const audioFile = (await import('../../../../../../tests/devData/06-yy_ch01_l01_d01.mp3'))
     .default;
-  console.log({audioFile});
 
   const audioCid = await app.constellation.ajouterÀSFIP({
-    fichier: audioFile,
+    fichier: {content: audioFile},
   });
 
-  const thumbnailFile = new Uint8Array(URL.createObjectURL(new Blob('src/assets/logo.svg')));
-  console.log({thumbnailFile});
+  const thumbnailFile = (await import('../../../../../../src/assets/logo.svg')).default;
+
   const thumbnailCid = await app.constellation.ajouterÀSFIP({
-    fichier: thumbnailFile,
+    fichier: {content: thumbnailFile},
   });
   await app.addRelease({
     [RELEASES_NAME_COLUMN]: 'Famous song',
     [RELEASES_AUTHOR_COLUMN]: 'I. B. Astar',
-    [RELEASES_THUMBNAIL_COLUMN]: {cid: thumbnailCid, ext: 'svg'},
-    [RELEASES_FILE_COLUMN]: {cid: audioCid, ext: 'mp3'},
+    [RELEASES_THUMBNAIL_COLUMN]: thumbnailCid,
+    [RELEASES_FILE_COLUMN]: audioCid,
     [RELEASES_METADATA_COLUMN]: 'With an open-access licence, of course.',
     [RELEASES_TYPE_COLUMN]: 'audio',
   });

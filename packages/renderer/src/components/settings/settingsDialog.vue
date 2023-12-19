@@ -90,7 +90,7 @@ import AccountPane from './accountPane.vue';
 import ModPane from './modPane.vue';
 import ConnectivityPane from './connectivityPane.vue';
 
-const orbiter: Orbiter = inject('orbiter')!;
+const orbiter = inject<Orbiter>('orbiter');
 
 const dialog = ref(false);
 const tab = ref('account');
@@ -104,9 +104,9 @@ let forgetAccountExists: (() => void) | undefined = undefined;
 let forgetModerator: (() => void) | undefined = undefined;
 
 onMounted(async () => {
-  forgetAccount = await orbiter.onAccountChange({f: a => (account.value = a)});
-  forgetAccountExists = await orbiter.onAccountExists({f: a => (accountExists.value = a)});
-  forgetModerator = await orbiter.onIsModChange({f: isMod => (moderator.value = isMod)});
+  forgetAccount = await orbiter?.listenForAccountId({f: a => (account.value = a)});
+  forgetAccountExists = await orbiter?.listenForAccountExists({f: a => (accountExists.value = a)});
+  forgetModerator = await orbiter?.listenToIsModerator({f: isMod => (moderator.value = !!isMod)});
 });
 
 onUnmounted(async () => {

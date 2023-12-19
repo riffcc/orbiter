@@ -14,12 +14,12 @@
 <script setup lang="ts">
 import {inject, ref, onMounted} from 'vue';
 import type Orbiter from '/@/plugins/orbiter/orbiter';
-import Hls from 'hls.js';
-import HlsjsIpfsLoader from 'hlsjs-ipfs-loader';
+// import Hls from 'hls.js';
+// import HlsjsIpfsLoader from 'hlsjs-ipfs-loader';
 
-const props = defineProps<{file: {cid: string; ext: string}}>();
+const props = defineProps<{file: string}>();
 
-const orbiter: Orbiter = inject('orbiter')!;
+const orbiter = inject<Orbiter>('orbiter');
 
 const videoURL = ref();
 
@@ -30,13 +30,14 @@ const status = ref<HTMLElement | null>(document.getElementById('status'));
 // ...and especially https://github.com/ipfs-examples/js-ipfs-examples/blob/master/examples/browser-video-streaming/src/index.js
 
 onMounted(async () => {
-  const videoData = await orbiter.constellation.obtFichierSFIP({
-    id: props.file.cid,
+  const videoData = await orbiter?.constellation.obtFichierSFIP({
+    id: props.file,
   });
   console.log(videoData);
   videoURL.value = URL.createObjectURL(new Blob([videoData!.buffer]));
   console.log(videoURL);
   return;
+  /*
   if (Hls.isSupported()) {
     const hls = new Hls();
     hls.loadSource(videoURL.value);
@@ -55,7 +56,7 @@ onMounted(async () => {
   if (Hls.isSupported()) {
     const hls = new Hls();
     // @ts-expect-error ipfs extention config for hls is not included in hls types
-    hls.config.ipfs = orbiter.constellation.sfip;
+    hls.config.ipfs = orbiter?.constellation.sfip;
     // @ts-expect-error ipfs extention config for hls is not included in hls types
     hls.config.ipfsHash = props.file.cid;
 
@@ -74,6 +75,7 @@ onMounted(async () => {
 
       video.value?.play();
     });
-  }
+    
+  }*/
 });
 </script>

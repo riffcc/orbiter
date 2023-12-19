@@ -11,14 +11,14 @@ import {registerListener, selectTranslation} from '/@/utils';
 
 import {useUserProfilePhoto} from './utils';
 
-const orbiter: Orbiter = inject('orbiter')!;
+const orbiter = inject<Orbiter>('orbiter');
 
 const props = defineProps<{accountId?: string}>();
 
 // User name
 const names = ref<{[language: string]: string}>();
 registerListener(
-  orbiter.onNameChange({
+  orbiter?.listenForNameChange({
     f: x => (names.value = x),
     accountId: props.accountId,
   }),

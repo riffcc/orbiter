@@ -6,7 +6,7 @@
   >
     <v-card>
       <v-card-title>Missing moderation database addresses</v-card-title>
-      <v-card-text v-if="!generatedModDbAddress">
+      <v-card-text v-if="!generatedSiteId">
         Each instance of Orbiter.CC must be compiled with a moderation database address. Click below
         to generate the moderation DB.
       </v-card-text>
@@ -19,10 +19,10 @@
           :append-inner-icon="textCopied ? 'mdi-check' : 'mdi-content-copy'"
           readonly
           variant="outlined"
-          @click:appendInner="copyGeneratedEnvFile"
+          @click:append-inner="copyGeneratedEnvFile"
         />
       </v-card-text>
-      <v-card-actions v-if="!generatedModDbAddress">
+      <v-card-actions v-if="!generatedSiteId">
         <v-btn
           color="primary"
           block
@@ -57,14 +57,13 @@ import type Orbiter from '/@/plugins/orbiter/orbiter';
 import type {VariableIds} from '/@/plugins/orbiter/types';
 import {downloadFile} from '/@/utils';
 
-const orbiter: Orbiter = inject('orbiter')!;
+const orbiter = inject<Orbiter>('orbiter');
 
 const siteConfigured = ref<boolean>();
 const siteNotConfigured = computed(() => siteConfigured.value === false);
 
 const generatingDb = ref<boolean>(false);
-const generatedModDbAddress = ref<string>();
-const generatedOrbiterSwarmId = ref<string>();
+const generatedSiteId = ref<string>();
 const generatedVariableIds = ref<VariableIds>();
 
 const generatingEnvFile = ref<boolean>(false);
@@ -72,24 +71,23 @@ const generatingEnvFile = ref<boolean>(false);
 const generateDb = async () => {
   generatingDb.value = true;
 
-  const {modDbId, orbiterSwarmId, variableIds} = await orbiter.generateModDb();
+  if (!orbiter) throw Error('Orbiter not initialised.');
+  const {siteId, variableIds} = await orbiter.setUpSite();
 
-  generatedModDbAddress.value = modDbId;
+  generatedSiteId.value = siteId;
   generatedVariableIds.value = variableIds;
-  generatedOrbiterSwarmId.value = orbiterSwarmId;
 
   generatingDb.value = false;
 };
 
 const envFileText = computed(() => {
-  const trustedSitesSwarmVar =
+  const trustedSitesSiteIdVar =
     'VITE_TRUSTED_SITES_SITE_ID_VAR_ID=' + generatedVariableIds.value?.trustedSitesSiteIdVariableId;
   const trustedSitesNameVar =
     'VITE_TRUSTED_SITES_NAME_VAR_ID=' + generatedVariableIds.value?.trustedSitesNameVariableId;
   const blockedCidsVar =
     'VITE_BLOCKED_CIDS_VAR_ID=' + generatedVariableIds.value?.blockedCidsVariableId;
 
-  const orbiterSwarmId = 'VITE_ORBITER_SWARM_ID=' + generatedOrbiterSwarmId.value;
   const releasesFileVar =
     'VITE_RELEASES_FILE_VAR_ID=' + generatedVariableIds.value?.releasesFileVar;
   const releasesTypeVar =
@@ -103,19 +101,15 @@ const envFileText = computed(() => {
   const releasesThumbnailVar =
     'VITE_RELEASES_THUMBNAIL_VAR_ID=' + generatedVariableIds.value?.releasesThumbnailVar;
 
-  const modDBAddress = 'VITE_MOD_BD_ADDRESS=' + generatedModDbAddress.value;
+  const siteId = 'VITE_SITE_ID=' + generatedSiteId.value;
 
   return (
     '# The address below should be regenerated for each Orbiter.CC site. If you are setting up an independent site, erase the value below and run the site in development mode (`pnpm dev`) to automatically regenerate. \n' +
-    modDBAddress +
-    '\n' +
-    orbiterSwarmId +
+    siteId +
     '\n' +
     '\n' +
     '# These should ideally stay the same for all Orbiter.CC sites for optimal performance. Only change if you know what you are doing.\n' +
-    trustedSitesModDbVar +
-    '\n' +
-    trustedSitesSwarmVar +
+    trustedSitesSiteIdVar +
     '\n' +
     trustedSitesNameVar +
     '\n' +
@@ -137,10 +131,10 @@ const envFileText = computed(() => {
 });
 
 const downloadEnvFile = async () => {
-  if (!generatedModDbAddress.value) return;
+  if (!generatedSiteId.value) return;
   generatingEnvFile.value = true;
 
-  const contents = await envFileText.value;
+  const contents = envFileText.value;
   downloadFile('.env', contents);
 
   generatingEnvFile.value = false;
@@ -156,9 +150,8 @@ const copyGeneratedEnvFile = async () => {
 
 const acceptNewModDb = async () => {
   if (
-    !generatedModDbAddress.value ||
-    !generatedVariableIds.value ||
-    !generatedOrbiterSwarmId.value
+    !generatedSiteId.value ||
+    !generatedVariableIds.value
   ) {
     throw new Error('Mod DB and variables not generated.');
   }
@@ -167,7 +160,7 @@ const acceptNewModDb = async () => {
 let forgetSiteConfigured: (() => void) | undefined = undefined;
 
 onMounted(async () => {
-  forgetSiteConfigured = await orbiter.isSiteConfigured({
+  forgetSiteConfigured = await orbiter?.listenForSiteConfigured({
     f: configured => {
       siteConfigured.value = configured;
     },

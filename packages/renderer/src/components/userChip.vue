@@ -13,7 +13,7 @@ import {computed, inject, onMounted, onUnmounted, ref} from 'vue';
 
 import {selectTranslation} from '/@/utils';
 
-const orbiter: Orbiter = inject('orbiter')!;
+const orbiter = inject<Orbiter>('orbiter');
 
 const props = defineProps<{accountId: string}>();
 
@@ -26,7 +26,7 @@ const displayName = computed(() => {
 let forgetNames: (() => Promise<void>) | undefined = undefined;
 
 onMounted(async () => {
-  forgetNames = await orbiter.listenForNameChange({
+  forgetNames = await orbiter?.listenForNameChange({
     f: x => (names.value = x),
     accountId: props.accountId,
   });

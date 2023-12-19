@@ -10,8 +10,8 @@ export default {
 
     const orbiterApp = new OrbiterApp({
       constellation,
-      modDbAddress: variableIds ? import.meta.env.VITE_MOD_BD_ADDRESS : undefined,
-      orbiterSwarmId: variableIds ? import.meta.env.VITE_ORBITER_SWARM_ID : undefined,
+      siteId: variableIds ? import.meta.env.VITE_SITE_ID : undefined,
+      swarmId: variableIds ? import.meta.env.VITE_SWARM_ID : undefined,
       variableIds,
     });
     app.config.globalProperties.$orbiter = orbiterApp;
@@ -26,8 +26,7 @@ export default {
 
 const getVariableIds = (): possiblyIncompleteVariableIds => {
   const {
-    VITE_TRUSTED_SITES_MOD_DB_VAR_ID,
-    VITE_TRUSTED_SITES_SWARM_VAR_ID,
+    VITE_TRUSTED_SITES_SITE_ID_VAR_ID,
     VITE_TRUSTED_SITES_NAME_VAR_ID,
     VITE_BLOCKED_CIDS_VAR_ID,
     VITE_RELEASES_FILE_VAR_ID,
@@ -36,11 +35,16 @@ const getVariableIds = (): possiblyIncompleteVariableIds => {
     VITE_RELEASES_CONTENT_NAME_VAR_ID,
     VITE_RELEASES_METADATA_VAR_ID,
     VITE_RELEASES_THUMBNAIL_VAR_ID,
+    VITE_COLLECTIONS_AUTHOR_VAR_ID,
+    VITE_COLLECTIONS_METADATA_VAR_ID,
+    VITE_COLLECTIONS_NAME_VAR_ID,
+    VITE_COLLECTIONS_RELEASES_VAR_ID,
+    VITE_COLLECTIONS_THUMBNAIL_VAR_ID,
+    VITE_COLLECTIONS_TYPE_VAR_ID,
   } = import.meta.env;
 
   const variableIds: possiblyIncompleteVariableIds = {
-    trustedSitesModDbVariableId: VITE_TRUSTED_SITES_MOD_DB_VAR_ID,
-    trustedSitesSwarmVariableId: VITE_TRUSTED_SITES_SWARM_VAR_ID,
+    trustedSitesSiteIdVariableId: VITE_TRUSTED_SITES_SITE_ID_VAR_ID,
     trustedSitesNameVariableId: VITE_TRUSTED_SITES_NAME_VAR_ID,
     blockedCidsVariableId: VITE_BLOCKED_CIDS_VAR_ID,
 
@@ -50,6 +54,12 @@ const getVariableIds = (): possiblyIncompleteVariableIds => {
     releasesContentNameVar: VITE_RELEASES_CONTENT_NAME_VAR_ID,
     releasesMetadataVar: VITE_RELEASES_METADATA_VAR_ID,
     releasesThumbnailVar: VITE_RELEASES_THUMBNAIL_VAR_ID,
+    collectionsAuthorVar: VITE_COLLECTIONS_AUTHOR_VAR_ID,
+    collectionsMetadataVar: VITE_COLLECTIONS_METADATA_VAR_ID,
+    collectionsNameVar: VITE_COLLECTIONS_NAME_VAR_ID,
+    collectionsReleasesVar: VITE_COLLECTIONS_RELEASES_VAR_ID,
+    collectionsThumbnailVar: VITE_COLLECTIONS_THUMBNAIL_VAR_ID,
+    collectionsTypeVar: VITE_COLLECTIONS_TYPE_VAR_ID,
   };
 
   return variableIds;

@@ -34,13 +34,13 @@ import TrustSiteDialog from './trustSiteDialog.vue';
 
 import type Orbiter from '/@/plugins/orbiter/orbiter';
 import type {TrustedSite} from '/@/plugins/orbiter/types';
-import type {élémentDonnées} from '@constl/ipa/dist/src/valid';
+import type {tableaux} from '@constl/ipa';
 
-const props = defineProps<{site: élémentDonnées<TrustedSite>}>();
+const props = defineProps<{site: tableaux.élémentDonnées<TrustedSite>}>();
 
-const orbiter = inject<Orbiter>('orbiter')!;
+const orbiter = inject<Orbiter>('orbiter');
 
 const untrustSite = async () => {
-  await orbiter.untrustSite(props.site.empreinte);
+  await orbiter?.untrustSite({elementId: props.site.id});
 };
 </script>
