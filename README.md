@@ -9,9 +9,9 @@ Funding provided via [OpenCollective](https://opencollective.com/riffcc).
 Orbiter will work on any standard Linux distribution where standard utilities like a webserver and Node.JS are available, but **our instructions specifically cover the latest LTS releases of Ubuntu and Debian only**. Ask us (or submit a PR) if you want any others to be added.
 
 ### Dependencies
-Before installing Orbiter, you must install the following dependencies by running the following command as root:
+Before installing Orbiter, you must install the following dependencies:
 ```
-# apt install libnss3-dev libgtk-3-0 libgbm1 libasound2 libatk1.0-0 node-pre-gyp git curl
+sudo apt install libnss3-dev libgtk-3-0 libgbm1 libasound2 libatk1.0-0 node-pre-gyp git curl
 ```
 
 Additionally, Orbiter utilizes **Node.JS** and **pnpm** to set up and install the platform, and as such it's required to install them as well. It is possible to use **yarn** instead of pnpm, but it's not recommended as it requires much more memory. Nevertheless, instructions for both will be provided.
