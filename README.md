@@ -62,7 +62,7 @@ This is **not** necessary if you choose to use the pnpm method above.
 
 * Install Yarn once Node.JS is installed:
 ```sh
-npm install -g yarn
+sudo npm install -g yarn
 ```
 
 ### Installation
