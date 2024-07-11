@@ -2,7 +2,7 @@
   <div>
     <h2>Riff.CC Connections</h2>
     <v-divider
-      v-if="RiffConnections"
+      v-if="RiffMembers"
       class="my-2"
     />
     <v-progress-linear
@@ -12,11 +12,11 @@
       :height="1"
     />
     <v-list>
-      <v-list-item v-if="RiffConnections && !RiffConnections.length">
+      <v-list-item v-if="RiffMembers && !RiffMembers.length">
         <v-list-item-title>You seem to be alone...</v-list-item-title>
       </v-list-item>
       <v-list-item
-        v-for="con in RiffConnections"
+        v-for="con in RiffMembers"
         :key="con.infoMembre.idCompte"
       >
         <v-list-item-title>
@@ -45,41 +45,33 @@
       </v-list-item>
       <v-list-item
         v-for="con in IPFSConnections"
-        :key="con.adresse"
+        :key="con.pair"
       >
         <v-list-item-title>
           {{ con.pair }}
         </v-list-item-title>
         <v-list-item-subtitle>
-          {{ con.adresse }}
+          {{ con.adresses }}
         </v-list-item-subtitle>
       </v-list-item>
     </v-list>
   </div>
 </template>
 <script setup lang="ts">
-import {inject, ref} from 'vue';
-import {registerListener, RIFFCC_PROTOCOL} from '/@/utils';
-import type Orbiter from '/@/plugins/orbiter/orbiter';
-import type {réseau} from '@constl/ipa';
+import { suivre as follow } from '@constl/vue';
 
-const orbiter = inject<Orbiter>('orbiter');
+import { computed} from 'vue';
+import { RIFFCC_PROTOCOL } from '/@/utils';
 
-const IPFSConnections = ref<
-  {
-    adresse: string;
-    pair: string;
-  }[]
->();
-registerListener(
-  orbiter?.constellation.réseau?.suivreConnexionsPostesSFIP({f: x => (IPFSConnections.value = x)}),
-);
+import { useOrbiter } from '/@/plugins/orbiter/utils';
 
-const RiffConnections = ref<réseau.statutMembre[]>();
-registerListener(
-  orbiter?.constellation.réseau?.suivreConnexionsMembres({
-    f: x =>
-      (RiffConnections.value = x.filter(c => c.infoMembre.protocoles.includes(RIFFCC_PROTOCOL))),
-  }),
-);
+const {orbiter} = useOrbiter();
+
+const IPFSConnections = follow(orbiter.constellation.réseau.suivreConnexionsPostesSFIP);
+
+const ConstellationMembers = follow(orbiter.constellation.réseau.suivreConnexionsMembres);
+const RiffMembers = computed(()=>{
+  return ConstellationMembers.value?.filter(c => c.infoMembre.protocoles.includes(RIFFCC_PROTOCOL));
+});
+
 </script>

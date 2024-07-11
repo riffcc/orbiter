@@ -25,17 +25,14 @@
 </template>
 
 <script setup lang="ts">
-import type Orbiter from '/@/plugins/orbiter/orbiter';
-
-import {inject, ref} from 'vue';
-import {registerListener} from '/@/utils';
+import { suivre as follow} from '@constl/vue';
 import {useUserProfilePhoto} from '/@/components/users/utils';
+import { useOrbiter } from '/@/plugins/orbiter/utils';
 
-const orbiter = inject<Orbiter>('orbiter');
+const { orbiter } = useOrbiter();
 
 // User avatar
-const accountId = ref<string>();
-registerListener(orbiter?.listenForAccountId({f: id => (accountId.value = id)}));
+const accountId = follow(orbiter.listenForAccountId);
 
 const userAvatar = useUserProfilePhoto(accountId);
 </script>

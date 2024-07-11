@@ -1,17 +1,16 @@
-import type Orbiter from '/@/plugins/orbiter/orbiter';
-import {type ComputedRef, ref, inject, computed, type Ref} from 'vue';
+import {type ComputedRef, ref, computed, type Ref} from 'vue';
 
 import type {types} from '@constl/ipa';
 
 import {registerListener} from '/@/utils';
 import {onMounted} from 'vue';
 import {watchEffect} from 'vue';
+import { useOrbiter } from '/@/plugins/orbiter/utils';
 
 export const useUserProfilePhoto = (
   accountId?: string | Ref<string | undefined>,
 ): ComputedRef<string | undefined> => {
-  const orbiter = inject<Orbiter>('orbiter');
-  if (!orbiter) throw new Error('Orbiter not installed');
+  const {orbiter} = useOrbiter();
 
   const profilePic = ref<Uint8Array | null>();
   const defaultAvatar = ref<string>();
@@ -27,7 +26,7 @@ export const useUserProfilePhoto = (
   watchEffect(async () => {
     if (forgetPhoto) await forgetPhoto();
     forgetPhoto = await registerListener(
-      orbiter?.listenForProfilePhotoChange({
+      orbiter.listenForProfilePhotoChange({
         f: x => (profilePic.value = x),
         accountId: accountId
           ? typeof accountId === 'string'

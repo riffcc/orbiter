@@ -1,7 +1,9 @@
 import {app, BrowserWindow} from 'electron';
 import {join} from 'path';
-import {URL} from 'url';
+import {fileURLToPath, URL} from 'url';
 import {gestionnaireFenêtres} from './constellation';
+import {connecterHttp} from './http';
+import {connecterSystèmeFichiers} from './systèmeFichiers';
 
 async function createWindow() {
   const browserWindow = new BrowserWindow({
@@ -32,16 +34,27 @@ async function createWindow() {
   });
 
   /**
-   * URL for main window.
-   * Vite dev server for development.
-   * `file://../renderer/index.html` for production and test.
+   * Load the main page of the main window.
    */
-  const pageUrl =
-    import.meta.env.DEV && import.meta.env.VITE_DEV_SERVER_URL !== undefined
-      ? import.meta.env.VITE_DEV_SERVER_URL
-      : new URL('../renderer/dist/index.html', 'file://' + __dirname).toString();
-
-  await browserWindow.loadURL(pageUrl);
+  if (import.meta.env.DEV && import.meta.env.VITE_DEV_SERVER_URL !== undefined) {
+    /**
+     * Load from the Vite dev server for development.
+     */
+    await browserWindow.loadURL(import.meta.env.VITE_DEV_SERVER_URL);
+  } else {
+    /**
+     * Load from the local file system for production and test.
+     *
+     * Use BrowserWindow.loadFile() instead of BrowserWindow.loadURL() for WhatWG URL API limitations
+     * when path contains special characters like `#`.
+     * Let electron handle the path quirks.
+     * @see https://github.com/nodejs/node/issues/12682
+     * @see https://github.com/electron/electron/issues/6869
+     */
+    await browserWindow.loadFile(
+      fileURLToPath(new URL('./../../renderer/dist/index.html', import.meta.url)),
+    );
+  }
 
   return browserWindow;
 }
@@ -50,11 +63,15 @@ async function createWindow() {
  * Restore an existing BrowserWindow or Create a new BrowserWindow.
  */
 export async function restoreOrCreateWindow() {
-  let window = BrowserWindow.getAllWindows().find(w => !w.isDestroyed());
+  let window = BrowserWindow.getAllWindows().find(
+    w => !w.isDestroyed(), // && w.title !== 'WRTC Relay', Vérification 'WRTC Relay' probablement plus nécessaire
+  );
 
   if (window === undefined) {
     window = await createWindow();
     gestionnaireFenêtres.connecterFenêtreÀConstellation(window);
+    connecterHttp();
+    connecterSystèmeFichiers();
   }
 
   if (window.isMinimized()) {

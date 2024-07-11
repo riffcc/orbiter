@@ -79,7 +79,7 @@
     </v-col>
   </v-row>
   <v-row
-    v-else
+    v-else-if="siteConfigured"
     class="d-flex align-center justify-center"
   >
     <v-col cols="auto">
@@ -93,31 +93,25 @@
 </template>
 
 <script setup lang="ts">
-import type Orbiter from '/@/plugins/orbiter/orbiter';
-import {ref, inject, onMounted, onUnmounted} from 'vue';
+import {ref, onMounted} from 'vue';
+import { suivre as follow } from '@constl/vue';
+
+import { useOrbiter } from '/@/plugins/orbiter/utils';
 
 import initiateModDBs from '/@/components/initiateModDBs.vue';
 import initiateAccount from '/@/components/initiateAccount.vue';
 
-const orbiter = inject<Orbiter>('orbiter');
+const { orbiter } = useOrbiter();
 
 const orbiterReady = ref<boolean>(false);
 onMounted(async () => {
-  if (!orbiter) throw new Error('Orbiter not initialised.');
-  await orbiter?.siteConfigured();
+  await orbiter.siteConfigured();
   orbiterReady.value = true;
 });
 
-const accountExists = ref<boolean>();
+// const accountExists = follow(orbiter.listenForAccountExists);
 
-let forgetAccountExists: (() => void) | undefined = undefined;
-onMounted(async () => {
-  forgetAccountExists = await orbiter?.listenForAccountExists({f: a => (accountExists.value = a)});
-});
-
-onUnmounted(async () => {
-  if (forgetAccountExists) await forgetAccountExists();
-});
+const siteConfigured = follow(orbiter.listenForSiteConfigured);
 
 const emit = defineEmits<{
   (e: 'enter'): void;

@@ -33,12 +33,16 @@ const config = {
       output: {
         entryFileNames: '[name].cjs',
       },
-      external: ['wrtc'],
     },
     emptyOutDir: true,
     reportCompressedSize: false,
   },
   plugins: [injectAppVersion()],
+  test: {
+    coverage: {
+      provider: 'istanbul',
+    },
+  },
 };
 
 export default config;

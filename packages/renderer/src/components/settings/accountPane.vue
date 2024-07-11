@@ -42,7 +42,7 @@
     <v-btn
       color="error"
       class="my-6"
-      text
+      variant="text"
       outlined
       @click="deleteAccount"
     >
@@ -52,12 +52,12 @@
 </template>
 
 <script setup lang="ts">
-import {computed, inject, onMounted, onUnmounted, ref} from 'vue';
+import {computed, onMounted, onUnmounted, ref} from 'vue';
 
-import type Orbiter from '/@/plugins/orbiter/orbiter';
 import {selectTranslation, copyText} from '/@/utils';
+import { useOrbiter } from '/@/plugins/orbiter/utils';
 
-const orbiter = inject<Orbiter>('orbiter');
+const { orbiter } = useOrbiter();
 
 const names = ref<{[language: string]: string}>();
 
@@ -90,14 +90,13 @@ const copySiteInfo = async () => {
 };
 
 async function deleteAccount() {
-  await orbiter?.deleteAccount();
+  await orbiter.deleteAccount();
 }
 
 let forgetAccount: (() => Promise<void>) | undefined = undefined;
 let forgetNames: (() => Promise<void>) | undefined = undefined;
 
 onMounted(async () => {
-  if (!orbiter) throw new Error('Orbiter not found.');
 
   forgetAccount = await orbiter.listenForAccountId({f: a => (account.value = a)});
   forgetNames = await orbiter.listenForNameChange({f: n => (names.value = n)});

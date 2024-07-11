@@ -29,7 +29,7 @@
             ></v-file-input>
             <v-select
               v-model="releaseType"
-              :items="orbiter?.contentTypes"
+              :items="orbiter.contentTypes"
               variant="outlined"
               label="Content type"
             ></v-select>
@@ -134,9 +134,8 @@
 </template>
 
 <script setup lang="ts">
-import {computed, inject, ref} from 'vue';
+import {computed, ref} from 'vue';
 
-import type Orbiter from '/@/plugins/orbiter/orbiter';
 import type {FFmpeg, fetchFile as FetchFile} from '@ffmpeg/ffmpeg';
 import {
   RELEASES_AUTHOR_COLUMN,
@@ -146,8 +145,9 @@ import {
   RELEASES_THUMBNAIL_COLUMN,
   RELEASES_TYPE_COLUMN,
 } from '/@/plugins/orbiter/consts';
+import { useOrbiter } from '/@/plugins/orbiter/utils';
 
-const orbiter = inject<Orbiter>('orbiter');
+const { orbiter } = useOrbiter();
 
 // Navigation
 const dialog = ref(false);
@@ -363,11 +363,10 @@ const readyToSave = computed(() => {
   if (file.value && author.value && releaseName.value && releaseType.value) {
     const contentValue = optimisedContent.value || {
       content: file.value[0],
-      ext: file.value[0].name.split('.').pop(),
+      fileName: file.value[0].name,
     };
-    if (!contentValue.ext) return undefined;
     return {
-      contentValue: contentValue as {content: File; ext: string},
+      contentValue: contentValue as {content: File; fileName: string},
       authorValue: author.value,
       releaseNameValue: releaseName.value,
       releaseTypeValue: releaseType.value,
@@ -386,23 +385,22 @@ const releaseName = ref<string>();
 const metadata = ref<string>();
 
 const save = async () => {
-  if (!orbiter) throw new Error('Orbiter not found.');
   if (!readyToSave.value) return;
 
   const {contentValue, authorValue, releaseNameValue, releaseTypeValue} = readyToSave.value;
 
   saving.value = true;
 
-  const fileEntry = await orbiter?.constellation.ajouterÀSFIP({
-    fichier: contentValue,
-  });
+  const fileContentBytes = new Uint8Array(await contentValue.content.arrayBuffer());
+  const fileEntry = await orbiter.constellation.ajouterÀSFIP({contenu: fileContentBytes, nomFichier: contentValue.fileName});
 
   const thumbnailEntry = thumbnail.value?.length
-    ? await orbiter?.constellation.ajouterÀSFIP({
-          fichier: {content: thumbnail.value[0]},
+    ? await orbiter.constellation.ajouterÀSFIP({
+          contenu: new Uint8Array(await thumbnail.value[0].arrayBuffer()),
+          nomFichier: thumbnail.value[0].name,
         }) : undefined;
 
-  await orbiter?.addRelease({
+  await orbiter.addRelease({
     [RELEASES_FILE_COLUMN]: fileEntry,
     [RELEASES_TYPE_COLUMN]: releaseTypeValue,
     [RELEASES_THUMBNAIL_COLUMN]: thumbnailEntry,

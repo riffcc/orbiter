@@ -3,10 +3,10 @@
     v-model="dialog"
     max-width="600"
   >
-    <template #activator="{on, attrs}">
+    <template #activator="{props}">
       <v-btn
         icon="mdi-cog"
-        v-bind="{on, attrs}"
+        v-bind="{props}"
         @click="dialog = true"
       ></v-btn>
     </template>
@@ -81,16 +81,16 @@
 </template>
 
 <script setup lang="ts">
-import {ref, inject, onMounted, onUnmounted} from 'vue';
+import {ref, onMounted, onUnmounted} from 'vue';
 
 import initiateAccount from '/@/components/initiateAccount.vue';
 
-import type Orbiter from '/@/plugins/orbiter/orbiter';
 import AccountPane from './accountPane.vue';
 import ModPane from './modPane.vue';
 import ConnectivityPane from './connectivityPane.vue';
+import { useOrbiter } from '/@/plugins/orbiter/utils';
 
-const orbiter = inject<Orbiter>('orbiter');
+const { orbiter } = useOrbiter();
 
 const dialog = ref(false);
 const tab = ref('account');
@@ -104,9 +104,9 @@ let forgetAccountExists: (() => void) | undefined = undefined;
 let forgetModerator: (() => void) | undefined = undefined;
 
 onMounted(async () => {
-  forgetAccount = await orbiter?.listenForAccountId({f: a => (account.value = a)});
-  forgetAccountExists = await orbiter?.listenForAccountExists({f: a => (accountExists.value = a)});
-  forgetModerator = await orbiter?.listenToIsModerator({f: isMod => (moderator.value = !!isMod)});
+  forgetAccount = await orbiter.listenForAccountId({f: a => (account.value = a)});
+  forgetAccountExists = await orbiter.listenForAccountExists({f: a => (accountExists.value = a)});
+  forgetModerator = await orbiter.listenToIsModerator({f: isMod => (moderator.value = !!isMod)});
 });
 
 onUnmounted(async () => {

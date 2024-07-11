@@ -60,17 +60,17 @@
 </template>
 
 <script setup lang="ts">
-import type Orbiter from '/@/plugins/orbiter/orbiter';
 import type {ReleaseWithId} from '/@/plugins/orbiter/types';
 
-import {computed, inject, onMounted, onUnmounted, ref, watchEffect} from 'vue';
+import {computed, onMounted, onUnmounted, ref, watchEffect} from 'vue';
 
 import UserChip from '/@/components/userChip.vue';
 import ReleaseViewer from './releaseViewer.vue';
 import {downloadFile} from '/@/utils';
+import { useOrbiter } from '/@/plugins/orbiter/utils';
 
 
-const orbiter = inject<Orbiter>('orbiter');
+const { orbiter } = useOrbiter();
 
 const props = defineProps<{ release: ReleaseWithId; contributor: string; site: string; }>();
 
@@ -85,7 +85,7 @@ watchEffect(async () => {
   const {thumbnail} = props.release.release;
 
   if (thumbnail) {
-    const image = await orbiter?.constellation.obtFichierSFIP({
+    const image = await orbiter.constellation.obtFichierSFIP({
       id: thumbnail,
       max: 1500 * 1000, // 1.5 MB,
     });
@@ -102,13 +102,13 @@ watchEffect(async () => {
 });
 
 async function removeRelease() {
-  await orbiter?.removeRelease(props.release.id);
+  await orbiter.removeRelease(props.release.id);
 }
 
 async function downloadRelease() {
   const {file, contentName} = props.release.release;
 
-  const releaseFile = await orbiter?.constellation.obtFichierSFIP({
+  const releaseFile = await orbiter.constellation.obtFichierSFIP({
     id: file,
   });
 
@@ -118,13 +118,13 @@ async function downloadRelease() {
 }
 
 async function blockRelease() {
-  await orbiter?.blockRelease({cid: props.release.release.file});
+  await orbiter.blockRelease({cid: props.release.release.file});
 }
 
 let forgetAccountId: (() => Promise<void>) | undefined = undefined;
 
 onMounted(async () => {
-  forgetAccountId = await orbiter?.listenForAccountId({f: a => (myAccountId.value = a)});
+  forgetAccountId = await orbiter.listenForAccountId({f: a => (myAccountId.value = a)});
 });
 
 onUnmounted(async () => {

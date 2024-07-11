@@ -58,16 +58,16 @@
 </template>
 
 <script setup lang="ts">
-import {inject, ref, onMounted, onUnmounted} from 'vue';
+import {ref, onMounted, onUnmounted} from 'vue';
 
-import type Orbiter from '/@/plugins/orbiter/orbiter';
 import type {TrustedSite} from '/@/plugins/orbiter/types';
 import type {tableaux} from '@constl/ipa';
 
-import TrustSiteDialog from './trustedSites/trustSiteDialog.vue';
-import TrustedSiteListItem from './trustedSites/trustedSite.vue';
+import TrustSiteDialog from './trustedSites/AddTrustedSite.vue';
+import TrustedSiteListItem from './trustedSites/TrustedSiteItem.vue';
+import { useOrbiter } from '/@/plugins/orbiter/utils';
 
-const orbiter = inject<Orbiter>('orbiter');
+const { orbiter } = useOrbiter();
 
 const blockedCIDs = ref<{cid: string; id: string}[]>();
 const toBlock = ref<string>();
@@ -75,19 +75,19 @@ const toBlock = ref<string>();
 const trustedSites = ref<tableaux.élémentDonnées<TrustedSite>[]>();
 
 const blockRelease = async (cid: string) => {
-  await orbiter?.blockRelease({cid});
+  await orbiter.blockRelease({cid});
   toBlock.value = undefined;
 };
 const unblockRelease = async (id: string) => {
-  await orbiter?.unblockRelease({id});
+  await orbiter.unblockRelease({id});
 };
 
 let forgetBlockedCIDs: (() => Promise<void>) | undefined = undefined;
 let forgetTrustedSites: (() => Promise<void>) | undefined = undefined;
 
 onMounted(async () => {
-  forgetBlockedCIDs = await orbiter?.listenForSiteBlockedReleases({f: x => (blockedCIDs.value = x)});
-  forgetTrustedSites = await orbiter?.followTrustedSites({f: x => (trustedSites.value = x)});
+  forgetBlockedCIDs = await orbiter.listenForSiteBlockedReleases({f: x => (blockedCIDs.value = x)});
+  forgetTrustedSites = await orbiter.followTrustedSites({f: x => (trustedSites.value = x)});
 });
 
 onUnmounted(async () => {

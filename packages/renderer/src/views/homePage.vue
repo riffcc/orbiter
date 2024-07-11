@@ -17,24 +17,24 @@
 import mainPage from '/@/components/mainPage.vue';
 import initScreen from '/@/components/initScreen.vue';
 
-import {ref, inject, onMounted, onUnmounted} from 'vue';
-import type Orbiter from '/@/plugins/orbiter/orbiter';
+import {ref, onMounted, onUnmounted} from 'vue';
+import { useOrbiter } from '/@/plugins/orbiter/utils';
 
-const orbiter = inject<Orbiter>('orbiter');
+const { orbiter } = useOrbiter();
 
 const orbiterReady = ref<boolean>(false);
 const accountExists = ref<boolean>();
 const enterAnonymously = ref(false);
 
 onMounted(async ()=>{
-  await orbiter?.siteConfigured();
+  await orbiter.siteConfigured();
   orbiterReady.value = true;
 });
 
 let forgetAccountExists: (() => void) | undefined = undefined;
 
 onMounted(async () => {
-  forgetAccountExists = await orbiter?.listenForAccountExists({f: a => (accountExists.value = a)});
+  forgetAccountExists = await orbiter.listenForAccountExists({f: a => (accountExists.value = a)});
 });
 
 onUnmounted(async () => {

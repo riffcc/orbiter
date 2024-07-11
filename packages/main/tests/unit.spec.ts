@@ -1,4 +1,4 @@
-import type {MockedClass} from 'vitest';
+import type {MockedClass, MockedObject} from 'vitest';
 import {beforeEach, expect, test, vi} from 'vitest';
 import {restoreOrCreateWindow} from '../src/mainWindow';
 
@@ -12,6 +12,7 @@ vi.mock('electron', () => {
   const bw = vi.fn() as unknown as MockedClass<typeof BrowserWindow>;
   bw.getAllWindows = vi.fn(() => bw.mock.instances);
   bw.prototype.loadURL = vi.fn((_: string, __?: Electron.LoadURLOptions) => Promise.resolve());
+  bw.prototype.loadFile = vi.fn((_: string, __?: Electron.LoadFileOptions) => Promise.resolve());
   // Use "any" because the on function is overloaded
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   bw.prototype.on = vi.fn<any>();
@@ -21,30 +22,55 @@ vi.mock('electron', () => {
   bw.prototype.focus = vi.fn();
   bw.prototype.restore = vi.fn();
 
-  const app: Pick<Electron.App, 'getAppPath'> = {
+  // @ts-expect-error webContents est une propriété en lecture seule
+  bw.prototype.webContents = {
+    send: vi.fn(),
+    setWindowOpenHandler: vi.fn(),
+  };
+
+  const app: Pick<Electron.App, 'getAppPath' | 'getPath'> = {
     getAppPath(): string {
+      return '';
+    },
+    getPath(): string {
       return '';
     },
   };
 
-  return {BrowserWindow: bw, app};
+  const ipcMain: Pick<Electron.IpcMain, 'on' | 'handle'> = {
+    on(..._args) {
+      return this;
+    },
+    handle(..._args) {
+      return this;
+    },
+  };
+
+  return {BrowserWindow: bw, app, ipcMain};
 });
 
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
-test('Should create a new window', async () => {
+test('Devrait créer une nouvelle fenêtre', async () => {
   const {mock} = vi.mocked(BrowserWindow);
   expect(mock.instances).toHaveLength(0);
 
   await restoreOrCreateWindow();
   expect(mock.instances).toHaveLength(1);
-  expect(mock.instances[0].loadURL).toHaveBeenCalledOnce();
-  expect(mock.instances[0].loadURL).toHaveBeenCalledWith(expect.stringMatching(/index\.html$/));
+  const instance = mock.instances[0] as MockedObject<BrowserWindow>;
+  const loadURLCalls = instance.loadURL.mock.calls.length;
+  const loadFileCalls = instance.loadFile.mock.calls.length;
+  expect(loadURLCalls + loadFileCalls).toBe(1);
+  if (loadURLCalls === 1) {
+    expect(instance.loadURL).toHaveBeenCalledWith(expect.stringMatching(/index\.html$/));
+  } else {
+    expect(instance.loadFile).toHaveBeenCalledWith(expect.stringMatching(/index\.html$/));
+  }
 });
 
-test('Should restore an existing window', async () => {
+test('Devrait restaurer une fenêtre existante', async () => {
   const {mock} = vi.mocked(BrowserWindow);
 
   // Create a window and minimize it.
@@ -58,7 +84,7 @@ test('Should restore an existing window', async () => {
   expect(appWindow.restore).toHaveBeenCalledOnce();
 });
 
-test('Should create a new window if the previous one was destroyed', async () => {
+test("Devrait créer une nouvelle fenêtre si l'ancienne fenêtre a été détruite", async () => {
   const {mock} = vi.mocked(BrowserWindow);
 
   // Create a window and destroy it.

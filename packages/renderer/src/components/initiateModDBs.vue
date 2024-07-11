@@ -5,13 +5,21 @@
     max-width="800"
   >
     <v-card>
-      <v-card-title>Missing moderation database addresses</v-card-title>
+      <v-card-title>{{ generatedSiteId ? 'Site is now configured' : 'Site not configured' }}</v-card-title>
       <v-card-text v-if="!generatedSiteId">
-        Each instance of Orbiter.CC must be compiled with a moderation database address. Click below
-        to generate the moderation DB.
+        Each instance of Orbiter.CC must be compiled with a unique site configuration. Click below
+        to configure the site. (This can take a while.)
+        <v-alert
+          v-if="development" 
+          class="mt-4"
+          title="You seem to be in development mode"
+          text="This is fine if you're just testing things out. If you're trying to deploy a development server, however, be aware that Orbiter account credentials are linked to the browser and the site domain name. This means that the site will be configured with your localhost address as the root moderator, which is probably not what you want. You should instead deploy the site to your production domain name first, open this page under that domain name (or in the installable Electron app version of your site) and then configure and recompile and deploy the site."
+          type="warning"
+          variant="tonal"
+        />
       </v-card-text>
       <v-card-text v-else>
-        Moderation DB generated! Be sure to copy the code below into a <code>.env</code> file and
+        Site configured! Be sure to copy the code below into a <code>.env</code> file and
         place it at the root of your Orbiter.CC project.
         <v-textarea
           class="mt-4"
@@ -24,17 +32,20 @@
       </v-card-text>
       <v-card-actions v-if="!generatedSiteId">
         <v-btn
-          color="primary"
-          block
+          color="primary mx-auto"
+          prepend-icon="mdi-creation"
+          variant="outlined"
           :loading="generatingDb"
           @click="generateDb"
         >
-          Generate moderation DB
+          Configure site
         </v-btn>
       </v-card-actions>
       <v-card-actions v-else>
+        <v-spacer />
         <v-btn
           color="primary"
+          prepend-icon="mdi-download"
           :loading="generatingEnvFile"
           @click="downloadEnvFile"
         >
@@ -42,6 +53,7 @@
         </v-btn>
         <v-btn
           color="primary"
+          prepend-icon="mdi-export"
           @click="acceptNewModDb"
         >
           Close and enter site
@@ -52,12 +64,14 @@
 </template>
 
 <script setup lang="ts">
-import {ref, inject, onMounted, onUnmounted, computed} from 'vue';
-import type Orbiter from '/@/plugins/orbiter/orbiter';
 import type {VariableIds} from '/@/plugins/orbiter/types';
-import {downloadFile} from '/@/utils';
 
-const orbiter = inject<Orbiter>('orbiter');
+import {ref, onMounted, onUnmounted, computed} from 'vue';
+
+import {saveAs} from 'file-saver';
+import { useOrbiter } from '/@/plugins/orbiter/utils';
+
+const { orbiter } = useOrbiter();
 
 const siteConfigured = ref<boolean>();
 const siteNotConfigured = computed(() => siteConfigured.value === false);
@@ -71,7 +85,6 @@ const generatingEnvFile = ref<boolean>(false);
 const generateDb = async () => {
   generatingDb.value = true;
 
-  if (!orbiter) throw Error('Orbiter not initialised.');
   const {siteId, variableIds} = await orbiter.setUpSite();
 
   generatedSiteId.value = siteId;
@@ -79,6 +92,8 @@ const generateDb = async () => {
 
   generatingDb.value = false;
 };
+
+const development = import.meta.env.DEV;
 
 const envFileText = computed(() => {
   const trustedSitesSiteIdVar =
@@ -100,6 +115,13 @@ const envFileText = computed(() => {
     'VITE_RELEASES_METADATA_VAR_ID=' + generatedVariableIds.value?.releasesMetadataVar;
   const releasesThumbnailVar =
     'VITE_RELEASES_THUMBNAIL_VAR_ID=' + generatedVariableIds.value?.releasesThumbnailVar;
+
+  const collectionsAuthorVar = 'VITE_COLLECTIONS_AUTHOR_VAR_ID=' + generatedVariableIds.value?.collectionsAuthorVar;
+  const collectionsMetadataVar = 'VITE_COLLECTIONS_METADATA_VAR_ID=' + generatedVariableIds.value?.collectionsMetadataVar;
+  const collectionsNameVar = 'VITE_COLLECTIONS_NAME_VAR_ID=' + generatedVariableIds.value?.collectionsNameVar;
+  const collectionsReleasesVar = 'VITE_COLLECTIONS_RELEASES_VAR_ID=' + generatedVariableIds.value?.collectionsReleasesVar;
+  const collectionsThumbnailVar = 'VITE_COLLECTIONS_THUMBNAIL_VAR_ID=' + generatedVariableIds.value?.collectionsThumbnailVar;
+  const collectionsTypeVar = 'VITE_COLLECTIONS_TYPE_VAR_ID=' + generatedVariableIds.value?.collectionsTypeVar;
 
   const siteId = 'VITE_SITE_ID=' + generatedSiteId.value;
 
@@ -126,7 +148,18 @@ const envFileText = computed(() => {
     releasesMetadataVar +
     '\n' +
     releasesThumbnailVar +
-    '\n'
+    '\n' + 
+    collectionsAuthorVar +
+    '\n' +
+    collectionsMetadataVar +
+    '\n' +
+    collectionsNameVar +
+    '\n' +
+    collectionsReleasesVar +
+    '\n' +
+    collectionsThumbnailVar +
+    '\n' +
+    collectionsTypeVar
   );
 });
 
@@ -134,8 +167,7 @@ const downloadEnvFile = async () => {
   if (!generatedSiteId.value) return;
   generatingEnvFile.value = true;
 
-  const contents = envFileText.value;
-  downloadFile('.env', contents);
+  saveAs(envFileText.value, '[erase this bit].env');
 
   generatingEnvFile.value = false;
 };
@@ -160,7 +192,7 @@ const acceptNewModDb = async () => {
 let forgetSiteConfigured: (() => void) | undefined = undefined;
 
 onMounted(async () => {
-  forgetSiteConfigured = await orbiter?.listenForSiteConfigured({
+  forgetSiteConfigured = await orbiter.listenForSiteConfigured({
     f: configured => {
       siteConfigured.value = configured;
     },

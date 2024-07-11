@@ -8,12 +8,12 @@
 </template>
 
 <script setup lang="ts">
-import type Orbiter from '/@/plugins/orbiter/orbiter';
-import {computed, inject, onMounted, onUnmounted, ref} from 'vue';
+import {computed, onMounted, onUnmounted, ref} from 'vue';
 
 import {selectTranslation} from '/@/utils';
+import { useOrbiter } from '/@/plugins/orbiter/utils';
 
-const orbiter = inject<Orbiter>('orbiter');
+const { orbiter } = useOrbiter();
 
 const props = defineProps<{accountId: string}>();
 
@@ -26,7 +26,7 @@ const displayName = computed(() => {
 let forgetNames: (() => Promise<void>) | undefined = undefined;
 
 onMounted(async () => {
-  forgetNames = await orbiter?.listenForNameChange({
+  forgetNames = await orbiter.listenForNameChange({
     f: x => (names.value = x),
     accountId: props.accountId,
   });

@@ -116,6 +116,7 @@ export default class Orbiter {
     siteId: string;
     variableIds: VariableIds;
   }> {
+    console.log('ici');
     // Variables for moderation database
     const trustedSitesSiteIdVariableId =
       this.initialVariableIds.trustedSitesSiteIdVariableId ||
@@ -128,7 +129,7 @@ export default class Orbiter {
       (await this.constellation.variables.créerVariable({
         catégorie: 'chaîneNonTraductible',
       }));
-
+      console.log('ici 1');
     // Variables for releases table
     const releasesFileVar =
       this.initialVariableIds.releasesFileVar ||
@@ -155,7 +156,7 @@ export default class Orbiter {
       (await this.constellation.variables.créerVariable({
         catégorie: 'chaîneNonTraductible',
       }));
-
+      console.log('ici 2');
     // The release type variable is a bit more complicated, because we need to specify
     // allowed categories to enforce.
     let releasesTypeVar: string;
@@ -177,7 +178,7 @@ export default class Orbiter {
         },
       });
     }
-
+    console.log('ici 3');
     // Variables for collections table
     const collectionsNameVar =
       this.initialVariableIds.collectionsNameVar ||
@@ -204,7 +205,7 @@ export default class Orbiter {
       (await this.constellation.variables.créerVariable({
         catégorie: 'fichier',
       }));
-
+      console.log('ici 4');
     // Same thing for collections type variable.
     let collectionsTypeVar: string;
     if (this.initialVariableIds.collectionsTypeVar) {
@@ -225,7 +226,7 @@ export default class Orbiter {
         },
       });
     }
-
+    console.log('ici 5');
     // Swarm ID for site
     let swarmId: string;
     if (this.swarmId) {
@@ -263,7 +264,7 @@ export default class Orbiter {
         }
       }
     }
-
+    console.log('ici 6');
     const modDbId = await this.constellation.bds.créerBdDeSchéma({
       schéma: {
         licence: 'ODbl-1_0',
@@ -293,7 +294,7 @@ export default class Orbiter {
         ],
       },
     });
-
+    console.log('ici 7');
     const variableIds: VariableIds = {
       // Federation stuff
       trustedSitesSiteIdVariableId,
@@ -320,23 +321,25 @@ export default class Orbiter {
     const siteId = await this.constellation.créerBdIndépendante({
       type: 'keyvalue',
     });
-
+    console.log('ici 8', {modDbId});
     await this.constellation.orbite.appliquerFonctionBdOrbite({
       idBd: siteId,
       fonction: 'put',
       args: ['modDb', modDbId],
     });
+    console.log('ici 9');
     await this.constellation.orbite.appliquerFonctionBdOrbite({
       idBd: siteId,
       fonction: 'put',
       args: ['swarmId', swarmId],
     });
+    console.log('ici 10');
 
     this.events.emit('site configured', {
       siteId,
       variableIds,
     });
-
+    console.log('ici 11');
     return {
       siteId,
       variableIds,
@@ -1058,9 +1061,9 @@ export default class Orbiter {
     else await this.constellation.profil.effacerNom({langue: language});
   }
 
-  async changeProfilePhoto({image}: {image?: {content: Uint8Array; path: string}}): Promise<void> {
-    if (image) return await this.constellation.profil?.sauvegarderImage({image});
-    else return await this.constellation.profil?.effacerImage();
+  async changeProfilePhoto({image}: {image?: {contenu: Uint8Array; nomFichier: string}}): Promise<void> {
+    if (image) return await this.constellation.profil.sauvegarderImage({image});
+    else return await this.constellation.profil.effacerImage();
   }
 
   async addContactInfo({type, contact}: {type: string; contact: string}): Promise<void> {

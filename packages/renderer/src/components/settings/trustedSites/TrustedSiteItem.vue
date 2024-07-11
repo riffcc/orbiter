@@ -28,19 +28,18 @@
 </template>
 
 <script setup lang="ts">
-import {inject} from 'vue';
 
-import TrustSiteDialog from './trustSiteDialog.vue';
+import TrustSiteDialog from './AddTrustedSite.vue';
 
-import type Orbiter from '/@/plugins/orbiter/orbiter';
 import type {TrustedSite} from '/@/plugins/orbiter/types';
 import type {tableaux} from '@constl/ipa';
+import { useOrbiter } from '/@/plugins/orbiter/utils';
 
 const props = defineProps<{site: tableaux.élémentDonnées<TrustedSite>}>();
 
-const orbiter = inject<Orbiter>('orbiter');
+const { orbiter } = useOrbiter();
 
 const untrustSite = async () => {
-  await orbiter?.untrustSite({elementId: props.site.id});
+  await orbiter.untrustSite({elementId: props.site.id});
 };
 </script>

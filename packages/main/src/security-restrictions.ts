@@ -1,30 +1,21 @@
+import type {Session} from 'electron';
 import {app, shell} from 'electron';
 import {URL} from 'url';
 
-type Permissions =
-  | 'clipboard-read'
-  | 'media'
-  | 'display-capture'
-  | 'mediaKeySystem'
-  | 'geolocation'
-  | 'notifications'
-  | 'midi'
-  | 'midiSysex'
-  | 'pointerLock'
-  | 'fullscreen'
-  | 'openExternal'
-  | 'unknown'
-  | 'window-placement';
+type Permission = Parameters<
+  Exclude<Parameters<Session['setPermissionRequestHandler']>[0], null>
+>[1];
 
 /**
  * A list of origins that you allow open INSIDE the application and permissions for them.
  *
  * In development mode you need allow open `VITE_DEV_SERVER_URL`.
  */
-const ALLOWED_ORIGINS_AND_PERMISSIONS = new Map<string, Set<Permissions>>(
+const permissions = new Set<Permission>(['clipboard-sanitized-write']);
+const ALLOWED_ORIGINS_AND_PERMISSIONS = new Map<string, Set<Permission>>(
   import.meta.env.DEV && import.meta.env.VITE_DEV_SERVER_URL
-    ? [[new URL(import.meta.env.VITE_DEV_SERVER_URL).origin, new Set()]]
-    : [],
+    ? [[new URL(import.meta.env.VITE_DEV_SERVER_URL).origin, permissions]]
+    : [['null', permissions]],
 );
 
 /**
@@ -37,7 +28,11 @@ const ALLOWED_ORIGINS_AND_PERMISSIONS = new Map<string, Set<Permissions>>(
  *   href="https://github.com/"
  * >
  */
-const ALLOWED_EXTERNAL_ORIGINS = new Set<`https://${string}`>(['https://github.com']);
+const ALLOWED_EXTERNAL_ORIGINS = new Set<`https://${string}`>([
+  'https://github.com',
+  'https://docu.xn--rseau-constellation-bzb.ca',
+  'https://matrix.to',
+]);
 
 app.on('web-contents-created', (_, contents) => {
   /**
@@ -90,10 +85,10 @@ app.on('web-contents-created', (_, contents) => {
    * @see https://www.electronjs.org/docs/latest/tutorial/security#15-do-not-use-openexternal-with-untrusted-content
    */
   contents.setWindowOpenHandler(({url}) => {
-    const {origin} = new URL(url);
+    const {origin, protocol} = new URL(url);
 
     // @ts-expect-error Type checking is performed in runtime.
-    if (ALLOWED_EXTERNAL_ORIGINS.has(origin)) {
+    if (protocol === 'mailto:' || ALLOWED_EXTERNAL_ORIGINS.has(origin)) {
       // Open url in default browser.
       shell.openExternal(url).catch(console.error);
     } else if (import.meta.env.DEV) {

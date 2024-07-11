@@ -34,14 +34,14 @@
 </template>
 
 <script setup lang="ts">
-import {computed, inject, ref} from 'vue';
+import {computed, ref} from 'vue';
 
 import type {TrustedSite} from '/@/plugins/orbiter/types';
-import type Orbiter from '/@/plugins/orbiter/orbiter';
 import type {tableaux} from '@constl/ipa';
 import { watchEffect } from 'vue';
+import { useOrbiter } from '/@/plugins/orbiter/utils';
 
-const orbiter = inject<Orbiter>('orbiter');
+const { orbiter } = useOrbiter();
 
 const props = defineProps<{site?: tableaux.élémentDonnées<TrustedSite>}>();
 
@@ -79,12 +79,12 @@ const save = async () => {
   const {siteId: siteIdValue, siteName: siteNameValue} = info;
 
   if (newSite.value) {
-    await orbiter?.trustSite({
+    await orbiter.trustSite({
       siteId: siteIdValue, 
       siteName: siteNameValue,
     });
   } else {
-    await orbiter?.editTrustedSite({
+    await orbiter.editTrustedSite({
       elementId: props.site!.id,
       site: {siteId: siteIdValue, siteName: siteNameValue},
     });

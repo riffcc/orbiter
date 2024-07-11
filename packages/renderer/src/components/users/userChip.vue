@@ -4,21 +4,20 @@
   </v-chip>
 </template>
 <script setup lang="ts">
-import type Orbiter from '/@/plugins/orbiter/orbiter';
-
-import {computed, inject, ref} from 'vue';
+import {computed, ref} from 'vue';
 import {registerListener, selectTranslation} from '/@/utils';
 
 import {useUserProfilePhoto} from './utils';
+import { useOrbiter } from '/@/plugins/orbiter/utils';
 
-const orbiter = inject<Orbiter>('orbiter');
+const { orbiter } = useOrbiter();
 
 const props = defineProps<{accountId?: string}>();
 
 // User name
 const names = ref<{[language: string]: string}>();
 registerListener(
-  orbiter?.listenForNameChange({
+  orbiter.listenForNameChange({
     f: x => (names.value = x),
     accountId: props.accountId,
   }),

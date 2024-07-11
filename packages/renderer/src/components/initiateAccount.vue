@@ -53,17 +53,17 @@
 </template>
 
 <script setup lang="ts">
-import type Orbiter from '/@/plugins/orbiter/orbiter';
-import {ref, inject, computed} from 'vue';
+import {ref, computed} from 'vue';
 import {Nuchabäl} from 'nuchabal';
+import { useOrbiter } from '/@/plugins/orbiter/utils';
 
-const orbiter = inject<Orbiter>('orbiter');
+const { orbiter } = useOrbiter();
 const nuchabäl = new Nuchabäl({});
 
 const dialog = ref<boolean>(false);
 
 const knownLanguageCodes = computed(() => nuchabäl.konojelChabäl);
-const userNameLanguage = ref<string | {label: string; value: string}>('en');
+const userNameLanguage = ref('en');
 const userName = ref<string>();
 
 const saveName = async () => {
@@ -73,6 +73,6 @@ const saveName = async () => {
     typeof userNameLanguage.value === 'string'
       ? userNameLanguage.value
       : userNameLanguage.value['value'];
-  await orbiter?.changeName({name: userName.value, language: code});
+  await orbiter.changeName({name: userName.value, language: code});
 };
 </script>

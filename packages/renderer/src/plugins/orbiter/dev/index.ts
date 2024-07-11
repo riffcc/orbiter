@@ -29,13 +29,14 @@ export const loadStubData = async (app: Orbiter) => {
     .default;
 
   const audioCid = await app.constellation.ajouterÀSFIP({
-    fichier: {content: audioFile},
+    contenu: new Uint8Array(new TextEncoder().encode(audioFile)),
+    nomFichier: '06-yy_ch01_l01_d01.mp3',
   });
 
-  const thumbnailFile = (await import('../../../../../../src/assets/logo.svg')).default;
+  const thumbnailFile = (await import('../../../assets/logo.svg')).default;
 
   const thumbnailCid = await app.constellation.ajouterÀSFIP({
-    fichier: {content: thumbnailFile},
+    contenu: new Uint8Array(new TextEncoder().encode(thumbnailFile)), nomFichier: 'logo.svg',
   });
   await app.addRelease({
     [RELEASES_NAME_COLUMN]: 'Famous song',

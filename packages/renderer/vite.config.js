@@ -8,9 +8,7 @@ import {join} from 'node:path';
 import {injectAppVersion} from '../../version/inject-app-version-plugin.mjs';
 import {copyFileSync} from 'fs';
 
-import rollupNodePolyFill from 'rollup-plugin-polyfill-node';
-import {NodeGlobalsPolyfillPlugin} from '@esbuild-plugins/node-globals-polyfill';
-import builtins from 'rollup-plugin-node-builtins';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 const PACKAGE_ROOT = __dirname;
 const PROJECT_ROOT = join(PACKAGE_ROOT, '../..');
@@ -32,56 +30,12 @@ const générerExtentions = () => {
     vuetify({
       autoImport: true,
     }),
-    {
-      name: 'configure-response-headers',
-      configureServer: server => {
-        server.middlewares.use((_req, res, next) => {
-          res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
-          res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-          next();
-        });
-      },
-    },
+    nodePolyfills(),
   ];
   if (forElectron) {
     extentions.push(
       renderer.vite({
         preloadEntry: join(PACKAGE_ROOT, '../preload/src/index.ts'),
-      }),
-    );
-  } else {
-    extentions.push(
-      NodeGlobalsPolyfillPlugin({
-        buffer: true,
-        process: true,
-      }),
-    );
-    extentions.push({
-      name: 'vite:global-polyfill',
-      transformIndexHtml: {
-        transform(html) {
-          return {
-            html,
-            tags: [
-              {
-                tag: 'script',
-                children: `
-                  function getGlobal() {
-                    if (typeof globalThis === 'object') return globalThis;
-                    if (typeof window === 'object') return window;
-                  }
-                  global = getGlobal()
-                `,
-                injectTo: 'head-prepend',
-              },
-            ],
-          };
-        },
-      },
-    });
-    extentions.push(
-      builtins({
-        fs: true,
       }),
     );
   }
@@ -90,21 +44,20 @@ const générerExtentions = () => {
 };
 
 const générerAliasRésolution = () => {
-  const commun = {
+  const common = {
     '/@/': join(PACKAGE_ROOT, 'src') + '/',
   };
   if (forElectron) {
-    return commun;
+    return common;
   } else {
-    return Object.assign({}, commun, {
-      assert: 'rollup-plugin-node-polyfills/polyfills/assert',
-      crypto: 'crypto-browserify',
-      path: 'rollup-plugin-node-polyfills/polyfills/path',
-      './buffer-globalThis': 'crypto-browserify',
-      stream: 'rollup-plugin-node-polyfills/polyfills/stream',
+    return Object.assign({}, common, {
+      '#preload': join(PACKAGE_ROOT, 'src') + '/polyfillPreload',
     });
   }
 };
+
+// Same for Electron or web, since this is for the renderer process GUI
+const dépendsÀExclure = ['chokidar', '@libp2p/tcp', '@libp2p/mdns', 'env-paths'];
 
 /**
  * @type {import('vite').UserConfig}
@@ -118,7 +71,7 @@ const config = {
     alias: générerAliasRésolution(),
     extensions: ['.js', '.json', '.jsx', '.mjs', '.ts', '.tsx', '.vue'],
   },
-  base: '',
+  base: '', // forElectron ? '' : '/github-repo/', // Only necessary if on non-root url, such as github pages at org.github.io/repo
   server: {
     fs: {
       strict: true,
@@ -126,29 +79,34 @@ const config = {
   },
   build: {
     sourcemap: true,
-    target: forElectron ? `chrome${chrome}` : 'es2020',
+    target: forElectron ? `chrome${chrome}` : 'esnext',
     outDir: forElectron ? 'dist' : 'dist/web',
     assetsDir: '.',
     rollupOptions: {
       input: join(PACKAGE_ROOT, 'index.html'),
-      external: forElectron ? undefined : ['chokidar'],
-      plugins: forElectron ? undefined : [rollupNodePolyFill()],
+      external: dépendsÀExclure,
     },
     emptyOutDir: true,
     reportCompressedSize: false,
   },
   optimizeDeps: {
-    exclude: forElectron ? undefined : ['chokidar'],
+    exclude: dépendsÀExclure,
+    esbuildOptions: {
+      target: 'esnext',
+    },
   },
   test: {
     environment: 'happy-dom',
+    server: {
+      deps: {
+        inline: ['vuetify'],
+      },
+    },
+    coverage: {
+      provider: 'istanbul',
+    },
   },
   plugins: générerExtentions(),
-  /*define: forElectron || process.env.PROD
-    ? undefined
-    : {
-        global: ({}),
-      },*/
 };
 
 export default config;

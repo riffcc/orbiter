@@ -16,18 +16,18 @@
   </v-card>
 </template>
 <script setup lang="ts">
-import {inject, ref, onMounted} from 'vue';
-import type Orbiter from '/@/plugins/orbiter/orbiter';
+import {ref, onMounted} from 'vue';
+import { useOrbiter } from '/@/plugins/orbiter/utils';
 // import Plyr from 'plyr';
 
 const props = defineProps<{file: string}>();
 
-const orbiter = inject<Orbiter>('orbiter');
+const { orbiter } = useOrbiter();
 
 const audioSource = ref<string>();
 
 onMounted(async () => {
-  const audioData = await orbiter?.constellation.obtFichierSFIP({
+  const audioData = await orbiter.constellation.obtFichierSFIP({
     id: props.file,
   });
   console.log(audioData);

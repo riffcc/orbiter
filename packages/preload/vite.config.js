@@ -34,6 +34,11 @@ const config = {
     reportCompressedSize: false,
   },
   plugins: [preload.vite(), injectAppVersion()],
+  test: {
+    coverage: {
+      provider: 'istanbul',
+    },
+  },
 };
 
 export default config;

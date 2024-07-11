@@ -1,6 +1,6 @@
 import {app} from 'electron';
-import {gestionnaireFenêtres} from './constellation';
 import './security-restrictions';
+import {gestionnaireFenêtres} from '/@/constellation';
 import {restoreOrCreateWindow} from '/@/mainWindow';
 
 /**
@@ -69,7 +69,6 @@ if (import.meta.env.PROD) {
   app
     .whenReady()
     .then(() => import('electron-updater'))
-    // @ts-expect-error On doit importer de default pour une drôle de raison
     .then(({default: {autoUpdater}}) => autoUpdater.checkForUpdatesAndNotify())
     .catch(e => console.error('Erreur vérification mises à jour :', e));
 }
