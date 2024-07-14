@@ -21,6 +21,9 @@
     "test:main": "vitest run -r packages/main --passWithNoTests",
     "test:preload": "vitest run -r packages/preload --passWithNoTests",
     "test:renderer": "vitest run -r packages/renderer --passWithNoTests",
+    "test:firefox": "pnpm run compile:web && ENVIRONNEMENT_TESTS=firefox vitest run",
+    "test:webkit": "pnpm run compile:web && ENVIRONNEMENT_TESTS=webkit vitest run",
+    "test:chrome": "pnpm run compile:web && ENVIRONNEMENT_TESTS=chromium vitest run",
     "watch": "node scripts/watch.mjs",
     "watch:web": "cross-env WEB=true vite packages/renderer --port 5174",
     "watch:web:stub": "cross-env VITE_STUB_DATA=true pnpm watch:web",
@@ -34,6 +37,7 @@
     "format": "npx prettier --write \"**/*.{js,mjs,cjs,ts,mts,cts,vue,json}\""
   },
   "devDependencies": {
+    "@constl/utils-tests": "^1.2.7",
     "@eslint/js": "^9.6.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@types/file-saver": "^2.0.7",
