@@ -46,7 +46,7 @@
         <v-list-item-title>{{ b.cid }}</v-list-item-title>
         <template #append>
           <v-btn
-            text
+            variant="text"
             @click="() => unblockRelease(b.id)"
           >
             Unblock
