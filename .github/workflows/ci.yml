@@ -47,9 +47,9 @@ jobs:
     uses: ./.github/workflows/typechecking.yml
   tests:
     uses: ./.github/workflows/tests.yml
-  tests_navig:
+  web_tests:
     uses: ./.github/workflows/webTests.yml
-  publier_appli_internet:
+  publish_web_app:
     needs: [ typechecking, web_tests ]
     uses: ./.github/workflows/publishPage.yml
   draft_release:
