@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and answers
+    url: https://github.com/riffcc/orbiter/discussions/categories/q-a
+    about: Use this discussion page for questions and answers
