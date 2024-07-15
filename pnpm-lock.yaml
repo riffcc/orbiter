@@ -42,6 +42,9 @@ importers:
       '@ffmpeg/ffmpeg':
         specifier: ^0.9.8
         version: 0.9.8(encoding@0.1.13)
+      '@libp2p/topology':
+        specifier: ^4.0.3
+        version: 4.0.3
       '@mdi/font':
         specifier: ^7.4.47
         version: 7.4.47
@@ -78,6 +81,9 @@ importers:
       image-file-resize:
         specifier: ^1.0.5
         version: 1.0.5
+      longbits:
+        specifier: ^1.1.0
+        version: 1.1.0
       node-gyp-build:
         specifier: ^4.8.1
         version: 4.8.1
@@ -1454,6 +1460,10 @@ packages:
     resolution: {integrity: sha512-9pZp9zhTDoVwzRmp0Wtxw0Yfa//Yc0GqBCJi3EznBDE6HGIAVvppR91wSh2knt/0eYg0AQj7Y35VSesUTzMCUg==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
 
+  '@libp2p/interface-registrar@2.0.12':
+    resolution: {integrity: sha512-EyCi2bycC2rn3oPB4Swr7EqBsvcaWd6RcqR6zsImNIG9BKc4/R1gl6iaF861JaELYgYmzBMS31x1rQpVz5UekQ==}
+    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
+
   '@libp2p/interface-stream-muxer@4.1.2':
     resolution: {integrity: sha512-dQJcn67UaAa8YQFRJDhbo4uT453z/2lCzD/ZwTk1YOqJxATXbXgVcB8dXDQFEUiUX3ZjVQ1IBu+NlQd+IZ++zw==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
@@ -1571,6 +1581,10 @@ packages:
 
   '@libp2p/tcp@9.1.2':
     resolution: {integrity: sha512-Tb0fTEndgcBuB9sMxTTdcWZWhlv+/VD9s2By7ackRtDLAZPNkvwR2x7QL2XdswVA21UsO5pZYjM+cJqZG0rwng==}
+
+  '@libp2p/topology@4.0.3':
+    resolution: {integrity: sha512-uXd9ZYpmgb+onMTypsAPUlvKKeY20HMtxwsjAMEfDa29yqshK8DiEunHZNjLmtXaMIIO9CBl2w5ykjt5TtFsBQ==}
+    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
 
   '@libp2p/upnp-nat@1.2.0':
     resolution: {integrity: sha512-n0VYTrKozZOpx1FHFRxLPEUM6uDa3NZX/Xr6coNHCpIb0u3aVHOuMfO2u9HoKP3ZdQZzTu0E6HL4/Xm79qtmeA==}
@@ -2730,6 +2744,10 @@ packages:
 
   builtin-status-codes@3.0.0:
     resolution: {integrity: sha512-HpGFw18DgFWlncDfjTa2rcQ4W88O1mC8e8yZ2AvQY5KDaktSTwo+KRf6nHK6FRI5FyRyb/5T6+TSxfP7QyGsmQ==}
+
+  byte-access@1.0.1:
+    resolution: {integrity: sha512-GKYa+lvxnzhgHWj9X+LCsQ4s2/C5uvib573eAOiQKywXMkzFFErY2+yQdzmdE5iWVpmqecsRx3bOtOY4/1eINw==}
+    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
 
   bytes@3.0.0:
     resolution: {integrity: sha512-pMhOfFDPiv9t5jjIXkHosWmkSyQbvsgEVNkz0ERHbuLh2T/7j4Mqqpz523Fe8MVY89KC6Sh/QfS2sM+SjgFDcw==}
@@ -4659,6 +4677,10 @@ packages:
 
   long@5.2.3:
     resolution: {integrity: sha512-lcHwpNoggQTObv5apGNCTdJrO69eHOZMi4BNC+rTLER8iHAqGrUVeLh/irVIM7zTw2bOXA8T6uNPeujwOLg/2Q==}
+
+  longbits@1.1.0:
+    resolution: {integrity: sha512-22U2exkkYy7sr7nuQJYx2NEZ2kEMsC69+BxM5h8auLvkVIJa+LwAB5mFIExnuW2dFuYXFOWsFMKXjaWiq/htYQ==}
+    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
 
   loose-envify@1.4.0:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
@@ -8810,6 +8832,11 @@ snapshots:
     dependencies:
       multiformats: 11.0.2
 
+  '@libp2p/interface-registrar@2.0.12':
+    dependencies:
+      '@libp2p/interface-connection': 5.1.1
+      '@libp2p/interface-peer-id': 2.0.2
+
   '@libp2p/interface-stream-muxer@4.1.2':
     dependencies:
       '@libp2p/interface-connection': 5.1.1
@@ -9268,6 +9295,11 @@ snapshots:
       stream-to-it: 1.0.1
     transitivePeerDependencies:
       - supports-color
+
+  '@libp2p/topology@4.0.3':
+    dependencies:
+      '@libp2p/interface-peer-id': 2.0.2
+      '@libp2p/interface-registrar': 2.0.12
 
   '@libp2p/upnp-nat@1.2.0':
     dependencies:
@@ -11064,6 +11096,10 @@ snapshots:
   builtin-modules@3.3.0: {}
 
   builtin-status-codes@3.0.0: {}
+
+  byte-access@1.0.1:
+    dependencies:
+      uint8arraylist: 2.4.8
 
   bytes@3.0.0: {}
 
@@ -13481,6 +13517,11 @@ snapshots:
       yargs: 15.4.1
 
   long@5.2.3: {}
+
+  longbits@1.1.0:
+    dependencies:
+      byte-access: 1.0.1
+      uint8arraylist: 2.4.8
 
   loose-envify@1.4.0:
     dependencies:
