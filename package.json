@@ -78,7 +78,7 @@
     "@constl/mandataire-electron-principal": "^2.3.0",
     "@constl/mandataire-electron-rendu": "^2.3.0",
     "@constl/serveur": "^2.0.13",
-    "@constl/utils-ipa": "^1.0.1",
+    "@constl/utils-ipa": "^1.0.3",
     "@constl/vue": "^1.0.1",
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@ffmpeg/core": "^0.9.0",
