@@ -1,3 +1,7 @@
+# Dev resources
+ipa-main/*
+main.zip
+
 node_modules
 .DS_Store
 dist
@@ -56,3 +60,4 @@ thumbs.db
 # Editor-based Rest Client
 .idea/httpRequests
 /.idea/csv-plugin.xml
+.aider*
