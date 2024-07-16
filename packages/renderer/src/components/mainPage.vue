@@ -36,39 +36,14 @@
 </template>
 
 <script setup lang="ts">
-import type {ReleaseWithId} from '/@/plugins/orbiter/types';
-
 import ReleaseItem from '/@/components/releases/releaseItem.vue';
 import NewReleaseDialog from '/@/components/releases/newReleaseDialog.vue';
-
-import {ref, onMounted, onUnmounted} from 'vue';
 import { useOrbiter } from '/@/plugins/orbiter/utils';
+import { suivre as follow } from '@constl/vue';
 
 const { orbiter } = useOrbiter();
 
-const accountInitialised = ref<boolean | undefined>(undefined);
-const account = ref<string>();
-const releases = ref<{ release: ReleaseWithId; contributor: string; site: string; }[]>();
+const accountInitialised = follow(orbiter.listenForAccountExists);
+const releases = follow(orbiter.listenForReleases);
 
-let forgetAccountExists: (() => Promise<void>) | undefined = undefined;
-let forgetAccount: (() => Promise<void>) | undefined = undefined;
-let forgetReleases: (() => Promise<void>) | undefined = undefined;
-
-onMounted(async () => {
-  forgetAccountExists = await orbiter.listenForAccountExists({
-    f: a => (accountInitialised.value = a),
-  });
-});
-onMounted(async () => {
-  forgetAccount = await orbiter.listenForAccountId({f: a => (account.value = a)});
-});
-onMounted(async () => {
-  forgetReleases = await orbiter.listenForReleases({f: rs => (releases.value = rs)});
-});
-
-onUnmounted(async () => {
-  if (forgetAccountExists) await forgetAccountExists();
-  if (forgetAccount) await forgetAccount();
-  if (forgetReleases) await forgetReleases();
-});
 </script>

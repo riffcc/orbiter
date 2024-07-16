@@ -8,31 +8,20 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, onUnmounted, ref} from 'vue';
+import {computed} from 'vue';
 
 import {selectTranslation} from '/@/utils';
 import { useOrbiter } from '/@/plugins/orbiter/utils';
+import { suivre as follow } from '@constl/vue';
 
 const { orbiter } = useOrbiter();
 
 const props = defineProps<{accountId: string}>();
 
-const names = ref<{[language: string]: string}>();
+const names = follow(orbiter.listenForNameChange, {accountId: computed(()=>props.accountId)});
 
 const displayName = computed(() => {
   return selectTranslation(names.value) || 'Anonymous';
 });
 
-let forgetNames: (() => Promise<void>) | undefined = undefined;
-
-onMounted(async () => {
-  forgetNames = await orbiter.listenForNameChange({
-    f: x => (names.value = x),
-    accountId: props.accountId,
-  });
-});
-
-onUnmounted(async () => {
-  if (forgetNames) await forgetNames();
-});
 </script>

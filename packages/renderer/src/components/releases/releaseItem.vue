@@ -62,19 +62,20 @@
 <script setup lang="ts">
 import type {ReleaseWithId} from '/@/plugins/orbiter/types';
 
-import {computed, onMounted, onUnmounted, ref, watchEffect} from 'vue';
+import {computed, ref, watchEffect} from 'vue';
 
 import UserChip from '/@/components/userChip.vue';
 import ReleaseViewer from './releaseViewer.vue';
 import {downloadFile} from '/@/utils';
 import { useOrbiter } from '/@/plugins/orbiter/utils';
+import { suivre as follow } from '@constl/vue';
 
 
 const { orbiter } = useOrbiter();
 
 const props = defineProps<{ release: ReleaseWithId; contributor: string; site: string; }>();
 
-const myAccountId = ref<string>();
+const myAccountId = follow(orbiter.listenForAccountId);
 
 const myRelease = computed(() => {
   return props.contributor === myAccountId.value;
@@ -121,13 +122,4 @@ async function blockRelease() {
   await orbiter.blockRelease({cid: props.release.release.file});
 }
 
-let forgetAccountId: (() => Promise<void>) | undefined = undefined;
-
-onMounted(async () => {
-  forgetAccountId = await orbiter.listenForAccountId({f: a => (myAccountId.value = a)});
-});
-
-onUnmounted(async () => {
-  if (forgetAccountId) await forgetAccountId();
-});
 </script>

@@ -33,7 +33,7 @@
         :append-inner-icon="siteInfoCopied ? 'mdi-check' : 'mdi-content-copy'"
         @click:append-inner="() => copySiteInfo()"
       >
-        Site info: {{ siteInfo ? hashedSiteInfo.slice(0, 35) + '...' : '' }}
+        Site info: {{ siteId ? hashedSiteInfo.slice(0, 35) + '...' : '' }}
       </v-text-field>
     </p>
 
@@ -52,16 +52,17 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, onUnmounted, ref} from 'vue';
+import {computed, onMounted, ref} from 'vue';
 
 import {selectTranslation, copyText} from '/@/utils';
 import { useOrbiter } from '/@/plugins/orbiter/utils';
+import { suivre as follow } from '@constl/vue';
 
 const { orbiter } = useOrbiter();
 
-const names = ref<{[language: string]: string}>();
+const account = follow(orbiter.listenForAccountId);
+const names = follow(orbiter.listenForNameChange);
 
-const account = ref<string>();
 const accountIdCopied = ref(false);
 const copyAccountId = async () => {
   await copyText(account.value);
@@ -77,12 +78,10 @@ const siteDomainName = computed(() => {
 });
 
 const siteInfoCopied = ref(false);
-const siteInfo = ref<{
-    siteId: string,
-    siteName: string,
-}>();
+const siteId = ref<string>();
+
 const hashedSiteInfo = computed(()=>{
-  return btoa(JSON.stringify(siteInfo.value));
+  return btoa(JSON.stringify({siteId: siteId.value, siteName: siteDomainName.value}));
 });
 const copySiteInfo = async () => {
   await copyText(hashedSiteInfo.value);
@@ -93,24 +92,9 @@ async function deleteAccount() {
   await orbiter.deleteAccount();
 }
 
-let forgetAccount: (() => Promise<void>) | undefined = undefined;
-let forgetNames: (() => Promise<void>) | undefined = undefined;
-
 onMounted(async () => {
-
-  forgetAccount = await orbiter.listenForAccountId({f: a => (account.value = a)});
-  forgetNames = await orbiter.listenForNameChange({f: n => (names.value = n)});
-
   // These don't need to be dynamically followed, just noted once ready
-  const {siteId} = await orbiter.siteConfigured();
-  siteInfo.value = {
-    siteId,
-    siteName: siteDomainName.value,
-  };
+  siteId.value = (await orbiter.siteConfigured()).siteId;
 });
 
-onUnmounted(async () => {
-  if (forgetAccount) await forgetAccount();
-  if (forgetNames) await forgetNames();
-});
 </script>
