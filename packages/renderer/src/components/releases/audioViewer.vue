@@ -16,13 +16,13 @@
   </v-card>
 </template>
 <script setup lang="ts">
-import {ref, onMounted} from 'vue';
-import { useOrbiter } from '/@/plugins/orbiter/utils';
+import {onMounted, ref} from 'vue';
+import {useOrbiter} from '/@/plugins/orbiter/utils';
 // import Plyr from 'plyr';
 
 const props = defineProps<{file: string}>();
 
-const { orbiter } = useOrbiter();
+const {orbiter} = useOrbiter();
 
 const audioSource = ref<string>();
 

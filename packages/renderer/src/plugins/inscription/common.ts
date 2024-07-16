@@ -5,8 +5,8 @@
  */
 
 // Plugins
-import {loadFonts} from '../webfontloader';
 import vuetify from '../vuetify';
+import {loadFonts} from '../webfontloader';
 
 import orbiter from '../orbiter';
 

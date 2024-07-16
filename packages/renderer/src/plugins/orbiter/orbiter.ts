@@ -3,30 +3,30 @@ import {TypedEmitter} from 'tiny-typed-emitter';
 import {Lock} from 'semaphore-async-await';
 
 import type {Constellation, bds, tableaux, types} from '@constl/ipa';
-import {uneFois, suivreBdDeFonction, ignorerNonDéfinis} from '@constl/utils-ipa';
+import {ignorerNonDéfinis, suivreBdDeFonction, uneFois} from '@constl/utils-ipa';
 
 import type {JSONSchemaType} from 'ajv';
 
 import {
   BLOCKED_RELEASES_TABLE_KEY,
   BLOCKED_RELEASE_CID_COL,
+  COLLECTIONS_AUTHOR_COLUMN,
+  COLLECTIONS_DB_TABLE_KEY,
+  COLLECTIONS_METADATA_COLUMN,
+  COLLECTIONS_NAME_COLUMN,
+  COLLECTIONS_RELEASES_COLUMN,
+  COLLECTIONS_THUMBNAIL_COLUMN,
+  COLLECTIONS_TYPE_COLUMN,
   RELEASES_AUTHOR_COLUMN,
-  RELEASES_FILE_COLUMN,
   RELEASES_DB_TABLE_KEY,
-  TRUSTED_SITES_TABLE_KEY,
-  TRUSTED_SITES_NAME_COL,
-  RELEASES_NAME_COLUMN,
+  RELEASES_FILE_COLUMN,
   RELEASES_METADATA_COLUMN,
+  RELEASES_NAME_COLUMN,
   RELEASES_THUMBNAIL_COLUMN,
   RELEASES_TYPE_COLUMN,
-  COLLECTIONS_DB_TABLE_KEY,
+  TRUSTED_SITES_NAME_COL,
   TRUSTED_SITES_SITE_ID_COL,
-  COLLECTIONS_NAME_COLUMN,
-  COLLECTIONS_TYPE_COLUMN,
-  COLLECTIONS_RELEASES_COLUMN,
-  COLLECTIONS_AUTHOR_COLUMN,
-  COLLECTIONS_METADATA_COLUMN,
-  COLLECTIONS_THUMBNAIL_COLUMN,
+  TRUSTED_SITES_TABLE_KEY,
 } from './consts.js';
 import type {
   BlockedCid,
@@ -45,7 +45,6 @@ type forgetFunction = () => Promise<void>;
 
 interface OrbiterEvents {
   'site configured': (args: {siteId: string; variableIds: VariableIds}) => void;
-  'account status': (status: string) => void;
 }
 
 type RootDbSchema = {
@@ -129,7 +128,7 @@ export default class Orbiter {
       (await this.constellation.variables.créerVariable({
         catégorie: 'chaîneNonTraductible',
       }));
-      console.log('ici 1');
+    console.log('ici 1');
     // Variables for releases table
     const releasesFileVar =
       this.initialVariableIds.releasesFileVar ||
@@ -156,7 +155,7 @@ export default class Orbiter {
       (await this.constellation.variables.créerVariable({
         catégorie: 'chaîneNonTraductible',
       }));
-      console.log('ici 2');
+    console.log('ici 2');
     // The release type variable is a bit more complicated, because we need to specify
     // allowed categories to enforce.
     let releasesTypeVar: string;
@@ -205,7 +204,7 @@ export default class Orbiter {
       (await this.constellation.variables.créerVariable({
         catégorie: 'fichier',
       }));
-      console.log('ici 4');
+    console.log('ici 4');
     // Same thing for collections type variable.
     let collectionsTypeVar: string;
     if (this.initialVariableIds.collectionsTypeVar) {
@@ -590,7 +589,7 @@ export default class Orbiter {
     f,
     siteId,
   }: {
-    f: (releases?: {cid: string, id: string}[]) => void;
+    f: (releases?: {cid: string; id: string}[]) => void;
     siteId?: string;
   }): Promise<forgetFunction> {
     return await suivreBdDeFonction({
@@ -610,7 +609,7 @@ export default class Orbiter {
         fSuivreBd,
       }: {
         id: string;
-        fSuivreBd: types.schémaFonctionSuivi<{cid: string, id: string}[] | undefined>;
+        fSuivreBd: types.schémaFonctionSuivi<{cid: string; id: string}[] | undefined>;
       }): Promise<forgetFunction> => {
         return await this.constellation.bds.suivreDonnéesDeTableauParClef<BlockedCid>({
           idBd: id,
@@ -1045,23 +1044,16 @@ export default class Orbiter {
   }
 
   // User profile functions
-  async initAccount({names}: {names: {[lang: string]: string}}): Promise<void> {
-    for (const [name, language] of Object.values(names)) {
-      await this.changeName({name, language});
-    }
-    await this.constellation.sauvegarderAuStockageLocal({
-      clef: 'accountStatus',
-      val: 'initialised',
-    });
-    this.events.emit('account status', 'initialised');
-  }
-
   async changeName({name, language}: {name?: string; language: string}): Promise<void> {
     if (name) await this.constellation.profil.sauvegarderNom({langue: language, nom: name});
     else await this.constellation.profil.effacerNom({langue: language});
   }
 
-  async changeProfilePhoto({image}: {image?: {contenu: Uint8Array; nomFichier: string}}): Promise<void> {
+  async changeProfilePhoto({
+    image,
+  }: {
+    image?: {contenu: Uint8Array; nomFichier: string};
+  }): Promise<void> {
     if (image) return await this.constellation.profil.sauvegarderImage({image});
     else return await this.constellation.profil.effacerImage();
   }
@@ -1083,18 +1075,7 @@ export default class Orbiter {
   }
 
   async listenForAccountExists({f}: {f: (exists: boolean) => void}): Promise<forgetFunction> {
-    const finalF = (status?: string | null) => {
-      f(status === 'initialised');
-    };
-    const status = await this.constellation.obtDeStockageLocal({
-      clef: 'accountStatus',
-    });
-    finalF(status);
-
-    this.events.on('account status', finalF);
-    return async () => {
-      this.events.off('account status', finalF);
-    };
+    return await this.constellation.profil.suivreInitialisé({f});
   }
 
   async listenForNameChange({

@@ -14,6 +14,6 @@
 </template>
 
 <script setup lang="ts">
-import SettingsDialog from '/@/components/settings/settingsDialog.vue';
 import AccountMenu from '/@/components/account/accountMenu.vue';
+import SettingsDialog from '/@/components/settings/settingsDialog.vue';
 </script>

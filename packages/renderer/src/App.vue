@@ -8,15 +8,14 @@
 </template>
 
 <script setup lang="ts">
+import {suivre as follow} from '@constl/vue';
+import {ref} from 'vue';
 import Home from './views/homePage.vue';
 import appBar from '/@/components/appBar.vue';
-import {ref} from 'vue';
-import { useOrbiter } from '/@/plugins/orbiter/utils';
-import { suivre as follow } from '@constl/vue';
+import {useOrbiter} from '/@/plugins/orbiter/utils';
 
-const { orbiter } = useOrbiter();
+const {orbiter} = useOrbiter();
 
 const accountExists = follow(orbiter.listenForAccountExists);
 const enterAnonymously = ref(false);
-
 </script>

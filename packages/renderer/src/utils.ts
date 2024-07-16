@@ -1,4 +1,3 @@
-
 export function downloadFile(filename: string, content: string | Uint8Array) {
   const element = document.createElement('a');
 

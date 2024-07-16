@@ -58,16 +58,16 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, onUnmounted} from 'vue';
+import {onMounted, onUnmounted, ref} from 'vue';
 
-import type {TrustedSite} from '/@/plugins/orbiter/types';
 import type {tableaux} from '@constl/ipa';
+import type {TrustedSite} from '/@/plugins/orbiter/types';
 
 import TrustSiteDialog from './trustedSites/AddTrustedSite.vue';
 import TrustedSiteListItem from './trustedSites/TrustedSiteItem.vue';
-import { useOrbiter } from '/@/plugins/orbiter/utils';
+import {useOrbiter} from '/@/plugins/orbiter/utils';
 
-const { orbiter } = useOrbiter();
+const {orbiter} = useOrbiter();
 
 const blockedCIDs = ref<{cid: string; id: string}[]>();
 const toBlock = ref<string>();

@@ -1,4 +1,4 @@
-import {type IpcMainInvokeEvent, ipcMain, dialog} from 'electron';
+import {dialog, ipcMain, type IpcMainInvokeEvent} from 'electron';
 
 const choisirDossier = async (_événement: IpcMainInvokeEvent): Promise<string | undefined> => {
   return (

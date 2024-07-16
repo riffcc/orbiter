@@ -36,7 +36,8 @@ export const loadStubData = async (app: Orbiter) => {
   const thumbnailFile = (await import('../../../assets/logo.svg')).default;
 
   const thumbnailCid = await app.constellation.ajouterÀSFIP({
-    contenu: new Uint8Array(new TextEncoder().encode(thumbnailFile)), nomFichier: 'logo.svg',
+    contenu: new Uint8Array(new TextEncoder().encode(thumbnailFile)),
+    nomFichier: 'logo.svg',
   });
   await app.addRelease({
     [RELEASES_NAME_COLUMN]: 'Famous song',

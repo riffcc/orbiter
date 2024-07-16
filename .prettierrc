@@ -10,6 +10,7 @@
       }
     }
   ],
+  "plugins": ["prettier-plugin-organize-imports"],
   "trailingComma": "all",
   "bracketSpacing": false,
   "arrowParens": "avoid",

@@ -1,7 +1,7 @@
 import type {App} from 'vue';
+import {loadStubData} from './dev/index.js';
 import OrbiterApp from './orbiter';
 import type {possiblyIncompleteVariableIds} from './types';
-import {loadStubData} from './dev/index.js';
 
 export default {
   install: (app: App) => {

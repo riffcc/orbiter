@@ -14,19 +14,19 @@
 </template>
 
 <script setup lang="ts">
-import mainPage from '/@/components/mainPage.vue';
 import initScreen from '/@/components/initScreen.vue';
+import mainPage from '/@/components/mainPage.vue';
 
-import {ref, onMounted, onUnmounted} from 'vue';
-import { useOrbiter } from '/@/plugins/orbiter/utils';
+import {onMounted, onUnmounted, ref} from 'vue';
+import {useOrbiter} from '/@/plugins/orbiter/utils';
 
-const { orbiter } = useOrbiter();
+const {orbiter} = useOrbiter();
 
 const orbiterReady = ref<boolean>(false);
 const accountExists = ref<boolean>();
 const enterAnonymously = ref(false);
 
-onMounted(async ()=>{
+onMounted(async () => {
   await orbiter.siteConfigured();
   orbiterReady.value = true;
 });

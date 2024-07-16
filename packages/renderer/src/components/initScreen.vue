@@ -93,15 +93,15 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted} from 'vue';
-import { suivre as follow } from '@constl/vue';
+import {suivre as follow} from '@constl/vue';
+import {onMounted, ref} from 'vue';
 
-import { useOrbiter } from '/@/plugins/orbiter/utils';
+import {useOrbiter} from '/@/plugins/orbiter/utils';
 
-import initiateModDBs from '/@/components/initiateModDBs.vue';
 import initiateAccount from '/@/components/initiateAccount.vue';
+import initiateModDBs from '/@/components/initiateModDBs.vue';
 
-const { orbiter } = useOrbiter();
+const {orbiter} = useOrbiter();
 
 const orbiterReady = ref<boolean>(false);
 onMounted(async () => {

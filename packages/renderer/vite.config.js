@@ -1,14 +1,14 @@
 /* eslint-env node */
 
-import {chrome} from '../../.electron-vendors.cache.json';
 import vue from '@vitejs/plugin-vue';
-import vuetify from 'vite-plugin-vuetify';
-import {renderer} from 'unplugin-auto-expose';
-import {join} from 'node:path';
-import {injectAppVersion} from '../../version/inject-app-version-plugin.mjs';
 import {copyFileSync} from 'fs';
+import {join} from 'node:path';
+import {renderer} from 'unplugin-auto-expose';
+import vuetify from 'vite-plugin-vuetify';
+import {chrome} from '../../.electron-vendors.cache.json';
+import {injectAppVersion} from '../../version/inject-app-version-plugin.mjs';
 
-import { nodePolyfills } from 'vite-plugin-node-polyfills';
+import {nodePolyfills} from 'vite-plugin-node-polyfills';
 
 const PACKAGE_ROOT = __dirname;
 const PROJECT_ROOT = join(PACKAGE_ROOT, '../..');

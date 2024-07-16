@@ -12,9 +12,9 @@
     <v-card>
       <v-card-title class="d-flex">
         Welcome!
-        <v-spacer />  
+        <v-spacer />
         <v-btn icon>
-          <v-icon @click="() => dialog = false">mdi-close</v-icon>
+          <v-icon @click="() => (dialog = false)">mdi-close</v-icon>
         </v-btn>
       </v-card-title>
       <v-card-text>
@@ -55,11 +55,11 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed} from 'vue';
 import {Nuchabäl} from 'nuchabal';
-import { useOrbiter } from '/@/plugins/orbiter/utils';
+import {computed, ref} from 'vue';
+import {useOrbiter} from '/@/plugins/orbiter/utils';
 
-const { orbiter } = useOrbiter();
+const {orbiter} = useOrbiter();
 const nuchabäl = new Nuchabäl({});
 
 const dialog = ref<boolean>(false);
@@ -78,7 +78,7 @@ const saveName = async () => {
       ? userNameLanguage.value
       : userNameLanguage.value['value'];
   await orbiter.changeName({name: userName.value, language: code});
+  await orbiter.constellation.profil.initialiser();
   savingName.value = false;
 };
-
 </script>

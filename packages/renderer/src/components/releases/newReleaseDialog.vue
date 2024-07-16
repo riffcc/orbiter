@@ -145,9 +145,9 @@ import {
   RELEASES_THUMBNAIL_COLUMN,
   RELEASES_TYPE_COLUMN,
 } from '/@/plugins/orbiter/consts';
-import { useOrbiter } from '/@/plugins/orbiter/utils';
+import {useOrbiter} from '/@/plugins/orbiter/utils';
 
-const { orbiter } = useOrbiter();
+const {orbiter} = useOrbiter();
 
 // Navigation
 const dialog = ref(false);
@@ -392,13 +392,17 @@ const save = async () => {
   saving.value = true;
 
   const fileContentBytes = new Uint8Array(await contentValue.content.arrayBuffer());
-  const fileEntry = await orbiter.constellation.ajouterÀSFIP({contenu: fileContentBytes, nomFichier: contentValue.fileName});
+  const fileEntry = await orbiter.constellation.ajouterÀSFIP({
+    contenu: fileContentBytes,
+    nomFichier: contentValue.fileName,
+  });
 
   const thumbnailEntry = thumbnail.value?.length
     ? await orbiter.constellation.ajouterÀSFIP({
-          contenu: new Uint8Array(await thumbnail.value[0].arrayBuffer()),
-          nomFichier: thumbnail.value[0].name,
-        }) : undefined;
+        contenu: new Uint8Array(await thumbnail.value[0].arrayBuffer()),
+        nomFichier: thumbnail.value[0].name,
+      })
+    : undefined;
 
   await orbiter.addRelease({
     [RELEASES_FILE_COLUMN]: fileEntry,

@@ -54,11 +54,11 @@
 <script setup lang="ts">
 import {computed, onMounted, ref} from 'vue';
 
-import {selectTranslation, copyText} from '/@/utils';
-import { useOrbiter } from '/@/plugins/orbiter/utils';
-import { suivre as follow } from '@constl/vue';
+import {suivre as follow} from '@constl/vue';
+import {useOrbiter} from '/@/plugins/orbiter/utils';
+import {copyText, selectTranslation} from '/@/utils';
 
-const { orbiter } = useOrbiter();
+const {orbiter} = useOrbiter();
 
 const account = follow(orbiter.listenForAccountId);
 const names = follow(orbiter.listenForNameChange);
@@ -80,7 +80,7 @@ const siteDomainName = computed(() => {
 const siteInfoCopied = ref(false);
 const siteId = ref<string>();
 
-const hashedSiteInfo = computed(()=>{
+const hashedSiteInfo = computed(() => {
   return btoa(JSON.stringify({siteId: siteId.value, siteName: siteDomainName.value}));
 });
 const copySiteInfo = async () => {
@@ -96,5 +96,4 @@ onMounted(async () => {
   // These don't need to be dynamically followed, just noted once ready
   siteId.value = (await orbiter.siteConfigured()).siteId;
 });
-
 </script>

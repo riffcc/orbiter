@@ -12,14 +12,14 @@
   </v-card>
 </template>
 <script setup lang="ts">
-import {ref, onMounted} from 'vue';
-import { useOrbiter } from '/@/plugins/orbiter/utils';
+import {onMounted, ref} from 'vue';
+import {useOrbiter} from '/@/plugins/orbiter/utils';
 // import Hls from 'hls.js';
 // import HlsjsIpfsLoader from 'hlsjs-ipfs-loader';
 
 const props = defineProps<{file: string}>();
 
-const { orbiter } = useOrbiter();
+const {orbiter} = useOrbiter();
 
 const videoURL = ref();
 

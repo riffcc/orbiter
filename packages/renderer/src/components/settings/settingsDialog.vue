@@ -81,16 +81,16 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, onUnmounted} from 'vue';
+import {onMounted, onUnmounted, ref} from 'vue';
 
 import initiateAccount from '/@/components/initiateAccount.vue';
 
 import AccountPane from './accountPane.vue';
-import ModPane from './modPane.vue';
 import ConnectivityPane from './connectivityPane.vue';
-import { useOrbiter } from '/@/plugins/orbiter/utils';
+import ModPane from './modPane.vue';
+import {useOrbiter} from '/@/plugins/orbiter/utils';
 
-const { orbiter } = useOrbiter();
+const {orbiter} = useOrbiter();
 
 const dialog = ref(false);
 const tab = ref('account');

@@ -5,12 +5,16 @@
     max-width="800"
   >
     <v-card>
-      <v-card-title>{{ generatedSiteId ? 'Site is now configured' : 'Site not configured' }}</v-card-title>
+      <v-card-title>
+        {{
+          generatedSiteId ? 'Site is now configured' : 'Site not configured'
+        }}
+      </v-card-title>
       <v-card-text v-if="!generatedSiteId">
         Each instance of Orbiter.CC must be compiled with a unique site configuration. Click below
         to configure the site. (This can take a while.)
         <v-alert
-          v-if="development" 
+          v-if="development"
           class="mt-4"
           title="You seem to be in development mode"
           text="This is fine if you're just testing things out. If you're trying to deploy a development server, however, be aware that Orbiter account credentials are linked to the browser and the site domain name. This means that the site will be configured with your localhost address as the root moderator, which is probably not what you want. You should instead deploy the site to your production domain name first, open this page under that domain name (or in the installable Electron app version of your site) and then configure and recompile and deploy the site."
@@ -19,8 +23,8 @@
         />
       </v-card-text>
       <v-card-text v-else>
-        Site configured! Be sure to copy the code below into a <code>.env</code> file and
-        place it at the root of your Orbiter.CC project.
+        Site configured! Be sure to copy the code below into a <code>.env</code> file and place it
+        at the root of your Orbiter.CC project.
         <v-textarea
           class="mt-4"
           :value="envFileText"
@@ -66,13 +70,13 @@
 <script setup lang="ts">
 import type {VariableIds} from '/@/plugins/orbiter/types';
 
-import {ref, computed} from 'vue';
+import {computed, ref} from 'vue';
 
+import {suivre as follow} from '@constl/vue';
 import {saveAs} from 'file-saver';
-import { useOrbiter } from '/@/plugins/orbiter/utils';
-import { suivre as follow } from '@constl/vue';
+import {useOrbiter} from '/@/plugins/orbiter/utils';
 
-const { orbiter } = useOrbiter();
+const {orbiter} = useOrbiter();
 
 const siteConfigured = follow(orbiter.listenForSiteConfigured);
 const siteNotConfigured = computed(() => siteConfigured.value === false);
@@ -117,12 +121,18 @@ const envFileText = computed(() => {
   const releasesThumbnailVar =
     'VITE_RELEASES_THUMBNAIL_VAR_ID=' + generatedVariableIds.value?.releasesThumbnailVar;
 
-  const collectionsAuthorVar = 'VITE_COLLECTIONS_AUTHOR_VAR_ID=' + generatedVariableIds.value?.collectionsAuthorVar;
-  const collectionsMetadataVar = 'VITE_COLLECTIONS_METADATA_VAR_ID=' + generatedVariableIds.value?.collectionsMetadataVar;
-  const collectionsNameVar = 'VITE_COLLECTIONS_NAME_VAR_ID=' + generatedVariableIds.value?.collectionsNameVar;
-  const collectionsReleasesVar = 'VITE_COLLECTIONS_RELEASES_VAR_ID=' + generatedVariableIds.value?.collectionsReleasesVar;
-  const collectionsThumbnailVar = 'VITE_COLLECTIONS_THUMBNAIL_VAR_ID=' + generatedVariableIds.value?.collectionsThumbnailVar;
-  const collectionsTypeVar = 'VITE_COLLECTIONS_TYPE_VAR_ID=' + generatedVariableIds.value?.collectionsTypeVar;
+  const collectionsAuthorVar =
+    'VITE_COLLECTIONS_AUTHOR_VAR_ID=' + generatedVariableIds.value?.collectionsAuthorVar;
+  const collectionsMetadataVar =
+    'VITE_COLLECTIONS_METADATA_VAR_ID=' + generatedVariableIds.value?.collectionsMetadataVar;
+  const collectionsNameVar =
+    'VITE_COLLECTIONS_NAME_VAR_ID=' + generatedVariableIds.value?.collectionsNameVar;
+  const collectionsReleasesVar =
+    'VITE_COLLECTIONS_RELEASES_VAR_ID=' + generatedVariableIds.value?.collectionsReleasesVar;
+  const collectionsThumbnailVar =
+    'VITE_COLLECTIONS_THUMBNAIL_VAR_ID=' + generatedVariableIds.value?.collectionsThumbnailVar;
+  const collectionsTypeVar =
+    'VITE_COLLECTIONS_TYPE_VAR_ID=' + generatedVariableIds.value?.collectionsTypeVar;
 
   const siteId = 'VITE_SITE_ID=' + generatedSiteId.value;
 
@@ -149,7 +159,7 @@ const envFileText = computed(() => {
     releasesMetadataVar +
     '\n' +
     releasesThumbnailVar +
-    '\n' + 
+    '\n' +
     collectionsAuthorVar +
     '\n' +
     collectionsMetadataVar +
@@ -182,10 +192,7 @@ const copyGeneratedEnvFile = async () => {
 };
 
 const acceptNewModDb = async () => {
-  if (
-    !generatedSiteId.value ||
-    !generatedVariableIds.value
-  ) {
+  if (!generatedSiteId.value || !generatedVariableIds.value) {
     throw new Error('Mod DB and variables not generated.');
   }
 };

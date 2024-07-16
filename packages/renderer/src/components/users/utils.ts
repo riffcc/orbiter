@@ -1,9 +1,8 @@
-import {type ComputedRef, ref, computed, type MaybeRef} from 'vue';
+import {computed, ref, type ComputedRef, type MaybeRef} from 'vue';
 
-
+import {suivre as follow} from '@constl/vue';
 import {onMounted} from 'vue';
-import { useOrbiter } from '/@/plugins/orbiter/utils';
-import { suivre as follow } from '@constl/vue';
+import {useOrbiter} from '/@/plugins/orbiter/utils';
 
 export const useUserProfilePhoto = (
   accountId?: MaybeRef<string | undefined>,

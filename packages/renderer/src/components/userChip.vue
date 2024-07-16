@@ -10,18 +10,17 @@
 <script setup lang="ts">
 import {computed} from 'vue';
 
+import {suivre as follow} from '@constl/vue';
+import {useOrbiter} from '/@/plugins/orbiter/utils';
 import {selectTranslation} from '/@/utils';
-import { useOrbiter } from '/@/plugins/orbiter/utils';
-import { suivre as follow } from '@constl/vue';
 
-const { orbiter } = useOrbiter();
+const {orbiter} = useOrbiter();
 
 const props = defineProps<{accountId: string}>();
 
-const names = follow(orbiter.listenForNameChange, {accountId: computed(()=>props.accountId)});
+const names = follow(orbiter.listenForNameChange, {accountId: computed(() => props.accountId)});
 
 const displayName = computed(() => {
   return selectTranslation(names.value) || 'Anonymous';
 });
-
 </script>

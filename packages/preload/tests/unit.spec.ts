@@ -1,23 +1,23 @@
 import {expect, test, vi} from 'vitest';
 
-import type {IpcRendererEvent} from 'electron';
 import type {messageDeServeur, messageInitServeur} from '@constl/mandataire-electron-principal';
+import type {IpcRendererEvent} from 'electron';
 
-import {v4 as uuidv4} from 'uuid';
-import EventEmitter from 'events';
 import {attente} from '@constl/utils-tests';
+import EventEmitter from 'events';
+import {v4 as uuidv4} from 'uuid';
 
+import type {mandataire} from '@constl/ipa';
 import {
   envoyerMessageÀConstellation,
-  écouterMessagesDeConstellation,
   envoyerMessageÀServeurConstellation,
-  écouterMessagesDeServeurConstellation,
+  plateforme,
   surLinux,
   surMac,
   surWindows,
-  plateforme,
+  écouterMessagesDeConstellation,
+  écouterMessagesDeServeurConstellation,
 } from '../src';
-import type {mandataire} from '@constl/ipa';
 
 test('plateforme', async () => {
   expect(plateforme).toBe(process.platform);

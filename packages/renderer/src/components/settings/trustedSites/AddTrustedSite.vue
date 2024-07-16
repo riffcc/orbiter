@@ -36,12 +36,12 @@
 <script setup lang="ts">
 import {computed, ref} from 'vue';
 
-import type {TrustedSite} from '/@/plugins/orbiter/types';
 import type {tableaux} from '@constl/ipa';
-import { watchEffect } from 'vue';
-import { useOrbiter } from '/@/plugins/orbiter/utils';
+import {watchEffect} from 'vue';
+import type {TrustedSite} from '/@/plugins/orbiter/types';
+import {useOrbiter} from '/@/plugins/orbiter/utils';
 
-const { orbiter } = useOrbiter();
+const {orbiter} = useOrbiter();
 
 const props = defineProps<{site?: tableaux.élémentDonnées<TrustedSite>}>();
 
@@ -62,8 +62,8 @@ const siteInfo = ref<string>();
 const siteId = ref<string>();
 const siteName = ref<string>();
 
-watchEffect(()=>{
-  if (siteInfo.value){
+watchEffect(() => {
+  if (siteInfo.value) {
     const info = JSON.parse(atob(siteInfo.value)) as TrustedSite;
     siteId.value = info.siteId;
     siteName.value = info.siteName;
@@ -80,7 +80,7 @@ const save = async () => {
 
   if (newSite.value) {
     await orbiter.trustSite({
-      siteId: siteIdValue, 
+      siteId: siteIdValue,
       siteName: siteNameValue,
     });
   } else {

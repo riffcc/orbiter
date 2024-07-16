@@ -1,5 +1,5 @@
 import axios, {type AxiosRequestConfig, type AxiosResponse} from 'axios';
-import {type IpcMainInvokeEvent, ipcMain} from 'electron';
+import {ipcMain, type IpcMainInvokeEvent} from 'electron';
 
 const requêteHttp = async (
   _événement: IpcMainInvokeEvent,

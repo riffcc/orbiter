@@ -58,20 +58,19 @@
   </div>
 </template>
 <script setup lang="ts">
-import { suivre as follow } from '@constl/vue';
+import {suivre as follow} from '@constl/vue';
 
-import { computed} from 'vue';
-import { RIFFCC_PROTOCOL } from '/@/utils';
+import {computed} from 'vue';
+import {RIFFCC_PROTOCOL} from '/@/utils';
 
-import { useOrbiter } from '/@/plugins/orbiter/utils';
+import {useOrbiter} from '/@/plugins/orbiter/utils';
 
 const {orbiter} = useOrbiter();
 
 const IPFSConnections = follow(orbiter.constellation.réseau.suivreConnexionsPostesSFIP);
 
 const ConstellationMembers = follow(orbiter.constellation.réseau.suivreConnexionsMembres);
-const RiffMembers = computed(()=>{
+const RiffMembers = computed(() => {
   return ConstellationMembers.value?.filter(c => c.infoMembre.protocoles.includes(RIFFCC_PROTOCOL));
 });
-
 </script>

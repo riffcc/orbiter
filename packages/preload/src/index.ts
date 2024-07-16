@@ -2,7 +2,7 @@
  * @module preload
  */
 
-export {surLinux, surMac, surWindows, plateforme} from './so.js';
+export {plateforme, surLinux, surMac, surWindows} from './so.js';
 
 export {requêteHttp} from './http.js';
 
@@ -10,7 +10,7 @@ export {choisirDossier} from './systèmeFichiers.js';
 
 export {
   envoyerMessageÀConstellation,
-  écouterMessagesDeConstellation,
   envoyerMessageÀServeurConstellation,
+  écouterMessagesDeConstellation,
   écouterMessagesDeServeurConstellation,
 } from '@constl/mandataire-electron-principal';

@@ -64,16 +64,15 @@ import type {ReleaseWithId} from '/@/plugins/orbiter/types';
 
 import {computed, ref, watchEffect} from 'vue';
 
-import UserChip from '/@/components/userChip.vue';
+import {suivre as follow} from '@constl/vue';
 import ReleaseViewer from './releaseViewer.vue';
+import UserChip from '/@/components/userChip.vue';
+import {useOrbiter} from '/@/plugins/orbiter/utils';
 import {downloadFile} from '/@/utils';
-import { useOrbiter } from '/@/plugins/orbiter/utils';
-import { suivre as follow } from '@constl/vue';
 
+const {orbiter} = useOrbiter();
 
-const { orbiter } = useOrbiter();
-
-const props = defineProps<{ release: ReleaseWithId; contributor: string; site: string; }>();
+const props = defineProps<{release: ReleaseWithId; contributor: string; site: string}>();
 
 const myAccountId = follow(orbiter.listenForAccountId);
 
@@ -121,5 +120,4 @@ async function downloadRelease() {
 async function blockRelease() {
   await orbiter.blockRelease({cid: props.release.release.file});
 }
-
 </script>

@@ -36,14 +36,13 @@
 </template>
 
 <script setup lang="ts">
-import ReleaseItem from '/@/components/releases/releaseItem.vue';
+import {suivre as follow} from '@constl/vue';
 import NewReleaseDialog from '/@/components/releases/newReleaseDialog.vue';
-import { useOrbiter } from '/@/plugins/orbiter/utils';
-import { suivre as follow } from '@constl/vue';
+import ReleaseItem from '/@/components/releases/releaseItem.vue';
+import {useOrbiter} from '/@/plugins/orbiter/utils';
 
-const { orbiter } = useOrbiter();
+const {orbiter} = useOrbiter();
 
 const accountInitialised = follow(orbiter.listenForAccountExists);
 const releases = follow(orbiter.listenForReleases);
-
 </script>

@@ -1,6 +1,6 @@
 import {envoyerMessageÀConstellation, écouterMessagesDeConstellation} from '#preload';
-import type {App} from 'vue';
 import {générerMandataireÉlectronPrincipal} from '@constl/mandataire-electron-rendu';
+import type {App} from 'vue';
 
 export default {
   install: (app: App) => {
