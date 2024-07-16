@@ -6,9 +6,7 @@
   >
     <v-card>
       <v-card-title>
-        {{
-          generatedSiteId ? 'Site is now configured' : 'Site not configured'
-        }}
+        {{ generatedSiteId ? 'Site is now configured' : 'Site not configured' }}
       </v-card-title>
       <v-card-text v-if="!generatedSiteId">
         Each instance of Orbiter.CC must be compiled with a unique site configuration. Click below
@@ -78,7 +76,7 @@ import {useOrbiter} from '/@/plugins/orbiter/utils';
 
 const {orbiter} = useOrbiter();
 
-const siteConfigured = follow(orbiter.listenForSiteConfigured);
+const siteConfigured = follow(({f}) => orbiter.listenForSiteConfigured({f}));
 const siteNotConfigured = computed(() => siteConfigured.value === false);
 
 const generatingDb = ref<boolean>(false);

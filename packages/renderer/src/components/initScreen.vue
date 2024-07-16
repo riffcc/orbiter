@@ -111,7 +111,7 @@ onMounted(async () => {
 
 // const accountExists = follow(orbiter.listenForAccountExists);
 
-const siteConfigured = follow(orbiter.listenForSiteConfigured);
+const siteConfigured = follow(({f}) => orbiter.listenForSiteConfigured({f}));
 
 const emit = defineEmits<{
   (e: 'enter'): void;
