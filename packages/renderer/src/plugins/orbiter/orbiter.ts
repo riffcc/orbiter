@@ -2,7 +2,7 @@ import {TypedEmitter} from 'tiny-typed-emitter';
 
 import {Lock} from 'semaphore-async-await';
 
-import type {ClientConstellation, bds, tableaux, types} from '@constl/ipa';
+import type {Constellation, bds, tableaux, types} from '@constl/ipa';
 import {uneFois, suivreBdDeFonction, ignorerNonDéfinis} from '@constl/utils-ipa';
 
 import type {JSONSchemaType} from 'ajv';
@@ -81,7 +81,7 @@ export default class Orbiter {
   initialVariableIds: possiblyIncompleteVariableIds;
   variableIds?: VariableIds;
 
-  constellation: ClientConstellation;
+  constellation: Constellation;
   events: TypedEmitter<OrbiterEvents>;
 
   contentTypes = ['tvShow', 'movie', 'audiobook', 'game', 'book', 'music', 'video', 'other'];
@@ -95,7 +95,7 @@ export default class Orbiter {
     siteId?: string;
     swarmId?: string;
     variableIds: possiblyIncompleteVariableIds;
-    constellation: ClientConstellation;
+    constellation: Constellation;
   }) {
     this.events = new TypedEmitter<OrbiterEvents>();
 
