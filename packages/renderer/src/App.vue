@@ -10,20 +10,13 @@
 <script setup lang="ts">
 import Home from './views/homePage.vue';
 import appBar from '/@/components/appBar.vue';
-import {ref, onMounted, onUnmounted} from 'vue';
+import {ref} from 'vue';
 import { useOrbiter } from '/@/plugins/orbiter/utils';
+import { suivre as follow } from '@constl/vue';
 
 const { orbiter } = useOrbiter();
 
-const accountExists = ref<boolean>();
+const accountExists = follow(orbiter.listenForAccountExists);
 const enterAnonymously = ref(false);
 
-let forgetAccountExists: (() => void) | undefined = undefined;
-onMounted(async () => {
-  forgetAccountExists = await orbiter.listenForAccountExists({f: a => (accountExists.value = a)});
-});
-
-onUnmounted(async () => {
-  if (forgetAccountExists) await forgetAccountExists();
-});
 </script>

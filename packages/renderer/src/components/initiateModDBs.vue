@@ -66,14 +66,15 @@
 <script setup lang="ts">
 import type {VariableIds} from '/@/plugins/orbiter/types';
 
-import {ref, onMounted, onUnmounted, computed} from 'vue';
+import {ref, computed} from 'vue';
 
 import {saveAs} from 'file-saver';
 import { useOrbiter } from '/@/plugins/orbiter/utils';
+import { suivre as follow } from '@constl/vue';
 
 const { orbiter } = useOrbiter();
 
-const siteConfigured = ref<boolean>();
+const siteConfigured = follow(orbiter.listenForSiteConfigured);
 const siteNotConfigured = computed(() => siteConfigured.value === false);
 
 const generatingDb = ref<boolean>(false);
@@ -188,18 +189,4 @@ const acceptNewModDb = async () => {
     throw new Error('Mod DB and variables not generated.');
   }
 };
-
-let forgetSiteConfigured: (() => void) | undefined = undefined;
-
-onMounted(async () => {
-  forgetSiteConfigured = await orbiter.listenForSiteConfigured({
-    f: configured => {
-      siteConfigured.value = configured;
-    },
-  });
-});
-
-onUnmounted(async () => {
-  if (forgetSiteConfigured) await forgetSiteConfigured();
-});
 </script>

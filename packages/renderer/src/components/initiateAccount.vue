@@ -10,10 +10,11 @@
       ></slot>
     </template>
     <v-card>
-      <v-card-title>
+      <v-card-title class="d-flex">
         Welcome!
+        <v-spacer />  
         <v-btn icon>
-          <v-icon @click="dialog = false">mdi-close</v-icon>
+          <v-icon @click="() => dialog = false">mdi-close</v-icon>
         </v-btn>
       </v-card-title>
       <v-card-text>
@@ -43,6 +44,7 @@
           color="primary"
           block
           :disabled="!userNameLanguage || !userName"
+          :loading="savingName"
           @click="saveName"
         >
           Next
@@ -63,16 +65,20 @@ const nuchabäl = new Nuchabäl({});
 const dialog = ref<boolean>(false);
 
 const knownLanguageCodes = computed(() => nuchabäl.konojelChabäl);
-const userNameLanguage = ref('en');
+const userNameLanguage = ref('English');
 const userName = ref<string>();
 
+const savingName = ref(false);
 const saveName = async () => {
   if (!userNameLanguage.value || !userName.value)
     throw new Error('Name or language not specified.');
+  savingName.value = true;
   const code: string =
     typeof userNameLanguage.value === 'string'
       ? userNameLanguage.value
       : userNameLanguage.value['value'];
   await orbiter.changeName({name: userName.value, language: code});
+  savingName.value = false;
 };
+
 </script>

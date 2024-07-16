@@ -1,6 +1,3 @@
-import type {types} from '@constl/ipa';
-import EventEmitter, {once} from 'events';
-import {onMounted, onUnmounted} from 'vue';
 
 export function downloadFile(filename: string, content: string | Uint8Array) {
   const element = document.createElement('a');
@@ -36,43 +33,5 @@ export async function copyText(text: string | undefined) {
   if (!text) return;
   await navigator.clipboard.writeText(text);
 }
-
-/**
- * A helper function to register an async Orbiter listener and to deregister it automatically when the component is unmounted.
- * @param listenerPromise The Orbiter listener promise
- */
-export const registerListener = <
-  T extends
-    | types.schémaFonctionOublier
-    | types.schémaRetourFonctionRechercheParProfondeur
-    | types.schémaRetourFonctionRechercheParN,
->(
-  listenerPromise?: Promise<T>,
-): Promise<T | undefined> => {
-  let fForget: types.schémaFonctionOublier | undefined = undefined;
-
-  const events = new EventEmitter();
-  let result: T | undefined;
-  const returnPromise = new Promise<T | undefined>(resolve => {
-    once(events, 'ready').then(() => {
-      resolve(result);
-    });
-  });
-
-  onMounted(async () => {
-    result = await listenerPromise;
-    if (result instanceof Function) {
-      fForget = result;
-    } else {
-      fForget = result?.fOublier;
-    }
-    events.emit('ready');
-  });
-  onUnmounted(async () => {
-    if (fForget) await fForget();
-  });
-
-  return returnPromise;
-};
 
 export const RIFFCC_PROTOCOL = 'Riff.CC';
