@@ -16,6 +16,6 @@ import {useOrbiter} from '/@/plugins/orbiter/utils';
 
 const {orbiter} = useOrbiter();
 
-const accountExists = follow(({f}) => orbiter.listenForAccountExists({f}));
+const accountExists = follow(orbiter.listenForAccountExists.bind(orbiter));
 const enterAnonymously = ref(false);
 </script>
