@@ -5,9 +5,9 @@
     </v-list-item-title>
     <template #append>
       <TrustSiteDialog :site="site">
-        <template #activator="{props}">
+        <template #activator="{props: activatorProps}">
           <v-btn
-            v-bind="props"
+            v-bind="activatorProps"
             icon
             @click.stop
           >
