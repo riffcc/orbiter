@@ -17,4 +17,4 @@ jobs:
       - uses: actions/checkout@v4
       - name: Create pull request if necessary
         run: |
-          gh pr create --fill --base main || $? == *already exists* 
+          gh pr create --title "Merge dev" --body "Automatic pull request to merge dev into main" --base main || $? == *already exists*
