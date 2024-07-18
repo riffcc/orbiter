@@ -64,6 +64,7 @@
     "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-resolve-id": "^1.0.2",
     "simple-git-hooks": "2.11.1",
+    "typed-emitter": "^2.1.0",
     "typescript": "5.2.2",
     "typescript-eslint": "^7.16.1",
     "unplugin-auto-expose": "0.3.0",
