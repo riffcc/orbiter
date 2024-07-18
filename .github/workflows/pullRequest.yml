@@ -1,0 +1,18 @@
+name: Pull request to main
+on:
+  push:
+    branches:
+      - dev
+
+concurrency:
+  group: pull-request-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pull_request_to_main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create pull request if necessary
+        run: |
+          gh pr create --fill --base main || true

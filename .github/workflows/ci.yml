@@ -12,12 +12,7 @@ on:
       - v*
     paths-ignore:
       - '.github/**'
-      - '!.github/workflows/ci.yml'
-      - '!.github/workflows/typechecking.yml'
-      - '!.github/workflows/tests.yml'
-      - '!.github/workflows/webTests.yml'
-      - '!.github/workflows/release.yml'
-      - '!.github/workflows/publishPage.yml'
+      - '!.github/workflows/*.yml'
       - '**.md'
       - .editorconfig
       - .gitignore
@@ -26,12 +21,7 @@ on:
   pull_request:
     paths-ignore:
       - '.github/**'
-      - '!.github/workflows/ci.yml'
-      - '!.github/workflows/typechecking.yml'
-      - '!.github/workflows/tests.yml'
-      - '!.github/workflows/webtests.yml'
-      - '!.github/workflows/release.yml'
-      - '!.github/workflows/publishPage.yml'
+      - '!.github/workflows/*.yml'
       - '**.md'
       - .editorconfig
       - .gitignore
@@ -53,6 +43,7 @@ jobs:
     needs: [ typechecking, web_tests ]
     uses: ./.github/workflows/publishPage.yml
   draft_release:
+    if: ${{ github.ref_name == 'main' }}
     permissions:
       contents: write # Allows this job to create releases
     with:

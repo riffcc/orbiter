@@ -28,7 +28,7 @@
     "watch:web": "cross-env WEB=true vite packages/renderer --port 5174",
     "watch:web:stub": "cross-env VITE_STUB_DATA=true pnpm watch:web",
     "preview:web": "pnpm compile:web && cross-env WEB=true vite preview packages/renderer",
-    "lint": "eslint . --ext js,mjs,cjs,ts,mts,cts,vue",
+    "lint": "eslint .",
     "typecheck:main": "tsc --noEmit -p packages/main/tsconfig.json",
     "typecheck:preload": "tsc --noEmit -p packages/preload/tsconfig.json",
     "typecheck:renderer": "vue-tsc --noEmit -p packages/renderer/tsconfig.json",

@@ -43,6 +43,6 @@ import {useOrbiter} from '/@/plugins/orbiter/utils';
 
 const {orbiter} = useOrbiter();
 
-const accountInitialised = follow(orbiter.listenForAccountExists);
-const releases = follow(orbiter.listenForReleases);
+const accountInitialised = follow(orbiter.listenForAccountExists.bind(orbiter));
+const releases = follow(orbiter.listenForReleases.bind(orbiter));
 </script>
