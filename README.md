@@ -63,25 +63,14 @@ git clone https://github.com/riffcc/orbiter.git
 ```
 
 2. Move into Orbiter's directory and set up its installation dependencies:
-    - If using **pnpm**:
     ```sh
     cd orbiter
     pnpm install
     ```
-    - If using **yarn**:
-    ```sh
-    cd orbiter
-    yarn
-    ```
 
 3. Run the application in development mode (with hot reloading):
-    - If using **pnpm**:
     ```sh
     pnpm watch:web
-    ```
-    - If using **yarn**:
-    ```sh
-    yarn dev
     ```
 
 4. Visit the application in your browser, generate a moderation database, copy the parameters the application gives you, and copy them to `./.env.local`
