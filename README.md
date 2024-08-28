@@ -2,7 +2,7 @@
 [![Orbiter installable app](https://github.com/riffcc/orbiter/actions/workflows/ci.yml/badge.svg)](https://github.com/riffcc/orbiter/actions/workflows/ci.yml)
 
 # Riff.CC "Orbiter"
-Orbiter is a proof-of-concept version of Riff.CC, implemented using OrbitDB, Constellation, IPFS and other tools. It is one of the two current platforms for hosting Riff.CC instances, the other being [CeramicRiff](https://github.com/riffcc/riff.cc-vue). This repository contains instructions on how to set up and install a Riff.CC instance through Orbiter, as well as the necessary code to do so. For more information about Orbiter as well as the Riff.CC project itself, [see the project's main page](https://riff.cc/riff-docs/).
+Orbiter is the proof-of-concept version of Riff.CC, implemented using OrbitDB, Constellation, IPFS and other tools. This repository contains instructions on how to set up and install a Riff.CC instance through Orbiter, as well as the necessary code to do so. For more information about Orbiter as well as the Riff.CC project itself, [see the project's main page](https://riff.cc/riff-docs/).
 
 Funding provided via [OpenCollective](https://opencollective.com/riffcc).
 
@@ -15,10 +15,10 @@ Before installing Orbiter, you must install the following dependencies:
 sudo apt install libnss3-dev libgtk-3-0 libgbm1 libasound2 libatk1.0-0 node-pre-gyp git curl
 ```
 
-Additionally, Orbiter utilizes **Node.JS** and **pnpm** to set up and install the platform, and as such it's required to install them as well. It is possible to use **yarn** instead of pnpm, but it's not recommended as it requires much more memory. Nevertheless, instructions for both will be provided.
+Additionally, Orbiter utilizes **Node.JS** and **pnpm** to set up and install the platform, and as such it's required to install them as well.
 
 #### **Base: Node.JS**
-Required whether you use pnpm or yarn. We suggest using the [NodeSource installation guide](https://github.com/nodesource/distributions#installation-instructions), with $NODE_MAJOR set to 20:
+Required whether you use pnpm or yarn. We suggest using the [NodeSource installation guide](https://github.com/nodesource/distributions#installation-instructions), with $NODE_MAJOR set to 22:
 
 1. Download and import the Nodesource GPG key
 
@@ -32,7 +32,7 @@ curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg 
 2. Create deb repository
 
 ```sh
-NODE_MAJOR=20
+NODE_MAJOR=22
 echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 ```
 
@@ -43,10 +43,7 @@ sudo apt-get update
 sudo apt-get install nodejs -y
 ```
 
-#### **Method 1: pnpm**
-You *need* to have installed Node.JS first.
-
-1. Download the official pnpm installation script:
+4. Download the official pnpm installation script:
 
 ```sh
 curl -fsSL https://get.pnpm.io/install.sh | sh -
@@ -56,14 +53,6 @@ curl -fsSL https://get.pnpm.io/install.sh | sh -
 
 ```sh
 source ~/.bashrc
-```
-
-#### **Method 2: yarn**
-This is **not** necessary if you choose to use the pnpm method above.
-
-* Install Yarn once Node.JS is installed:
-```sh
-sudo npm install -g yarn
 ```
 
 ### Installation
