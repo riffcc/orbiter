@@ -50,5 +50,6 @@ jobs:
     needs: [ typechecking, tests ]
     uses: ./.github/workflows/release.yml
   merge_pr:
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
     needs: [ typechecking, publish_web_app, draft_release ]
     uses: ./.github/workflows/mergePr.yml
