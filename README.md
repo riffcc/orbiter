@@ -12,7 +12,7 @@ Orbiter will work on any standard Linux distribution where standard utilities li
 ### Dependencies
 Before installing Orbiter, you must install the following dependencies:
 ```
-sudo apt install libnss3-dev libgtk-3-0 libgbm1 libasound2 libatk1.0-0 node-pre-gyp git curl
+sudo apt install libnss3-dev libgtk-3-0 libgbm1 libasound2-dev libatk1.0-0 node-pre-gyp git curl
 ```
 
 Additionally, Orbiter utilizes **Node.JS** and **pnpm** to set up and install the platform, and as such it's required to install them as well.
