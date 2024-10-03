@@ -6,6 +6,13 @@ Orbiter is the proof-of-concept version of Riff.CC, implemented using OrbitDB, C
 
 Funding provided via [OpenCollective](https://opencollective.com/riffcc).
 
+## What's Riff.CC?
+Riff.CC is an in-development platform for watching, sharing, distributing and curating legally free media.
+
+It's like if sites like Netflix, Spotify and YouTube were rolled into one platform where you are not the product.
+
+The software we're making is open source and you can not only make your own things with it but federate with other sites using the Defederation system.
+
 ## Getting started
 Orbiter will work on any standard Linux distribution where standard utilities like a webserver and Node.JS are available, but **our instructions specifically cover the latest LTS releases of Ubuntu and Debian only**. Ask us (or submit a PR) if you want any others to be added.
 
