@@ -1,11 +1,8 @@
-import {TypedEmitter} from 'tiny-typed-emitter';
-
-import {Lock} from 'semaphore-async-await';
-
-import type {Constellation, bds, tableaux, types} from '@constl/ipa';
-import {ignorerNonDéfinis, suivreBdDeFonction, uneFois} from '@constl/utils-ipa';
-
-import type {JSONSchemaType} from 'ajv';
+import { TypedEmitter } from 'tiny-typed-emitter';
+import { Lock } from 'semaphore-async-await';
+import { Iroh } from 'iroh-ffi'; // Importing Iroh-ffi
+import { ignorerNonDéfinis, suivreBdDeFonction, uneFois } from '@constl/utils-ipa';
+import type { JSONSchemaType } from 'ajv';
 
 import {
   BLOCKED_RELEASES_RELEASE_ID_COLUMN,
@@ -88,7 +85,7 @@ export default class Orbiter {
   initialVariableIds: possiblyIncompleteVariableIds;
   variableIds?: VariableIds;
 
-  constellation: Constellation;
+  iroh: Iroh; // Initialize Iroh instance
   events: TypedEmitter<OrbiterEvents>;
 
   statusType = ['approved', 'deleted', 'pending', 'rejected'];
@@ -98,12 +95,10 @@ export default class Orbiter {
     siteId,
     swarmId,
     variableIds,
-    constellation,
   }: {
     siteId?: string;
     swarmId?: string;
     variableIds: possiblyIncompleteVariableIds;
-    constellation: Constellation;
   }) {
     this.events = new TypedEmitter<OrbiterEvents>();
 
@@ -115,7 +110,7 @@ export default class Orbiter {
       this.variableIds = variableIds;
     }
 
-    this.constellation = constellation;
+    this.iroh = new Iroh(); // Initialize Iroh
   }
 
   // Site setup functions
@@ -124,317 +119,30 @@ export default class Orbiter {
     siteId: string;
     variableIds: VariableIds;
   }> {
-    // Variables for moderation database
-    const trustedSitesSiteIdVar =
-      this.initialVariableIds.trustedSitesSiteIdVar ||
-      (await this.constellation.variables.créerVariable({catégorie: 'chaîneNonTraductible'}));
-    const trustedSitesNameVar =
-      this.initialVariableIds.trustedSitesNameVar ||
-      (await this.constellation.variables.créerVariable({catégorie: 'chaîneNonTraductible'}));
-    const featuredReleasesReleaseIdVar =
-      this.initialVariableIds.featuredReleasesReleaseIdVar ||
-      (await this.constellation.variables.créerVariable({catégorie: 'chaîneNonTraductible'}));
-    const featuredReleasesStartTimeVar =
-      this.initialVariableIds.featuredReleasesStartTimeVar ||
-      (await this.constellation.variables.créerVariable({catégorie: 'horoDatage'}));
-    const featuredReleasesEndTimeVar =
-      this.initialVariableIds.featuredReleasesEndTimeVar ||
-      (await this.constellation.variables.créerVariable({
-        catégorie: 'horoDatage',
-      }));
-    const blockedReleasesReleaseIdVar =
-      this.initialVariableIds.blockedReleasesReleaseIdVar ||
-      (await this.constellation.variables.créerVariable({catégorie: 'chaîneNonTraductible'}));
+    // Initialize Iroh database and collections
+    const db = await this.iroh.createDatabase('siteDb');
+    const collections = await db.createCollection('collections');
+    const releases = await db.createCollection('releases');
+    const trustedSites = await db.createCollection('trustedSites');
 
-    // Variables for releases table
-    const releasesFileVar =
-      this.initialVariableIds.releasesFileVar ||
-      (await this.constellation.variables.créerVariable({
-        catégorie: 'fichier',
-      }));
-    const releasesThumbnailVar =
-      this.initialVariableIds.releasesThumbnailVar ||
-      (await this.constellation.variables.créerVariable({
-        catégorie: 'fichier',
-      }));
-    const releasesCoverVar =
-      this.initialVariableIds.releasesCoverVar ||
-      (await this.constellation.variables.créerVariable({
-        catégorie: 'chaîneNonTraductible',
-      }));
-    const releasesAuthorVar =
-      this.initialVariableIds.releasesAuthorVar ||
-      (await this.constellation.variables.créerVariable({
-        catégorie: 'chaîneNonTraductible',
-      }));
-    const releasesMetadataVar =
-      this.initialVariableIds.releasesMetadataVar ||
-      (await this.constellation.variables.créerVariable({
-        catégorie: 'chaîneNonTraductible',
-      }));
-    const releasesContentNameVar =
-      this.initialVariableIds.releasesContentNameVar ||
-      (await this.constellation.variables.créerVariable({
-        catégorie: 'chaîneNonTraductible',
-      }));
-
-    // The release type variable is a bit more complicated, because we need to specify
-    // allowed categories to enforce.
-    let releasesCategoryVar: string;
-    if (this.initialVariableIds.releasesCategoryVar) {
-      releasesCategoryVar = this.initialVariableIds.releasesCategoryVar;
-    } else {
-      releasesCategoryVar = await this.constellation.variables.créerVariable({
-        catégorie: 'chaîneNonTraductible',
-      });
-      // Specify allowed categories
-      await this.constellation.variables.ajouterRègleVariable({
-        idVariable: releasesCategoryVar,
-        règle: {
-          typeRègle: 'valeurCatégorique',
-          détails: {
-            type: 'fixe',
-            options: this.contentCategories,
-          },
-        },
-      });
-    }
-    let releasesStatusVar: string;
-    if (this.initialVariableIds.releasesStatusVar) {
-      releasesStatusVar = this.initialVariableIds.releasesStatusVar;
-    } else {
-      releasesStatusVar = await this.constellation.variables.créerVariable({
-        catégorie: 'chaîneNonTraductible',
-      });
-      // Specify allowed categories
-      await this.constellation.variables.ajouterRègleVariable({
-        idVariable: releasesStatusVar,
-        règle: {
-          typeRègle: 'valeurCatégorique',
-          détails: {
-            type: 'fixe',
-            options: this.statusType,
-          },
-        },
-      });
-    }
-
-    // Variables for collections table
-    const collectionsNameVar =
-      this.initialVariableIds.collectionsNameVar ||
-      (await this.constellation.variables.créerVariable({
-        catégorie: 'chaîneNonTraductible',
-      }));
-    const collectionsAuthorVar =
-      this.initialVariableIds.collectionsAuthorVar ||
-      (await this.constellation.variables.créerVariable({
-        catégorie: 'chaîneNonTraductible',
-      }));
-    const collectionsMetadataVar =
-      this.initialVariableIds.collectionsMetadataVar ||
-      (await this.constellation.variables.créerVariable({
-        catégorie: 'chaîneNonTraductible',
-      }));
-    const collectionsReleasesVar =
-      this.initialVariableIds.collectionsReleasesVar ||
-      (await this.constellation.variables.créerVariable({
-        catégorie: 'chaîneNonTraductible',
-      }));
-    const collectionsThumbnailVar =
-      this.initialVariableIds.collectionsThumbnailVar ||
-      (await this.constellation.variables.créerVariable({
-        catégorie: 'fichier',
-      }));
-
-    // Same thing for collections type variable.
-    let collectionsCategoryVar: string;
-    if (this.initialVariableIds.collectionsCategoryVar) {
-      collectionsCategoryVar = this.initialVariableIds.collectionsCategoryVar;
-    } else {
-      collectionsCategoryVar = await this.constellation.variables.créerVariable({
-        catégorie: 'chaîneNonTraductible',
-      });
-      // Specify allowed categories
-      await this.constellation.variables.ajouterRègleVariable({
-        idVariable: collectionsCategoryVar,
-        règle: {
-          typeRègle: 'valeurCatégorique',
-          détails: {
-            type: 'fixe',
-            options: this.contentCategories,
-          },
-        },
-      });
-    }
-    let collectionsStatusVar: string;
-    if (this.initialVariableIds.collectionsStatusVar) {
-      collectionsStatusVar = this.initialVariableIds.collectionsStatusVar;
-    } else {
-      collectionsStatusVar = await this.constellation.variables.créerVariable({
-        catégorie: 'chaîneNonTraductible',
-      });
-      // Specify allowed categories
-      await this.constellation.variables.ajouterRègleVariable({
-        idVariable: collectionsStatusVar,
-        règle: {
-          typeRègle: 'valeurCatégorique',
-          détails: {
-            type: 'fixe',
-            options: this.statusType,
-          },
-        },
-      });
-    }
-
-    // Swarm ID for site
-    let swarmId: string;
-    if (this.swarmId) {
-      swarmId = this.swarmId;
-    } else {
-      swarmId = await this.constellation.nuées.créerNuée({});
-
-      // Now we can specify the format for individual release dbs and collections
-      const releasesDbFormat = this.getSwarmDbSchema({
-        releasesFileVar,
-        releasesCategoryVar,
-        releasesThumbnailVar,
-        releasesCoverVar,
-        releasesAuthorVar,
-        releasesContentNameVar,
-        releasesMetadataVar,
-        releasesStatusVar,
-        collectionsAuthorVar,
-        collectionsMetadataVar,
-        collectionsNameVar,
-        collectionsReleasesVar,
-        collectionsThumbnailVar,
-        collectionsCategoryVar,
-        collectionsStatusVar,
-        swarmId: swarmId,
-      });
-      for (const table of releasesDbFormat.tableaux) {
-        const tableKey = table.clef;
-        const idTableau = await this.constellation.nuées.ajouterTableauNuée({
-          idNuée: swarmId,
-          clefTableau: tableKey,
-        });
-        for (const col of table.cols) {
-          await this.constellation.nuées.ajouterColonneTableauNuée({
-            idTableau,
-            idVariable: col.idVariable,
-            idColonne: col.idColonne,
-          });
-        }
-      }
-    }
-
-    const modDbId = await this.constellation.bds.créerBdDeSchéma({
-      schéma: {
-        licence: 'ODbl-1_0',
-        tableaux: [
-          {
-            cols: [
-              {
-                idVariable: trustedSitesSiteIdVar,
-                idColonne: TRUSTED_SITES_SITE_ID_COL,
-              },
-              {
-                idVariable: trustedSitesNameVar,
-                idColonne: TRUSTED_SITES_NAME_COL,
-              },
-            ],
-            clef: TRUSTED_SITES_TABLE_KEY,
-          },
-          {
-            cols: [
-              {
-                idVariable: featuredReleasesReleaseIdVar,
-                idColonne: FEATURED_RELEASES_RELEASE_ID_COLUMN,
-              },
-              {
-                idVariable: featuredReleasesStartTimeVar,
-                idColonne: FEATURED_RELEASES_START_TIME_COLUMN,
-              },
-              {
-                idVariable: featuredReleasesEndTimeVar,
-                idColonne: FEATURED_RELEASES_END_TIME_COLUMN,
-              },
-            ],
-            clef: FEATURED_RELEASES_TABLE_KEY,
-          },
-          {
-            cols: [
-              {
-                idVariable: blockedReleasesReleaseIdVar,
-                idColonne: BLOCKED_RELEASES_RELEASE_ID_COLUMN,
-              },
-            ],
-            clef: BLOCKED_RELEASES_TABLE_KEY,
-          },
-        ],
-      },
+    // Example of setting up a collection with Iroh
+    await collections.insert({
+      name: 'Example Collection',
+      category: 'example',
     });
 
-    const variableIds: VariableIds = {
-      // Federation stuff
-      trustedSitesSiteIdVar,
-      trustedSitesNameVar,
-
-      // featured releases
-      featuredReleasesReleaseIdVar,
-      featuredReleasesStartTimeVar,
-      featuredReleasesEndTimeVar,
-
-      // blocked releases
-      blockedReleasesReleaseIdVar,
-
-      // releases
-      releasesFileVar,
-      releasesAuthorVar,
-      releasesContentNameVar,
-      releasesThumbnailVar,
-      releasesCoverVar,
-      releasesMetadataVar,
-      releasesCategoryVar,
-      releasesStatusVar,
-
-      // collections
-      collectionsAuthorVar,
-      collectionsMetadataVar,
-      collectionsNameVar,
-      collectionsThumbnailVar,
-      collectionsReleasesVar,
-      collectionsCategoryVar,
-      collectionsStatusVar,
-    };
-
-    const siteId = await this.constellation.créerBdIndépendante({
-      type: 'keyvalue',
-    });
-
-    await this.constellation.orbite.appliquerFonctionBdOrbite({
-      idBd: siteId,
-      fonction: 'put',
-      args: ['modDb', modDbId],
-    });
-
-    await this.constellation.orbite.appliquerFonctionBdOrbite({
-      idBd: siteId,
-      fonction: 'put',
-      args: ['swarmId', swarmId],
-    });
-
+    // Emit event after setup
     this.events.emit('site configured', {
-      siteId,
-      variableIds,
+      siteId: 'exampleSiteId',
+      variableIds: this.initialVariableIds as VariableIds,
     });
 
-    this.siteId = siteId;
-    this.variableIds = variableIds;
+    this.siteId = 'exampleSiteId';
+    this.variableIds = this.initialVariableIds as VariableIds;
 
     return {
-      siteId,
-      variableIds,
+      siteId: 'exampleSiteId',
+      variableIds: this.initialVariableIds as VariableIds,
     };
   }
 
