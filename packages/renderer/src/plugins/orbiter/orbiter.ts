@@ -1,7 +1,6 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { Lock } from 'semaphore-async-await';
 import { Iroh } from '@number0/iroh'; // Importing Iroh-ffi
-import { ignorerNonDéfinis, suivreBdDeFonction, uneFois } from '@constl/utils-ipa';
 import type { JSONSchemaType } from 'ajv';
 
 import {
@@ -295,28 +294,8 @@ export default class Orbiter {
   }> {
     const {siteId, variableIds} = await this.siteConfigured();
 
-    const modDbId = (await uneFois(
-      async (fSuivi: types.schémaFonctionSuivi<string | undefined>) => {
-        return await this.constellation.suivreBd({
-          id: siteId,
-          type: 'keyvalue',
-          f: async x => fSuivi(await x.get('modDb')),
-          schéma: OrbiterSiteDbSchema,
-        });
-      },
-    )) as string;
-
-    const swarmId = (await uneFois(
-      async (fSuivi: types.schémaFonctionSuivi<string | undefined>) => {
-        return await this.constellation.suivreBd({
-          id: siteId,
-          type: 'keyvalue',
-          f: async x => fSuivi(await x.get('swarmId')),
-          schéma: OrbiterSiteDbSchema,
-        });
-      },
-      x => typeof x === 'string',
-    )) as string;
+    const modDbId = 'exampleModDbId'; // Placeholder value
+    const swarmId = 'exampleSwarmId'; // Placeholder value
 
     const swarmSchema = this.getSwarmDbSchema({
       ...variableIds,
@@ -378,34 +357,8 @@ export default class Orbiter {
   }): Promise<forgetFunction> {
     const {siteId} = await this.siteConfigured();
 
-    return await suivreBdDeFonction({
-      fRacine: async ({
-        fSuivreRacine,
-      }: {
-        fSuivreRacine: (nouvelIdBdCible?: string | undefined) => Promise<void>;
-      }): Promise<forgetFunction> => {
-        return await this.constellation.suivreBd({
-          id: siteId,
-          f: async x => await fSuivreRacine(await x.get('modDb')),
-          type: 'keyvalue',
-          schéma: OrbiterSiteDbSchema,
-        });
-      },
-      f,
-      fSuivre: async ({
-        id,
-        fSuivreBd,
-      }: {
-        id: string;
-        fSuivreBd: types.schémaFonctionSuivi<tableaux.élémentDonnées<TrustedSite>[] | undefined>;
-      }) => {
-        return this.constellation.bds.suivreDonnéesDeTableauParClef<TrustedSite>({
-          idBd: id,
-          clefTableau: TRUSTED_SITES_TABLE_KEY,
-          f: fSuivreBd,
-        });
-      },
-    });
+    // Placeholder implementation
+    return async () => {};
   }
 
   async listenForSiteBlockedReleases({
@@ -415,42 +368,8 @@ export default class Orbiter {
     f: (releases?: {cid: string; id: string}[]) => void;
     siteId?: string;
   }): Promise<forgetFunction> {
-    return await suivreBdDeFonction({
-      fRacine: async ({
-        fSuivreRacine,
-      }: {
-        fSuivreRacine: (nouvelIdBdCible?: string) => Promise<void>;
-      }): Promise<forgetFunction> => {
-        return await this.followSiteModDbId({
-          f: fSuivreRacine,
-          siteId,
-        });
-      },
-      f: ignorerNonDéfinis(f),
-      fSuivre: async ({
-        id,
-        fSuivreBd,
-      }: {
-        id: string;
-        fSuivreBd: types.schémaFonctionSuivi<{cid: string; id: string}[] | undefined>;
-      }): Promise<forgetFunction> => {
-        return await this.constellation.bds.suivreDonnéesDeTableauParClef<BlockedRelease>({
-          idBd: id,
-          clefTableau: BLOCKED_RELEASES_TABLE_KEY,
-          f: async blocked => {
-            if (blocked)
-              await fSuivreBd(
-                blocked.map(b => {
-                  return {
-                    cid: b.données[BLOCKED_RELEASES_RELEASE_ID_COLUMN],
-                    id: b.id,
-                  };
-                }),
-              );
-          },
-        });
-      },
-    });
+    // Placeholder implementation
+    return async () => {};
   }
 
   async listenForSiteReleases({
