@@ -1,6 +1,6 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { Lock } from 'semaphore-async-await';
-import { Iroh } from 'iroh-ffi'; // Importing Iroh-ffi
+import { Iroh } from '@number0/iroh'; // Importing Iroh-ffi
 import { ignorerNonDéfinis, suivreBdDeFonction, uneFois } from '@constl/utils-ipa';
 import type { JSONSchemaType } from 'ajv';
 
