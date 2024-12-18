@@ -45,14 +45,14 @@
           >
             <v-icon color="error">mdi-delete</v-icon>
           </v-btn>
-          <v-btn
+          <!-- <v-btn
             icon
             class="mx-2"
             @click.stop
             @click="blockRelease"
           >
             <v-icon color="error">mdi-flag</v-icon>
-          </v-btn>
+          </v-btn> -->
         </template>
       </v-list-item>
     </template>
@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import type {ReleaseWithId} from '/@/plugins/orbiter/types';
+import type {types as orbiterTypes} from '@riffcc/orbiter';
 
 import {computed, ref, watchEffect} from 'vue';
 
@@ -72,7 +72,11 @@ import {downloadFile} from '/@/utils';
 
 const {orbiter} = useOrbiter();
 
-const props = defineProps<{release: ReleaseWithId; contributor: string; site: string}>();
+const props = defineProps<{
+  release: orbiterTypes.ReleaseWithId;
+  contributor: string;
+  site: string;
+}>();
 
 const myAccountId = follow(orbiter.listenForAccountId);
 
@@ -117,7 +121,7 @@ async function downloadRelease() {
   }
 }
 
-async function blockRelease() {
-  await orbiter.blockRelease({cid: props.release.release.file});
-}
+// async function blockRelease() {
+//   await orbiter.blockRelease({cid: props.release.release.file});
+// }
 </script>

@@ -1,42 +1,21 @@
 <template>
-  <v-img
-    contain
-    height="300"
-    src="src/assets/logo.svg"
-  />
+  <v-responsive class="d-flex align-center text-center fill-height">
+    <v-img
+      contain
+      height="300"
+      src="src/assets/logo.svg"
+    />
 
-  <div class="text-body-2 font-weight-light mb-n1">Welcome to</div>
+    <div class="text-body-2 font-weight-light mb-n1">Welcome to</div>
 
-  <h1 class="text-h2 font-weight-bold">Orbiter.CC</h1>
+    <h1 class="text-h2 font-weight-bold">Orbiter</h1>
 
-  <div class="text-body-2 italic">E cinere surgemus</div>
+    <div class="text-body-2 italic">E cinere surgemus</div>
 
-  <div class="py-14" />
+    <div class="py-14" />
 
-  <initiateModDBs />
-
-  <v-row
-    v-if="orbiterReady"
-    class="d-flex align-center justify-center"
-  >
-    <v-col cols="auto">
-      <v-btn
-        min-width="164"
-        rel="noopener noreferrer"
-        target="_blank"
-        variant="text"
-        @click="emit('enter')"
-      >
-        <v-icon
-          icon="mdi-view-dashboard"
-          size="large"
-          start
-        />
-
-        Just browse
-      </v-btn>
-    </v-col>
-
+    <initiateModDBs />
+    <!-- <v-row>
     <v-col cols="auto">
       <initiate-account>
         <template #activator="{props}">
@@ -77,28 +56,17 @@
         View docs
       </v-btn>
     </v-col>
-  </v-row>
-  <v-row
-    v-else-if="siteConfigured"
-    class="d-flex align-center justify-center"
-  >
-    <v-col cols="auto">
-      <v-progress-circular
-        indeterminate
-        :size="100"
-        :width="15"
-      />
-    </v-col>
-  </v-row>
+  </v-row> -->
+  </v-responsive>
 </template>
 
 <script setup lang="ts">
-import {suivre as follow} from '@constl/vue';
+// import {suivre as follow} from '@constl/vue';
 import {onMounted, ref} from 'vue';
 
 import {useOrbiter} from '/@/plugins/orbiter/utils';
 
-import initiateAccount from '/@/components/initiateAccount.vue';
+// import initiateAccount from '/@/components/initiateAccount.vue';
 import initiateModDBs from '/@/components/initiateModDBs.vue';
 
 const {orbiter} = useOrbiter();
@@ -111,9 +79,9 @@ onMounted(async () => {
 
 // const accountExists = follow(orbiter.listenForAccountExists);
 
-const siteConfigured = follow(({f}) => orbiter.listenForSiteConfigured({f}));
+// const siteConfigured = follow(({f}) => orbiter.listenForSiteConfigured({f}));
 
-const emit = defineEmits<{
-  (e: 'enter'): void;
-}>();
+// const emit = defineEmits<{
+//   (e: 'enter'): void;
+// }>();
 </script>

@@ -1,6 +1,6 @@
 <template>
   <v-dialog
-    v-model="siteNotConfigured"
+    v-model="dialog"
     persistent
     max-width="800"
   >
@@ -9,8 +9,8 @@
         {{ generatedSiteId ? 'Site is now configured' : 'Site not configured' }}
       </v-card-title>
       <v-card-text v-if="!generatedSiteId">
-        Each instance of Orbiter.CC must be compiled with a unique site configuration. Click below
-        to configure the site. (This can take a while.)
+        Each instance of Orbiter must be compiled with a unique site configuration. Click below to
+        configure the site. (This can take a while.)
         <v-alert
           v-if="development"
           class="mt-4"
@@ -22,7 +22,7 @@
       </v-card-text>
       <v-card-text v-else>
         Site configured! Be sure to copy the code below into a <code>.env</code> file and place it
-        at the root of your Orbiter.CC project.
+        at the root of your Orbiter project.
         <v-textarea
           class="mt-4"
           :value="envFileText"
@@ -42,12 +42,20 @@
         >
           Configure site
         </v-btn>
+        <v-btn
+          color="primary mx-auto"
+          variant="outlined"
+          prepend-icon="mdi-exit"
+          @click="() => (status = 'static')"
+        >
+          View in dev (static data) mode
+        </v-btn>
       </v-card-actions>
       <v-card-actions v-else>
         <v-spacer />
         <v-btn
           color="primary"
-          prepend-icon="mdi-download"
+          append-icon="mdi-download"
           :loading="generatingEnvFile"
           @click="downloadEnvFile"
         >
@@ -55,7 +63,7 @@
         </v-btn>
         <v-btn
           color="primary"
-          prepend-icon="mdi-export"
+          append-icon="mdi-export"
           @click="acceptNewModDb"
         >
           Close and enter site
@@ -66,22 +74,29 @@
 </template>
 
 <script setup lang="ts">
-import type {VariableIds} from '/@/plugins/orbiter/types';
+import type {types as orbiterTypes} from '@riffcc/orbiter';
 
 import {computed, ref} from 'vue';
 
 import {suivre as follow} from '@constl/vue';
+import {constantCase} from 'change-case';
 import {saveAs} from 'file-saver';
+import {useDevStatus} from '../composables/devStatus';
 import {useOrbiter} from '/@/plugins/orbiter/utils';
 
 const {orbiter} = useOrbiter();
+const {status} = useDevStatus();
 
 const siteConfigured = follow(({f}) => orbiter.listenForSiteConfigured({f}));
 const siteNotConfigured = computed(() => siteConfigured.value === false);
 
+const staticDevMode = computed(() => status.value === 'static');
+const dialog = computed(() => siteNotConfigured.value && !staticDevMode.value);
+
 const generatingDb = ref<boolean>(false);
 const generatedSiteId = ref<string>();
-const generatedVariableIds = ref<VariableIds>();
+const generatedSwarmId = ref<string>();
+const generatedVariableIds = ref<orbiterTypes.VariableIds>();
 
 const generatingEnvFile = ref<boolean>(false);
 
@@ -90,8 +105,14 @@ const generateDb = async () => {
 
   const {siteId, variableIds} = await orbiter.setUpSite();
 
+  // For now, only admins can add content.
+  await orbiter.makeSitePrivate();
+
+  const {swarmId} = await orbiter.orbiterConfig();
+
   generatedSiteId.value = siteId;
   generatedVariableIds.value = variableIds;
+  generatedSwarmId.value = swarmId;
 
   generatingDb.value = false;
 };
@@ -99,76 +120,24 @@ const generateDb = async () => {
 const development = import.meta.env.DEV;
 
 const envFileText = computed(() => {
-  const trustedSitesSiteIdVar =
-    'VITE_TRUSTED_SITES_SITE_ID_VAR_ID=' + generatedVariableIds.value?.trustedSitesSiteIdVariableId;
-  const trustedSitesNameVar =
-    'VITE_TRUSTED_SITES_NAME_VAR_ID=' + generatedVariableIds.value?.trustedSitesNameVariableId;
-  const blockedCidsVar =
-    'VITE_BLOCKED_CIDS_VAR_ID=' + generatedVariableIds.value?.blockedCidsVariableId;
-
-  const releasesFileVar =
-    'VITE_RELEASES_FILE_VAR_ID=' + generatedVariableIds.value?.releasesFileVar;
-  const releasesTypeVar =
-    'VITE_RELEASES_TYPE_VAR_ID=' + generatedVariableIds.value?.releasesTypeVar;
-  const releasesAuthorVar =
-    'VITE_RELEASES_AUTHOR_VAR_ID=' + generatedVariableIds.value?.releasesAuthorVar;
-  const releasesContentNameVar =
-    'VITE_RELEASES_CONTENT_NAME_VAR_ID=' + generatedVariableIds.value?.releasesContentNameVar;
-  const releasesMetadataVar =
-    'VITE_RELEASES_METADATA_VAR_ID=' + generatedVariableIds.value?.releasesMetadataVar;
-  const releasesThumbnailVar =
-    'VITE_RELEASES_THUMBNAIL_VAR_ID=' + generatedVariableIds.value?.releasesThumbnailVar;
-
-  const collectionsAuthorVar =
-    'VITE_COLLECTIONS_AUTHOR_VAR_ID=' + generatedVariableIds.value?.collectionsAuthorVar;
-  const collectionsMetadataVar =
-    'VITE_COLLECTIONS_METADATA_VAR_ID=' + generatedVariableIds.value?.collectionsMetadataVar;
-  const collectionsNameVar =
-    'VITE_COLLECTIONS_NAME_VAR_ID=' + generatedVariableIds.value?.collectionsNameVar;
-  const collectionsReleasesVar =
-    'VITE_COLLECTIONS_RELEASES_VAR_ID=' + generatedVariableIds.value?.collectionsReleasesVar;
-  const collectionsThumbnailVar =
-    'VITE_COLLECTIONS_THUMBNAIL_VAR_ID=' + generatedVariableIds.value?.collectionsThumbnailVar;
-  const collectionsTypeVar =
-    'VITE_COLLECTIONS_TYPE_VAR_ID=' + generatedVariableIds.value?.collectionsTypeVar;
-
+  const generatedVariableIdsValue = generatedVariableIds.value;
+  if (!generatedVariableIdsValue) throw new Error("This shouldn't happen...");
+  const variableIdsList = (
+    Object.keys(generatedVariableIdsValue) as (keyof orbiterTypes.VariableIds)[]
+  ).map(k => `VITE_${constantCase(k)}_ID=${generatedVariableIdsValue[k]}`);
   const siteId = 'VITE_SITE_ID=' + generatedSiteId.value;
+  const swarmId = 'VITE_SWARM_ID=' + generatedSwarmId.value;
 
   return (
-    '# The address below should be regenerated for each Orbiter.CC site. If you are setting up an independent site, erase the value below and run the site in development mode (`pnpm dev`) to automatically regenerate. \n' +
+    '# The address below should be regenerated for each Orbiter site. Use the orbiter cli (`pnpm install -g @riffcc/orbiter && orb -h`) to regenerate.\n' +
     siteId +
     '\n' +
     '\n' +
-    '# These should ideally stay the same for all Orbiter.CC sites for optimal performance. Only change if you know what you are doing.\n' +
-    trustedSitesSiteIdVar +
+    '# These should ideally stay the same for all Orbiter sites for optimal performance. Only change if you know what you are doing.\n' +
+    swarmId +
     '\n' +
-    trustedSitesNameVar +
-    '\n' +
-    blockedCidsVar +
-    '\n' +
-    releasesFileVar +
-    '\n' +
-    releasesTypeVar +
-    '\n' +
-    releasesAuthorVar +
-    '\n' +
-    releasesContentNameVar +
-    '\n' +
-    releasesMetadataVar +
-    '\n' +
-    releasesThumbnailVar +
-    '\n' +
-    collectionsAuthorVar +
-    '\n' +
-    collectionsMetadataVar +
-    '\n' +
-    collectionsNameVar +
-    '\n' +
-    collectionsReleasesVar +
-    '\n' +
-    collectionsThumbnailVar +
-    '\n' +
-    collectionsTypeVar
+    variableIdsList.join('\n') +
+    '\n'
   );
 });
 
@@ -176,7 +145,7 @@ const downloadEnvFile = async () => {
   if (!generatedSiteId.value) return;
   generatingEnvFile.value = true;
 
-  saveAs(envFileText.value, '[erase this bit].env');
+  saveAs(new Blob([envFileText.value], {type: 'text/plain;charset=utf-8'}), '[erase this bit].env');
 
   generatingEnvFile.value = false;
 };
