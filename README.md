@@ -104,4 +104,5 @@ Authored by [@julienmalard](https://github.com/julienmalard), [@Zorlin](https://
 ## Sponsors
 Thank you to our sponsors, who have generously provided funding for the development of the Riff.CC Project:
 
-* [Money Every 3 Days](http://moneyevery3days.com/)
+* [ARData Tech](https://ardata.tech)
+* [Money Every 3 Days](https://moneyevery3days.com/)
